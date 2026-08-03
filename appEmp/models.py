@@ -57,6 +57,7 @@ LATE_CUTOFF_TIME = time(10, 15)  # after this time, check-in counts as Late
 
 
 class Attendance(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     employee = models.ForeignKey(
         empProfile, on_delete=models.CASCADE, related_name="attendances"
     )

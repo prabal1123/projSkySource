@@ -28,5 +28,5 @@ urlpatterns = [
     path('empList/', empList_view, name='employeeList'),
     path('dashboard/', dashboard_view, name='dashboard'),
     path('attendance/checkin-checkout/', checkin_checkout_view, name='checkinCheckout'),
-    path('attendance/<int:pk>/edit/', update_attendance_view, name='editAttendance'),
-]
+    path('attendance/<uuid:uuid>/edit/', update_attendance_view, name='editAttendance'),
+] 

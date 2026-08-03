@@ -95,7 +95,7 @@ from django.contrib.auth import authenticate, login, logout
 
 from .forms import LoginForm, registerEmp
 from .models import ActivityLog
-from appEmp.models import empProfile
+from appEmp.models import empProfile, ADMIN_ROLES
 
 
 def get_client_ip(request):
@@ -154,6 +154,11 @@ def login_view(request):
 
 
 def register_view(request):
+    requester_profile = empProfile.objects.filter(user=request.user).first()
+
+    if not requester_profile or requester_profile.role not in ADMIN_ROLES:
+        messages.error(request, "You don't have permission to add employees.")
+        return redirect("dashboard")
     form = registerEmp(request.POST or None)
 
     if request.method == "POST" and form.is_valid():

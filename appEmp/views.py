@@ -125,14 +125,36 @@ def checkin_checkout_view(request):
     return redirect('dashboard')
 
 
+# @login_required
+# def update_attendance_view(request, pk):
+#     profile = get_object_or_404(empProfile, user=request.user)
+#     if profile.role not in ADMIN_ROLES:
+#         messages.error(request, "You don't have permission to do that.")
+#         return redirect('dashboard')
+
+#     attendance = get_object_or_404(Attendance, pk=pk)
+
+#     if request.method == "POST":
+#         form = AttendanceUpdateForm(request.POST, instance=attendance)
+#         if form.is_valid():
+#             record = form.save(commit=False)
+#             record.marked_by = request.user
+#             record.save()
+#             messages.success(request, f"Attendance updated for {attendance.employee}.")
+#             return redirect('dashboard')
+#     else:
+#         form = AttendanceUpdateForm(instance=attendance)
+
+#     return render(request, "appEmp/edit_attendance.html", {"form": form, "attendance": attendance})
+
 @login_required
-def update_attendance_view(request, pk):
+def update_attendance_view(request, uuid):
     profile = get_object_or_404(empProfile, user=request.user)
     if profile.role not in ADMIN_ROLES:
         messages.error(request, "You don't have permission to do that.")
         return redirect('dashboard')
 
-    attendance = get_object_or_404(Attendance, pk=pk)
+    attendance = get_object_or_404(Attendance, uuid=uuid)
 
     if request.method == "POST":
         form = AttendanceUpdateForm(request.POST, instance=attendance)
