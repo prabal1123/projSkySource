@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Employees{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Organization</span>
+                <h1>Employees</h1>
+            </div>
+            <a href="{% url 'register' %}" class="sky-punch-btn in" style="text-decoration:none; display:inline-block; padding: 0.55rem 1.4rem; font-size: 0.9rem;">
+                + Add Employee
+            </a>
+        </div>
+
+        <div class="sky-panel">
+            <div class="sky-panel-head">
+                <h6>All Employees</h6>
+                <span class="sky-count">{{ objects|length }} record(s)</span>
+            </div>
+            <div class="table-responsive">
+                <table class="sky-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Phone Number</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for obj in objects %}
+                        <tr>
+                            <td class="sky-time">{{ obj.id }}</td>
+                            <td>{{ obj.user__last_name }}, {{ obj.user__first_name }}</td>
+                            <td class="sky-time">{{ obj.phone_number|default:"—" }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'editProfile' obj.uuid %}" class="sky-edit-link">Edit</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="sky-empty">No employees found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,900 @@
+/* ============================================
+   Dashboard — scoped design system
+   Only applies inside .sky-dashboard, so it
+   never leaks into other pages.
+   ============================================ */
+
+.sky-dashboard {
+    --ink: #101828;
+    --ink-soft: #667085;
+    --navy: #16233D;
+    --teal: #0F9E96;
+    --teal-soft: #E3F5F3;
+    --amber: #B76E1D;
+    --amber-soft: #FBEEDD;
+    --rose: #B5433A;
+    --rose-soft: #FBEAE8;
+    --slate: #5B6B85;
+    --slate-soft: #EEF1F5;
+    --bg: #F5F6F8;
+    --card: #FFFFFF;
+    --border: #E6E8EC;
+
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    padding: 2.5rem 0 3.5rem;
+}
+
+.sky-dashboard h1, .sky-dashboard h2, .sky-dashboard h3,
+.sky-dashboard h4, .sky-dashboard h5, .sky-dashboard h6 {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    letter-spacing: -0.01em;
+}
+
+.sky-mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Header */
+.sky-header {
+    border-top: 2px solid var(--navy);
+    padding-top: 0.85rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.sky-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.35rem;
+}
+
+.sky-header h1 {
+    font-size: 1.65rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.sky-header .sky-date {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Stat cards */
+.sky-stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .sky-stat-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+    .sky-stat-row { grid-template-columns: 1fr; }
+}
+
+.sky-stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--slate);
+    border-radius: 6px;
+    padding: 1.1rem 1.25rem;
+}
+
+.sky-stat.is-teal  { border-left-color: var(--teal); }
+.sky-stat.is-rose  { border-left-color: var(--rose); }
+.sky-stat.is-amber { border-left-color: var(--amber); }
+
+.sky-stat .sky-stat-value {
+    font-size: 1.9rem;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+}
+
+.sky-stat .sky-stat-label {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Panels */
+.sky-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    height: 100%;
+}
+
+.sky-panel-head {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sky-panel-head h6 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.sky-panel-head .sky-count {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.sky-panel-body { padding: 1.25rem; }
+
+/* Verification meters */
+.sky-meter-row { margin-bottom: 1.1rem; }
+.sky-meter-row:last-child { margin-bottom: 0; }
+
+.sky-meter-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    margin-bottom: 0.4rem;
+}
+
+.sky-meter-top .sky-meter-name { color: var(--ink); }
+.sky-meter-top .sky-meter-count { color: var(--ink-soft); }
+
+.sky-meter-track {
+    height: 5px;
+    background: var(--slate-soft);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.sky-meter-fill {
+    height: 100%;
+    background: var(--teal);
+    border-radius: 3px;
+}
+
+/* Table */
+.sky-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.sky-table th {
+    text-align: left;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+    font-weight: 600;
+    padding: 0.6rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.sky-table td {
+    padding: 0.7rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.sky-table tr:last-child td { border-bottom: none; }
+.sky-table .sky-empty { text-align: center; color: var(--ink-soft); padding: 2.5rem 1rem; }
+
+.sky-table .sky-time { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--ink-soft); }
+
+/* Status pill */
+.sky-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    padding: 0.22rem 0.55rem;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.sky-pill.present  { background: var(--teal-soft);  color: var(--teal); }
+.sky-pill.late     { background: var(--amber-soft); color: var(--amber); }
+.sky-pill.half_day { background: var(--amber-soft); color: var(--amber); }
+.sky-pill.absent   { background: var(--rose-soft);  color: var(--rose); }
+.sky-pill.leave    { background: var(--slate-soft); color: var(--slate); }
+
+.sky-edit-link {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+}
+.sky-edit-link:hover { border-color: var(--teal); color: var(--teal); }
+
+/* Employee (non-admin) view */
+.sky-punch-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2.25rem 1.5rem;
+    text-align: center;
+}
+
+.sky-punch-status {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-bottom: 1.25rem;
+}
+
+.sky-punch-btn {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: none;
+    border-radius: 6px;
+    padding: 0.7rem 2.25rem;
+    color: #fff;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+.sky-punch-btn:hover { opacity: 0.88; }
+.sky-punch-btn.in  { background: var(--teal); }
+.sky-punch-btn.out { background: var(--rose); }
+
+.sky-punch-times {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    margin-top: 1rem;
+}
+/* ============================================
+   Dashboard — scoped design system
+   Only applies inside .sky-dashboard, so it
+   never leaks into other pages.
+   ============================================ */
+
+.sky-dashboard {
+    --ink: #101828;
+    --ink-soft: #667085;
+    --navy: #16233D;
+    --teal: #0F9E96;
+    --teal-soft: #E3F5F3;
+    --amber: #B76E1D;
+    --amber-soft: #FBEEDD;
+    --rose: #B5433A;
+    --rose-soft: #FBEAE8;
+    --slate: #5B6B85;
+    --slate-soft: #EEF1F5;
+    --bg: #F5F6F8;
+    --card: #FFFFFF;
+    --border: #E6E8EC;
+
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    padding: 2.5rem 0 3.5rem;
+}
+
+.sky-dashboard h1, .sky-dashboard h2, .sky-dashboard h3,
+.sky-dashboard h4, .sky-dashboard h5, .sky-dashboard h6 {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    letter-spacing: -0.01em;
+}
+
+.sky-mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Header */
+.sky-header {
+    border-top: 2px solid var(--navy);
+    padding-top: 0.85rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.sky-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.35rem;
+}
+
+.sky-header h1 {
+    font-size: 1.65rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.sky-header .sky-date {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Stat cards */
+.sky-stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .sky-stat-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+    .sky-stat-row { grid-template-columns: 1fr; }
+}
+
+.sky-stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--slate);
+    border-radius: 6px;
+    padding: 1.1rem 1.25rem;
+}
+
+.sky-stat.is-teal  { border-left-color: var(--teal); }
+.sky-stat.is-rose  { border-left-color: var(--rose); }
+.sky-stat.is-amber { border-left-color: var(--amber); }
+
+.sky-stat .sky-stat-value {
+    font-size: 1.9rem;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+}
+
+.sky-stat .sky-stat-label {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Panels */
+.sky-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    height: 100%;
+}
+
+.sky-panel-head {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sky-panel-head h6 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.sky-panel-head .sky-count {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.sky-panel-body { padding: 1.25rem; }
+
+/* Verification meters */
+.sky-meter-row { margin-bottom: 1.1rem; }
+.sky-meter-row:last-child { margin-bottom: 0; }
+
+.sky-meter-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    margin-bottom: 0.4rem;
+}
+
+.sky-meter-top .sky-meter-name { color: var(--ink); }
+.sky-meter-top .sky-meter-count { color: var(--ink-soft); }
+
+.sky-meter-track {
+    height: 5px;
+    background: var(--slate-soft);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.sky-meter-fill {
+    height: 100%;
+    background: var(--teal);
+    border-radius: 3px;
+}
+
+/* Table */
+.sky-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.sky-table th {
+    text-align: left;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+    font-weight: 600;
+    padding: 0.6rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.sky-table td {
+    padding: 0.7rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.sky-table tr:last-child td { border-bottom: none; }
+.sky-table .sky-empty { text-align: center; color: var(--ink-soft); padding: 2.5rem 1rem; }
+
+.sky-table .sky-time { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--ink-soft); }
+
+/* Status pill */
+.sky-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    padding: 0.22rem 0.55rem;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.sky-pill.present  { background: var(--teal-soft);  color: var(--teal); }
+.sky-pill.late     { background: var(--amber-soft); color: var(--amber); }
+.sky-pill.half_day { background: var(--amber-soft); color: var(--amber); }
+.sky-pill.absent   { background: var(--rose-soft);  color: var(--rose); }
+.sky-pill.leave    { background: var(--slate-soft); color: var(--slate); }
+
+.sky-edit-link {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+}
+.sky-edit-link:hover { border-color: var(--teal); color: var(--teal); }
+
+/* Employee (non-admin) view */
+.sky-punch-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2.25rem 1.5rem;
+    text-align: center;
+}
+
+.sky-punch-status {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-bottom: 1.25rem;
+}
+
+.sky-punch-btn {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: none;
+    border-radius: 6px;
+    padding: 0.7rem 2.25rem;
+    color: #fff;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+.sky-punch-btn:hover { opacity: 0.88; }
+.sky-punch-btn.in  { background: var(--teal); }
+.sky-punch-btn.out { background: var(--rose); }
+
+.sky-punch-times {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    margin-top: 1rem;
+}
+
+/* Form fields (attendance edit, and reusable elsewhere) */
+.sky-form-label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-bottom: 0.35rem;
+}
+
+.sky-dashboard select,
+.sky-dashboard input[type="text"],
+.sky-dashboard input[type="datetime-local"] {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.55rem 0.75rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    background: #fff;
+}
+
+.sky-dashboard select:focus,
+.sky-dashboard input:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px var(--teal-soft);
+}
+
+.sky-form-error {
+    font-size: 0.78rem;
+    color: var(--rose);
+    margin-top: 0.3rem;
+}
+
+.sky-cancel-link {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 0.7rem 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+
+.sky-cancel-link:hover { border-color: var(--slate); color: var(--ink); }
+
+/* ============================================
+   Dashboard — scoped design system
+   Only applies inside .sky-dashboard, so it
+   never leaks into other pages.
+   ============================================ */
+
+.sky-dashboard {
+    --ink: #101828;
+    --ink-soft: #667085;
+    --navy: #16233D;
+    --teal: #0F9E96;
+    --teal-soft: #E3F5F3;
+    --amber: #B76E1D;
+    --amber-soft: #FBEEDD;
+    --rose: #B5433A;
+    --rose-soft: #FBEAE8;
+    --slate: #5B6B85;
+    --slate-soft: #EEF1F5;
+    --bg: #F5F6F8;
+    --card: #FFFFFF;
+    --border: #E6E8EC;
+
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    padding: 2.5rem 0 3.5rem;
+}
+
+.sky-dashboard h1, .sky-dashboard h2, .sky-dashboard h3,
+.sky-dashboard h4, .sky-dashboard h5, .sky-dashboard h6 {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    letter-spacing: -0.01em;
+}
+
+.sky-mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Header */
+.sky-header {
+    border-top: 2px solid var(--navy);
+    padding-top: 0.85rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.sky-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.35rem;
+}
+
+.sky-header h1 {
+    font-size: 1.65rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.sky-header .sky-date {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Stat cards */
+.sky-stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .sky-stat-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+    .sky-stat-row { grid-template-columns: 1fr; }
+}
+
+.sky-stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--slate);
+    border-radius: 6px;
+    padding: 1.1rem 1.25rem;
+}
+
+.sky-stat.is-teal  { border-left-color: var(--teal); }
+.sky-stat.is-rose  { border-left-color: var(--rose); }
+.sky-stat.is-amber { border-left-color: var(--amber); }
+
+.sky-stat .sky-stat-value {
+    font-size: 1.9rem;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+}
+
+.sky-stat .sky-stat-label {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Panels */
+.sky-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    height: 100%;
+}
+
+.sky-panel-head {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sky-panel-head h6 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.sky-panel-head .sky-count {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.sky-panel-body { padding: 1.25rem; }
+
+/* Verification meters */
+.sky-meter-row { margin-bottom: 1.1rem; }
+.sky-meter-row:last-child { margin-bottom: 0; }
+
+.sky-meter-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    margin-bottom: 0.4rem;
+}
+
+.sky-meter-top .sky-meter-name { color: var(--ink); }
+.sky-meter-top .sky-meter-count { color: var(--ink-soft); }
+
+.sky-meter-track {
+    height: 5px;
+    background: var(--slate-soft);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.sky-meter-fill {
+    height: 100%;
+    background: var(--teal);
+    border-radius: 3px;
+}
+
+/* Table */
+.sky-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.sky-table th {
+    text-align: left;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+    font-weight: 600;
+    padding: 0.6rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.sky-table td {
+    padding: 0.7rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.sky-table tr:last-child td { border-bottom: none; }
+.sky-table .sky-empty { text-align: center; color: var(--ink-soft); padding: 2.5rem 1rem; }
+
+.sky-table .sky-time { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--ink-soft); }
+
+/* Status pill */
+.sky-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    padding: 0.22rem 0.55rem;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.sky-pill.present  { background: var(--teal-soft);  color: var(--teal); }
+.sky-pill.late     { background: var(--amber-soft); color: var(--amber); }
+.sky-pill.half_day { background: var(--amber-soft); color: var(--amber); }
+.sky-pill.absent   { background: var(--rose-soft);  color: var(--rose); }
+.sky-pill.leave    { background: var(--slate-soft); color: var(--slate); }
+
+.sky-edit-link {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+}
+.sky-edit-link:hover { border-color: var(--teal); color: var(--teal); }
+
+/* Employee (non-admin) view */
+.sky-punch-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2.25rem 1.5rem;
+    text-align: center;
+}
+
+.sky-punch-status {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-bottom: 1.25rem;
+}
+
+.sky-punch-btn {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: none;
+    border-radius: 6px;
+    padding: 0.7rem 2.25rem;
+    color: #fff;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+.sky-punch-btn:hover { opacity: 0.88; }
+.sky-punch-btn.in  { background: var(--teal); }
+.sky-punch-btn.out { background: var(--rose); }
+
+.sky-punch-times {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    margin-top: 1rem;
+}
+
+/* Form fields (attendance edit, and reusable elsewhere) */
+.sky-form-label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-bottom: 0.35rem;
+}
+
+.sky-dashboard select,
+.sky-dashboard input[type="text"],
+.sky-dashboard input[type="datetime-local"] {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.55rem 0.75rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    background: #fff;
+}
+
+.sky-dashboard select:focus,
+.sky-dashboard input:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px var(--teal-soft);
+}
+
+.sky-form-error {
+    font-size: 0.78rem;
+    color: var(--rose);
+    margin-top: 0.3rem;
+}
+
+.sky-cancel-link {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 0.7rem 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+.sky-cancel-link:hover { border-color: var(--slate); color: var(--ink); }
+
+.sky-header-btn {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 0.88rem;
+    background: var(--teal);
+    color: #fff;
+    text-decoration: none;
+    padding: 0.55rem 1.3rem;
+    border-radius: 6px;
+    transition: opacity 0.15s ease;
+}
+.sky-header-btn:hover { opacity: 0.88; color: #fff; }

@@ -1,0 +1,131 @@
+/* ============================================
+   Global design tokens
+   Shared by navbar, footer, and every page.
+   Dashboard-specific styling lives in dashboard.css.
+   ============================================ */
+
+:root {
+    --ink: #101828;
+    --ink-soft: #667085;
+    --navy: #16233D;
+    --teal: #0F9E96;
+    --teal-soft: #E3F5F3;
+    --amber: #B76E1D;
+    --amber-soft: #FBEEDD;
+    --rose: #B5433A;
+    --rose-soft: #FBEAE8;
+    --slate: #5B6B85;
+    --slate-soft: #EEF1F5;
+    --bg: #F5F6F8;
+    --card: #FFFFFF;
+    --border: #E6E8EC;
+
+    --font-display: 'Space Grotesk', 'Inter', sans-serif;
+    --font-body: 'Inter', -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+body {
+    font-family: var(--font-body);
+    color: var(--ink);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+}
+
+/* ============================================
+   Navbar
+   ============================================ */
+
+.navbar {
+    background: var(--navy) !important;
+    border-bottom: 2px solid var(--teal);
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
+}
+
+.navbar-brand {
+    font-family: var(--font-display);
+    font-weight: 600 !important;
+    letter-spacing: -0.01em;
+    color: #fff !important;
+}
+
+.navbar .nav-link {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.78) !important;
+    padding-left: 0.9rem !important;
+    padding-right: 0.9rem !important;
+    transition: color 0.15s ease;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link:focus {
+    color: #fff !important;
+}
+
+.navbar .dropdown-menu {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(16, 24, 40, 0.12);
+    padding: 0.4rem;
+}
+
+.navbar .dropdown-item {
+    font-size: 0.88rem;
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+}
+
+.navbar .dropdown-item:hover,
+.navbar .dropdown-item:focus {
+    background: var(--teal-soft);
+    color: var(--teal);
+}
+
+.navbar-text {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.navbar .btn-outline-light {
+    font-size: 0.82rem;
+    font-weight: 500;
+    border-color: rgba(255, 255, 255, 0.35);
+    padding: 0.35rem 0.9rem;
+    border-radius: 5px;
+}
+
+.navbar .btn-outline-light:hover {
+    background: var(--teal);
+    border-color: var(--teal);
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+
+footer.bg-dark {
+    background: var(--navy) !important;
+    border-top: 2px solid var(--teal);
+}
+
+footer h5 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+footer p.small {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+footer small {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.55);
+    letter-spacing: 0.02em;
+}

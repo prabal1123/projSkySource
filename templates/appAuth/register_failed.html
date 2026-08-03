@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Registration Failed</h1>
+    <p>{{ error }}</p>
+    <p>Please try again or <a href="{% url 'register' %}">register with a different username</a>.</p>
+{% endblock %}

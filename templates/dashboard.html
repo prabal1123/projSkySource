@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container">
+
+        {% if is_admin_view %}
+            <div class="sky-header">
+                <div>
+                    <span class="sky-eyebrow">Organization / Live</span>
+                    <h1>Dashboard</h1>
+                </div>
+                <span class="sky-date sky-mono">{% now "D, M j Y" %}</span>
+            </div>
+
+            <div class="sky-stat-row">
+                <div class="sky-stat is-teal">
+                    <div class="sky-stat-value sky-mono">{{ total_employees }}</div>
+                    <div class="sky-stat-label">Total Employees</div>
+                </div>
+                <div class="sky-stat is-teal">
+                    <div class="sky-stat-value sky-mono">{{ attendance_summary.present }}</div>
+                    <div class="sky-stat-label">Present Today</div>
+                </div>
+                <div class="sky-stat is-rose">
+                    <div class="sky-stat-value sky-mono">{{ attendance_summary.absent }}</div>
+                    <div class="sky-stat-label">Absent Today</div>
+                </div>
+                <div class="sky-stat is-amber">
+                    <div class="sky-stat-value sky-mono">{{ attendance_summary.not_marked }}</div>
+                    <div class="sky-stat-label">Not Marked</div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-lg-5">
+                    <div class="sky-panel">
+                        <div class="sky-panel-head">
+                            <h6>Verification Status</h6>
+                        </div>
+                        <div class="sky-panel-body">
+                            {% for label, count in verification_stats.items %}
+                            <div class="sky-meter-row">
+                                <div class="sky-meter-top">
+                                    <span class="sky-meter-name">{{ label|cut:"_"|title }}</span>
+                                    <span class="sky-meter-count sky-mono">{{ count }}/{{ total_employees }}</span>
+                                </div>
+                                <div class="sky-meter-track">
+                                    <div class="sky-meter-fill" style="width: {% widthratio count total_employees 100 %}%"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-7">
+                    <div class="sky-panel">
+                        <div class="sky-panel-head">
+                            <h6>Today's Attendance</h6>
+                            <span class="sky-count">{{ today_attendance|length }} record(s)</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="sky-table">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Status</th>
+                                        <th>In</th>
+                                        <th>Out</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for record in today_attendance %}
+                                    <tr>
+                                        <td>{{ record.employee.user.first_name }} {{ record.employee.user.last_name }}</td>
+                                        <td><span class="sky-pill {{ record.status|lower }}">{{ record.get_status_display }}</span></td>
+                                        <td class="sky-time">{{ record.check_in|time:"H:i"|default:"—" }}</td>
+                                        <td class="sky-time">{{ record.check_out|time:"H:i"|default:"—" }}</td>
+                                        <td><a href="{% url 'editAttendance' record.pk %}" class="sky-edit-link">Edit</a></td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="5" class="sky-empty">No attendance marked yet today.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        {% else %}
+            <div class="sky-header">
+                <div>
+                    <span class="sky-eyebrow">Your Day</span>
+                    <h1>Welcome, {{ profile.user.first_name }}</h1>
+                </div>
+                <span class="sky-date sky-mono">{% now "D, M j Y" %}</span>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <div class="sky-punch-card">
+                        {% if my_attendance_today.check_out %}
+                            <div class="sky-punch-status">You're checked out for today.</div>
+                            <span class="sky-pill {{ my_attendance_today.status|lower }}">{{ my_attendance_today.get_status_display }}</span>
+                            <div class="sky-punch-times">In {{ my_attendance_today.check_in|time:"H:i" }} &middot; Out {{ my_attendance_today.check_out|time:"H:i" }}</div>
+                        {% elif my_attendance_today.check_in %}
+                            <div class="sky-punch-status">Checked in at {{ my_attendance_today.check_in|time:"H:i" }}</div>
+                            <form method="post" action="{% url 'checkinCheckout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="sky-punch-btn out">Check Out</button>
+                            </form>
+                        {% else %}
+                            <div class="sky-punch-status">You haven't checked in yet.</div>
+                            <form method="post" action="{% url 'checkinCheckout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="sky-punch-btn in">Check In</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-md-7">
+                    <div class="sky-panel">
+                        <div class="sky-panel-head">
+                            <h6>Recent Attendance</h6>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="sky-table">
+                                <thead>
+                                    <tr><th>Date</th><th>Status</th><th>In</th><th>Out</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for record in recent_attendance %}
+                                    <tr>
+                                        <td>{{ record.date|date:"M d" }}</td>
+                                        <td><span class="sky-pill {{ record.status|lower }}">{{ record.get_status_display }}</span></td>
+                                        <td class="sky-time">{{ record.check_in|time:"H:i"|default:"—" }}</td>
+                                        <td class="sky-time">{{ record.check_out|time:"H:i"|default:"—" }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="4" class="sky-empty">No records yet.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

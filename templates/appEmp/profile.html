@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Employee Profile{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 760px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Employee / Profile</span>
+                <h1>{{ employee.user.first_name|default:profile.user.first_name }} {{ employee.user.last_name|default:profile.user.last_name }}</h1>
+            </div>
+        </div>
+
+        <div class="sky-panel">
+            <div class="sky-panel-head">
+                <h6>Profile Details</h6>
+            </div>
+            <div class="sky-panel-body">
+
+                {% if form.non_field_errors %}
+                <div class="sky-auth-error-banner">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        {% for field in form %}
+                            <div class="{% if field.field.widget.input_type == 'checkbox' %}col-12{% else %}col-md-6{% endif %} mb-3">
+
+                                {% if field.field.widget.input_type == "checkbox" %}
+                                    <label class="sky-check">
+                                        {{ field }}
+                                        <span>{{ field.label }}</span>
+                                    </label>
+                                {% else %}
+                                    <label class="sky-form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.help_text %}
+                                        <div class="sky-help-text">{{ field.help_text }}</div>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% for error in field.errors %}
+                                    <div class="sky-form-error">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit" class="sky-header-btn">Save Changes</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

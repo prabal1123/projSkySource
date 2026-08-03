@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Attendance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 640px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Attendance / Edit</span>
+                <h1>{{ attendance.employee.user.first_name }} {{ attendance.employee.user.last_name }}</h1>
+            </div>
+            <span class="sky-date sky-mono">{{ attendance.date|date:"D, M j Y" }}</span>
+        </div>
+
+        <div class="sky-panel">
+            <div class="sky-panel-head">
+                <h6>Attendance Record</h6>
+                <span class="sky-pill {{ attendance.status|lower }}">{{ attendance.get_status_display }}</span>
+            </div>
+            <div class="sky-panel-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label sky-form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="sky-form-error">{{ field.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="sky-punch-btn in">Save Changes</button>
+                        <a href="{% url 'dashboard' %}" class="sky-cancel-link">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

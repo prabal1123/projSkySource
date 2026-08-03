@@ -1,0 +1,238 @@
+.sky-auth-wrap {
+    min-height: calc(100vh - 250px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    background: var(--bg);
+}
+
+.sky-auth-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--teal);
+    border-radius: 8px;
+    padding: 2.25rem 2rem;
+}
+
+.sky-auth-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.4rem;
+}
+
+.sky-auth-card h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.75rem;
+}
+
+.sky-auth-field {
+    margin-bottom: 1rem;
+}
+
+.sky-auth-field label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-bottom: 0.35rem;
+}
+
+.sky-auth-submit {
+    width: 100%;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: var(--teal);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.7rem;
+    margin-top: 0.5rem;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.sky-auth-submit:hover { opacity: 0.9; }
+
+.sky-auth-footer {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-top: 1.5rem;
+}
+
+.sky-auth-footer a {
+    color: var(--teal);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.sky-auth-footer a:hover { text-decoration: underline; }
+
+/* Django renders bare <input> with no class - style by context instead */
+.sky-auth-field input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    color: var(--ink);
+    background: #fff;
+}
+
+.sky-auth-field input:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px var(--teal-soft);
+}
+
+.sky-form-error {
+    font-size: 0.78rem;
+    color: var(--rose);
+    margin-top: 0.35rem;
+}
+
+.sky-auth-error-banner {
+    background: var(--rose-soft);
+    color: var(--rose);
+    border-radius: 6px;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
+}
+.sky-auth-wrap {
+    min-height: calc(100vh - 250px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    background: var(--bg);
+}
+
+.sky-auth-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--teal);
+    border-radius: 8px;
+    padding: 2.25rem 2rem;
+}
+
+.sky-auth-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.4rem;
+}
+
+.sky-auth-card h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.75rem;
+}
+
+.sky-auth-field {
+    margin-bottom: 1rem;
+}
+
+.sky-auth-field label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-bottom: 0.35rem;
+}
+
+.sky-auth-submit {
+    width: 100%;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: var(--teal);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.7rem;
+    margin-top: 0.5rem;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.sky-auth-submit:hover { opacity: 0.9; }
+
+.sky-auth-footer {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin-top: 1.5rem;
+}
+
+.sky-auth-footer a {
+    color: var(--teal);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.sky-auth-footer a:hover { text-decoration: underline; }
+
+/* Django renders bare <input> with no class - style by context instead */
+.sky-auth-field input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    color: var(--ink);
+    background: #fff;
+}
+
+.sky-auth-field input:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px var(--teal-soft);
+}
+
+.sky-form-error {
+    font-size: 0.78rem;
+    color: var(--rose);
+    margin-top: 0.35rem;
+}
+
+.sky-auth-error-banner {
+    background: var(--rose-soft);
+    color: var(--rose);
+    border-radius: 6px;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
+}
+
+.sky-auth-center { text-align: center; }
+
+.sky-auth-message {
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.sky-auth-link-btn {
+    display: block;
+    text-decoration: none;
+    box-sizing: border-box;
+}
