@@ -34,6 +34,7 @@ def profileDetail_view(request, uuid):
         "appEmp/profile.html",
         {
             "employee": employee,
+            "profile": employee, 
             "form": form,
         },
     )
