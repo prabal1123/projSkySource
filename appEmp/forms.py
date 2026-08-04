@@ -1,6 +1,6 @@
 from django import forms
 from .models import empProfile
-from .models import Attendance
+from .models import Attendance, Salary
 
 class EmployeeForm(forms.ModelForm):
     class Meta:
@@ -52,4 +52,21 @@ class AttendanceUpdateForm(forms.ModelForm):
             'check_out': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
 
+# ── Add to appEmp/forms.py ──────────────────────────────────────────────
 
+class SalaryForm(forms.ModelForm):
+    class Meta:
+        model = Salary
+        fields = ['basic_salary', 'hra', 'pf', 'effective_date']
+        widgets = {
+            'effective_date': forms.DateInput(attrs={'type': 'date'}),
+            'basic_salary': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
+            'hra': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
+            'pf': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
+        }
+
+    def clean_basic_salary(self):
+        val = self.cleaned_data['basic_salary']
+        if val <= 0:
+            raise forms.ValidationError("Basic salary must be greater than zero.")
+        return val

@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from datetime import time
 from django.utils import timezone
-
+from decimal import Decimal
 ROLE_CHOICES = (
     ('SUPER_ADMIN','Super Admin'),
     ('HR_ADMIN','HR Admin'),
@@ -82,3 +82,111 @@ class Attendance(models.Model):
 
     def __str__(self):
         return f"{self.employee} - {self.date} - {self.get_status_display()}"
+
+# ── Add to appEmp/models.py ──────────────────────────────────────────────
+# Requires these imports already at top of models.py (add if missing):
+#   import uuid
+#   from decimal import Decimal
+#   from django.utils import timezone
+#   from django.conf import settings  (or from django.contrib.auth.models import User,
+#                                       whichever your file already uses)
+
+class Salary(models.Model):
+    """
+    One row per salary revision. Only one row per employee has is_active=True
+    at any time — that's the 'current' salary. Keeping history instead of
+    overwriting means you can later show raise history / generate slips for
+    past months using the salary that was active then, if you want.
+    """
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    employee = models.ForeignKey(
+        empProfile,
+        on_delete=models.CASCADE,
+        related_name='salary_records',
+    )
+    basic_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    hra = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    pf = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # employee contribution — deducted, not added
+
+    effective_date = models.DateField(default=timezone.now)
+    is_active = models.BooleanField(default=True)
+
+    created_by = models.ForeignKey(
+        User,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='salaries_created',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-effective_date', '-created_at']
+
+    def __str__(self):
+        return f"{self.employee.user.get_full_name() or self.employee.user.username} — {self.effective_date}"
+
+    def save(self, *args, **kwargs):
+        # Enforce "only one active record per employee" at save time.
+        if self.is_active:
+            Salary.objects.filter(
+                employee=self.employee, is_active=True
+            ).exclude(pk=self.pk).update(is_active=False)
+        super().save(*args, **kwargs)
+
+    # ── Derived figures ────────────────────────────────────────────────
+    @property
+    def gross_monthly(self):
+        return self.basic_salary + self.hra
+
+    @property
+    def ctc_monthly(self):
+        """CTC = Basic + HRA only. PF is an employee deduction, NOT added to CTC."""
+        return self.basic_salary + self.hra
+
+    @property
+    def ctc_annual(self):
+        return self.ctc_monthly * 12
+
+    def calculate_annual_tax(self):
+        """
+        SIMPLIFIED illustrative slab calc (India, new-regime-style slabs) +
+        4% health & education cess, applied on annual gross (Basic + HRA).
+        This is NOT a substitute for a real payroll/tax engine — confirm
+        actual slabs and exemptions with your finance team before this
+        feeds real payslips.
+        """
+        annual_taxable = self.gross_monthly * 12
+        if annual_taxable < 0:
+            annual_taxable = Decimal('0')
+
+        slabs = [
+            (Decimal('300000'), Decimal('0.00')),
+            (Decimal('600000'), Decimal('0.05')),
+            (Decimal('900000'), Decimal('0.10')),
+            (Decimal('1200000'), Decimal('0.15')),
+            (Decimal('1500000'), Decimal('0.20')),
+            (Decimal('Infinity'), Decimal('0.30')),
+        ]
+
+        tax = Decimal('0')
+        lower = Decimal('0')
+        for upper, rate in slabs:
+            if annual_taxable > lower:
+                taxable_in_band = min(annual_taxable, upper) - lower
+                tax += taxable_in_band * rate
+                lower = upper
+            else:
+                break
+
+        tax += tax * Decimal('0.04')  # cess
+        return tax.quantize(Decimal('0.01'))
+
+    def calculate_monthly_tds(self):
+        return (self.calculate_annual_tax() / Decimal('12')).quantize(Decimal('0.01'))
+
+    @property
+    def net_monthly_pay(self):
+        """Net Pay = Gross (Basic + HRA) minus PF (employee contribution) minus TDS."""
+        return self.gross_monthly - self.pf - self.calculate_monthly_tds()
+    

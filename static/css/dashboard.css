@@ -332,3 +332,75 @@
     transition: opacity 0.15s ease;
 }
 .sky-header-btn:hover { opacity: 0.88; color: #fff; }
+
+/* ── Salary block — add to dashboard.css (near your other .sky-dashboard rules) ── */
+
+.sky-salary-card {
+  border: 1px solid rgba(15, 158, 150, 0.25);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sky-salary-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--ink-navy, #0F172A);
+  color: #fff;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+}
+
+.sky-salary-grid {
+  row-gap: 1rem;
+}
+
+.sky-salary-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.sky-salary-stat .sky-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.sky-salary-stat .sky-value {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink-navy, #0F172A);
+}
+
+.sky-salary-stat--accent .sky-value {
+  color: var(--teal, #0F9E96);
+}
+
+.mono {
+  font-family: "JetBrains Mono", monospace;
+}
+
+.btn-teal {
+  background: var(--teal, #0F9E96);
+  border-color: var(--teal, #0F9E96);
+  color: #fff;
+}
+
+.btn-teal:hover {
+  background: #0c8078;
+  border-color: #0c8078;
+  color: #fff;
+}
+
+.sky-note {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.sky-empty {
+  color: #94a3b8;
+  font-style: italic;
+}

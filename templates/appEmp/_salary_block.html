@@ -1,0 +1,69 @@
+{# appEmp/templates/appEmp/_salary_block.html #}
+
+
+<div class="card sky-salary-card mt-4">
+  <div class="card-header sky-salary-card__header">
+    <span>Salary</span>
+    {% if can_edit_salary %}
+      <button class="btn btn-sm btn-outline-light" type="button"
+              data-bs-toggle="collapse" data-bs-target="#salaryEditForm">
+        {% if salary %}Revise{% else %}Set Salary{% endif %}
+      </button>
+    {% endif %}
+  </div>
+
+  <div class="card-body">
+    {% if salary %}
+      <div class="row sky-salary-grid">
+        <div class="col-6 col-md-3 sky-salary-stat">
+          <span class="sky-label">Basic Salary</span>
+          <span class="sky-value mono">₹{{ salary.basic_salary|floatformat:2 }}</span>
+        </div>
+        <div class="col-6 col-md-3 sky-salary-stat">
+          <span class="sky-label">HRA</span>
+          <span class="sky-value mono">₹{{ salary.hra|floatformat:2 }}</span>
+        </div>
+        <div class="col-6 col-md-3 sky-salary-stat">
+          <span class="sky-label">PF</span>
+          <span class="sky-value mono">₹{{ salary.pf|floatformat:2 }}</span>
+        </div>
+        <div class="col-6 col-md-3 sky-salary-stat sky-salary-stat--accent">
+          <span class="sky-label">Monthly CTC</span>
+          <span class="sky-value mono">₹{{ salary.ctc_monthly|floatformat:2 }}</span>
+        </div>
+        <div class="col-6 col-md-3 sky-salary-stat">
+          <span class="sky-label">Est. Monthly TDS</span>
+          <span class="sky-value mono">₹{{ salary.calculate_monthly_tds|floatformat:2 }}</span>
+        </div>
+        <div class="col-6 col-md-3 sky-salary-stat sky-salary-stat--accent">
+          <span class="sky-label">Est. Net Pay</span>
+          <span class="sky-value mono">₹{{ salary.net_monthly_pay|floatformat:2 }}</span>
+        </div>
+      </div>
+
+      <p class="sky-note mt-3 mb-2">
+        Annual CTC: <span class="mono">₹{{ salary.ctc_annual|floatformat:2 }}</span>
+        &nbsp;·&nbsp; Effective from {{ salary.effective_date }}
+      </p>
+
+      <a class="btn btn-sm btn-teal"
+         href="{% if can_edit_salary %}{% url 'salarySlipAdmin' uuid=target_uuid year=current_year month=current_month %}{% else %}{% url 'salarySlipSelf' year=current_year month=current_month %}{% endif %}">
+        Download Salary Slip (PDF)
+      </a>
+    {% else %}
+      <p class="sky-empty mb-0">
+        No salary has been set up{% if can_edit_salary %} for this employee{% endif %} yet.
+      </p>
+    {% endif %}
+
+    {% if can_edit_salary %}
+      <div class="collapse {% if not salary %}show{% endif %} mt-3" id="salaryEditForm">
+        <form method="post" action="{% url 'salaryUpdate' uuid=target_uuid %}" class="sky-form">
+          {% csrf_token %}
+          {{ salary_form.as_p }}
+          <button type="submit" class="btn btn-teal btn-sm">Save Salary</button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+</div>

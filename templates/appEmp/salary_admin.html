@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="sky-dashboard">
+  <div class="sky-card">
+    <h1 class="sky-heading">Salary — {{ profile.user.get_full_name|default:profile.user.username }}</h1>
+
+    {% if salary %}
+      <div class="sky-salary-grid">
+        <div class="sky-salary-stat">
+          <span class="sky-label">Basic Salary</span>
+          <span class="sky-value mono">₹{{ salary.basic_salary|floatformat:2 }}</span>
+        </div>
+        <div class="sky-salary-stat">
+          <span class="sky-label">HRA</span>
+          <span class="sky-value mono">₹{{ salary.hra|floatformat:2 }}</span>
+        </div>
+        <div class="sky-salary-stat">
+          <span class="sky-label">PF</span>
+          <span class="sky-value mono">₹{{ salary.pf|floatformat:2 }}</span>
+        </div>
+        <div class="sky-salary-stat sky-salary-stat--accent">
+          <span class="sky-label">Monthly CTC</span>
+          <span class="sky-value mono">₹{{ salary.ctc_monthly|floatformat:2 }}</span>
+        </div>
+        <div class="sky-salary-stat">
+          <span class="sky-label">Estimated Monthly TDS</span>
+          <span class="sky-value mono">₹{{ salary.calculate_monthly_tds|floatformat:2 }}</span>
+        </div>
+        <div class="sky-salary-stat sky-salary-stat--accent">
+          <span class="sky-label">Estimated Net Pay</span>
+          <span class="sky-value mono">₹{{ salary.net_monthly_pay|floatformat:2 }}</span>
+        </div>
+      </div>
+
+      <p>
+        <a class="sky-btn sky-btn--teal"
+           href="{% url 'appEmp:salary_slip_admin' uuid=profile.uuid year=salary.effective_date.year month=salary.effective_date.month %}">
+          Download Salary Slip (PDF)
+        </a>
+      </p>
+    {% else %}
+      <p class="sky-empty">No salary has been set up for this employee yet.</p>
+    {% endif %}
+
+    <hr class="sky-divider">
+
+    <h2 class="sky-subheading">{% if salary %}Revise Salary{% else %}Set Salary{% endif %}</h2>
+    <p class="sky-note">Saving this creates a new active salary revision and supersedes the previous one.</p>
+
+    <form method="post" class="sky-form">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="sky-btn sky-btn--teal">Save</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
