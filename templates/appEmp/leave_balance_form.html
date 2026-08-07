@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if balance %}Edit Leave Balance{% else %}Assign Leave{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 800px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Leaves / Balance</span>
+
+                <h1>
+                    {% if balance %}
+                        Edit Leave Balance
+                    {% else %}
+                        Assign Leave Balance
+                    {% endif %}
+                </h1>
+            </div>
+        </div>
+
+        <div class="sky-panel">
+            <div class="sky-panel-head">
+                <h6>Balance Details</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                {% if form.non_field_errors %}
+                    <div class="sky-auth-error-banner">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row">
+
+                        {% for field in form %}
+                            <div class="{% if field.name == 'remarks' %}col-12{% else %}col-md-6{% endif %} mb-3">
+
+                                <label
+                                    class="sky-form-label"
+                                    for="{{ field.id_for_label }}"
+                                >
+                                    {{ field.label }}
+                                </label>
+
+                                {{ field }}
+
+                                {% if field.help_text %}
+                                    <div class="sky-help-text">
+                                        {{ field.help_text }}
+                                    </div>
+                                {% endif %}
+
+                                {% for error in field.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
+                    {% if balance %}
+                        <div class="mb-3">
+                            <span class="sky-help-text">
+                                Used: {{ balance.used }} ·
+                                Current Available: {{ balance.available_balance }}
+                            </span>
+                        </div>
+                    {% endif %}
+
+                    <button type="submit" class="sky-header-btn">
+                        Save Leave Balance
+                    </button>
+
+                    <a
+                        href="{% url 'leaveBalanceList' %}"
+                        class="sky-edit-link ms-3"
+                    >
+                        Back
+                    </a>
+
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

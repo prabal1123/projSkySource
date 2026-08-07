@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Raise Attendance Exception{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 700px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">
+                    Attendance / Regularisation
+                </span>
+
+                <h1>Raise Exception Request</h1>
+
+                <p class="sky-help-text">
+                    Submit a request to correct an absent attendance record.
+                </p>
+            </div>
+        </div>
+
+        <div class="sky-panel">
+            <div class="sky-panel-head">
+                <h6>Attendance Details</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                <div class="attendance-exception-summary">
+                    <div>
+                        <span>Employee</span>
+                        <strong>
+                            {{ employee.user.get_full_name|default:employee.user.username }}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Date</span>
+                        <strong>{{ attendance.date|date:"d M Y" }}</strong>
+                    </div>
+
+                    <div>
+                        <span>Current Status</span>
+                        <strong>{{ attendance.get_status_display }}</strong>
+                    </div>
+
+                    {% if employee.shift %}
+                        <div>
+                            <span>Assigned Shift</span>
+                            <strong>{{ employee.shift }}</strong>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="sky-form-error">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label
+                            class="sky-form-label"
+                            for="{{ form.reason.id_for_label }}"
+                        >
+                            {{ form.reason.label }}
+                        </label>
+
+                        {{ form.reason }}
+
+                        {% for error in form.reason.errors %}
+                            <div class="sky-form-error">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="attendance-exception-actions">
+                        <button type="submit" class="sky-header-btn">
+                            Submit Request
+                        </button>
+
+                        <a
+                            href="{% url 'attendanceCalendarSelf' %}?year={{ attendance.date.year }}&month={{ attendance.date.month }}"
+                            class="sky-edit-link"
+                        >
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

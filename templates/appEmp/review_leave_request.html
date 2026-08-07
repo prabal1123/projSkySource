@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Review Leave Request{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 780px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Leaves / Review</span>
+                <h1>Review Leave Request</h1>
+            </div>
+        </div>
+
+        <div class="sky-panel mb-4">
+            <div class="sky-panel-head">
+                <h6>Request Details</h6>
+            </div>
+
+            <div class="sky-panel-body">
+                <div class="attendance-exception-summary">
+
+                    <div>
+                        <span>Employee</span>
+                        <strong>
+                            {{ leave_request.employee.user.get_full_name|default:leave_request.employee.user.username }}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Leave Type</span>
+                        <strong>{{ leave_request.leave_type.name }}</strong>
+                    </div>
+
+                    <div>
+                        <span>Dates</span>
+                        <strong>
+                            {{ leave_request.start_date|date:"d M Y" }}
+                            –
+                            {{ leave_request.end_date|date:"d M Y" }}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Requested Days</span>
+                        <strong>{{ leave_request.number_of_days }}</strong>
+                    </div>
+
+                    <div>
+                        <span>Available Balance</span>
+                        <strong>
+                            {% if leave_balance %}
+                                {{ leave_balance.available_balance }}
+                            {% else %}
+                                Not assigned
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Status</span>
+                        <strong>{{ leave_request.get_status_display }}</strong>
+                    </div>
+
+                </div>
+
+                <div class="mb-4">
+                    <label class="sky-form-label">Employee Reason</label>
+                    <p>{{ leave_request.reason }}</p>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="sky-auth-error-banner">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="sky-form-label">
+                            Decision
+                        </label>
+
+                        {{ form.action }}
+
+                        {% for error in form.action.errors %}
+                            <div class="sky-form-error">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label
+                            class="sky-form-label"
+                            for="{{ form.manager_comment.id_for_label }}"
+                        >
+                            {{ form.manager_comment.label }}
+                        </label>
+
+                        {{ form.manager_comment }}
+
+                        {% for error in form.manager_comment.errors %}
+                            <div class="sky-form-error">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="attendance-exception-actions">
+                        <button type="submit" class="sky-header-btn">
+                            Submit Decision
+                        </button>
+
+                        <a
+                            href="{% url 'pendingLeaveRequests' %}"
+                            class="sky-edit-link"
+                        >
+                            Back
+                        </a>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

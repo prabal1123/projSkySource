@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Attendance Calendar{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 1050px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Attendance / Calendar</span>
+
+                <h1>
+                    {{ employee.user.get_full_name|default:employee.user.username }}
+                </h1>
+
+                <p class="sky-help-text">
+                    {{ month_name }} {{ year }}
+
+                    {% if employee.shift %}
+                        · Shift: {{ employee.shift }}
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="sky-calendar-message">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="sky-panel">
+            <div class="sky-panel-head attendance-calendar-header">
+
+                {% if is_admin_calendar %}
+                    <a
+                        class="sky-header-btn"
+                        href="{% url 'attendanceCalendarAdmin' employee.uuid %}?year={{ previous_year }}&month={{ previous_month }}"
+                    >
+                        ← Previous
+                    </a>
+                {% else %}
+                    <a
+                        class="sky-header-btn"
+                        href="{% url 'attendanceCalendarSelf' %}?year={{ previous_year }}&month={{ previous_month }}"
+                    >
+                        ← Previous
+                    </a>
+                {% endif %}
+
+                <h6>{{ month_name }} {{ year }}</h6>
+
+                {% if is_admin_calendar %}
+                    <a
+                        class="sky-header-btn"
+                        href="{% url 'attendanceCalendarAdmin' employee.uuid %}?year={{ next_year }}&month={{ next_month }}"
+                    >
+                        Next →
+                    </a>
+                {% else %}
+                    <a
+                        class="sky-header-btn"
+                        href="{% url 'attendanceCalendarSelf' %}?year={{ next_year }}&month={{ next_month }}"
+                    >
+                        Next →
+                    </a>
+                {% endif %}
+
+            </div>
+
+            <div class="sky-panel-body">
+
+                <div class="attendance-legend">
+                    <span class="legend-present">Present</span>
+                    <span class="legend-late">Late</span>
+                    <span class="legend-half-day">Half Day</span>
+                    <span class="legend-absent">Absent</span>
+                    <span class="legend-leave">Leave</span>
+                    <span class="legend-pending">Request Pending</span>
+                </div>
+
+                <div class="attendance-calendar">
+
+                    <div class="attendance-weekday">Mon</div>
+                    <div class="attendance-weekday">Tue</div>
+                    <div class="attendance-weekday">Wed</div>
+                    <div class="attendance-weekday">Thu</div>
+                    <div class="attendance-weekday">Fri</div>
+                    <div class="attendance-weekday">Sat</div>
+                    <div class="attendance-weekday">Sun</div>
+
+                    {% for week in weeks %}
+                        {% for day in week %}
+                            <div class="
+                                attendance-day
+                                {% if not day.is_current_month %}attendance-outside-month{% endif %}
+                                {% if day.is_today %}attendance-today{% endif %}
+                                {{ day.status_class }}
+                            ">
+
+                                <div class="attendance-day-number">
+                                    {{ day.day_number }}
+                                </div>
+
+                                {% if day.is_current_month %}
+                                    {% if day.attendance %}
+
+                                        <div class="attendance-day-status">
+                                            {{ day.attendance.get_status_display }}
+                                        </div>
+
+                                        {% if day.attendance.check_in %}
+                                            <div class="attendance-day-time">
+                                                In: {{ day.attendance.check_in|date:"h:i A" }}
+                                            </div>
+                                        {% endif %}
+
+                                        {% if day.attendance.check_out %}
+                                            <div class="attendance-day-time">
+                                                Out: {{ day.attendance.check_out|date:"h:i A" }}
+                                            </div>
+                                        {% endif %}
+
+                                        {% if day.pending_exception %}
+                                            <div class="attendance-request-pending">
+                                                Request Pending
+                                            </div>
+
+                                        {% elif not is_admin_calendar and day.attendance.status == "ABSENT" %}
+                                            <a
+                                                href="{% url 'raiseAttendanceException' day.attendance.uuid %}"
+                                                class="attendance-exception-link"
+                                            >
+                                                Raise Exception
+                                            </a>
+                                        {% endif %}
+
+                                    {% else %}
+                                        <div class="attendance-day-status">
+                                            Not Marked
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Pending Leave Requests{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Leaves / Approvals</span>
+                <h1>Pending Leave Requests</h1>
+            </div>
+        </div>
+
+        <div class="sky-panel">
+            <div class="sky-panel-head">
+                <h6>Requests Awaiting Review</h6>
+
+                <span class="sky-count">
+                    {{ leave_requests|length }} request(s)
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="sky-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Leave Type</th>
+                            <th>Dates</th>
+                            <th>Days</th>
+                            <th>Reason</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for leave in leave_requests %}
+                            <tr>
+                                <td>
+                                    {{ leave.employee.user.get_full_name|default:leave.employee.user.username }}
+                                </td>
+
+                                <td>
+                                    {{ leave.leave_type.name }}
+                                </td>
+
+                                <td class="sky-time">
+                                    {{ leave.start_date|date:"d M Y" }}
+                                    –
+                                    {{ leave.end_date|date:"d M Y" }}
+                                </td>
+
+                                <td>
+                                    {{ leave.number_of_days }}
+                                </td>
+
+                                <td>
+                                    {{ leave.reason|truncatechars:55 }}
+                                </td>
+
+                                <td class="text-end">
+                                    <a
+                                        href="{% url 'reviewLeaveRequest' leave.uuid %}"
+                                        class="sky-edit-link"
+                                    >
+                                        Review
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="sky-empty">
+                                    No pending leave requests.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

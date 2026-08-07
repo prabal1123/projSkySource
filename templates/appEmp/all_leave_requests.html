@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}All Leave Requests{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">
+                    Leaves / Administration
+                </span>
+
+                <h1>All Leave Requests</h1>
+
+                <p class="sky-help-text">
+                    View and filter employee leave requests.
+                </p>
+            </div>
+
+            <a
+                href="{% url 'pendingLeaveRequests' %}"
+                class="sky-header-btn"
+            >
+                Pending Requests
+            </a>
+        </div>
+
+        <!-- Filters -->
+        <div class="sky-panel mb-4">
+
+            <div class="sky-panel-head">
+                <h6>Filters</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                <form method="get">
+
+                    <div class="row">
+
+                        <!-- Employee -->
+                        <div class="col-md-3 mb-3">
+
+                            <label class="sky-form-label">
+                                Employee
+                            </label>
+
+                            <select
+                                name="employee"
+                                class="form-control"
+                            >
+                                <option value="">
+                                    All Employees
+                                </option>
+
+                                {% for employee in employees %}
+                                    <option
+                                        value="{{ employee.id }}"
+                                        {% if selected_employee == employee.id|stringformat:"s" %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        {{ employee.user.get_full_name|default:employee.user.username }}
+                                    </option>
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                        <!-- Leave Type -->
+                        <div class="col-md-3 mb-3">
+
+                            <label class="sky-form-label">
+                                Leave Type
+                            </label>
+
+                            <select
+                                name="leave_type"
+                                class="form-control"
+                            >
+                                <option value="">
+                                    All Leave Types
+                                </option>
+
+                                {% for leave_type in leave_types %}
+                                    <option
+                                        value="{{ leave_type.id }}"
+                                        {% if selected_leave_type == leave_type.id|stringformat:"s" %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        {{ leave_type.name }}
+                                    </option>
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-md-3 mb-3">
+
+                            <label class="sky-form-label">
+                                Status
+                            </label>
+
+                            <select
+                                name="status"
+                                class="form-control"
+                            >
+                                <option value="">
+                                    All Statuses
+                                </option>
+
+                                <option
+                                    value="PENDING"
+                                    {% if selected_status == "PENDING" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Pending
+                                </option>
+
+                                <option
+                                    value="APPROVED"
+                                    {% if selected_status == "APPROVED" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Approved
+                                </option>
+
+                                <option
+                                    value="REJECTED"
+                                    {% if selected_status == "REJECTED" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Rejected
+                                </option>
+
+                                <option
+                                    value="CANCELLED"
+                                    {% if selected_status == "CANCELLED" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Cancelled
+                                </option>
+                            </select>
+
+                        </div>
+
+                        <!-- Year -->
+                        <div class="col-md-3 mb-3">
+
+                            <label class="sky-form-label">
+                                Year
+                            </label>
+
+                            <select
+                                name="year"
+                                class="form-control"
+                            >
+                                <option value="">
+                                    All Years
+                                </option>
+
+                                {% for item_year in years %}
+                                    <option
+                                        value="{{ item_year }}"
+                                        {% if selected_year == item_year|stringformat:"s" %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        {{ item_year }}
+                                    </option>
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                    <div class="d-flex gap-2">
+
+                        <button
+                            type="submit"
+                            class="sky-header-btn"
+                        >
+                            Apply Filters
+                        </button>
+
+                        <a
+                            href="{% url 'allLeaveRequests' %}"
+                            class="sky-edit-link"
+                            style="
+                                display:flex;
+                                align-items:center;
+                            "
+                        >
+                            Clear Filters
+                        </a>
+
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+
+        <!-- Leave Requests Table -->
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+
+                <h6>Leave Requests</h6>
+
+                <span class="sky-count">
+                    {{ leave_requests|length }} record(s)
+                </span>
+
+            </div>
+
+            <div class="table-responsive">
+
+                <table class="sky-table">
+
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Leave Type</th>
+                            <th>Dates</th>
+                            <th>Days</th>
+                            <th>Status</th>
+                            <th>Reviewed By</th>
+                            <th class="text-end">
+                                Action
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for leave in leave_requests %}
+
+                            <tr>
+
+                                <td>
+                                    {{ leave.employee.user.get_full_name|default:leave.employee.user.username }}
+                                </td>
+
+                                <td>
+                                    {{ leave.leave_type.name }}
+                                </td>
+
+                                <td class="sky-time">
+
+                                    {{ leave.start_date|date:"d M Y" }}
+
+                                    {% if leave.start_date != leave.end_date %}
+                                        –
+                                        {{ leave.end_date|date:"d M Y" }}
+                                    {% endif %}
+
+                                </td>
+
+                                <td>
+                                    {{ leave.number_of_days }}
+                                </td>
+
+                                <td>
+                                    <span class="
+                                        leave-status
+                                        leave-status-{{ leave.status|lower }}
+                                    ">
+                                        {{ leave.get_status_display }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {% if leave.reviewed_by %}
+                                        {{ leave.reviewed_by.get_full_name|default:leave.reviewed_by.username }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-end">
+
+                                    {% if leave.status == "PENDING" %}
+
+                                        <a
+                                            href="{% url 'reviewLeaveRequest' leave.uuid %}"
+                                            class="sky-edit-link"
+                                        >
+                                            Review
+                                        </a>
+
+                                    {% else %}
+
+                                        <span class="sky-time">
+                                            Reviewed
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+                                <td
+                                    colspan="7"
+                                    class="sky-empty"
+                                >
+                                    No leave requests found.
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

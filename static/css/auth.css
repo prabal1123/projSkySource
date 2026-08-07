@@ -236,3 +236,53 @@
     text-decoration: none;
     box-sizing: border-box;
 }
+
+.sky-password-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.sky-password-wrap input {
+    width: 100%;
+    padding-right: 64px; /* room for both icons */
+}
+
+.sky-pw-toggle,
+.sky-pw-copy {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    opacity: 0.6;
+}
+
+.sky-pw-toggle:hover,
+.sky-pw-copy:hover {
+    opacity: 1;
+}
+
+.sky-pw-toggle {
+    right: 36px;
+}
+
+.sky-pw-copy {
+    right: 8px;
+}
+
+/* Simple icon placeholders using characters — swap for an icon font/SVG if you prefer */
+.sky-eye-icon::before {
+    content: "👁";
+}
+.sky-pw-toggle.is-visible .sky-eye-icon::before {
+    content: "🙈";
+}
+.sky-copy-icon::before {
+    content: "📋";
+}
+.sky-pw-copy.is-copied .sky-copy-icon::before {
+    content: "✅";
+}

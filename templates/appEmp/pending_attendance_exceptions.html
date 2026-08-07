@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Pending Attendance Exceptions{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Attendance / Review</span>
+                <h1>Pending Attendance Exceptions</h1>
+            </div>
+
+            <a href="{% url 'dashboard' %}" class="sky-edit-link">
+                Back to Dashboard
+            </a>
+        </div>
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+                <h6>Requests Awaiting Review</h6>
+
+                <span class="sky-count">
+                    {{ exception_requests|length }} request(s)
+                </span>
+            </div>
+
+            <div class="table-responsive">
+
+                <table class="sky-table">
+
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Date</th>
+                            <th>Current Status</th>
+                            <th>Reason</th>
+                            <th>Raised</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for exception in exception_requests %}
+
+                            <tr>
+
+                                <td>
+                                    {{ exception.attendance.employee.user.get_full_name|default:exception.attendance.employee.user.username }}
+                                </td>
+
+                                <td class="sky-time">
+                                    {{ exception.attendance.date|date:"d M Y" }}
+                                </td>
+
+                                <td>
+                                    <span class="sky-pill {{ exception.attendance.status|lower }}">
+                                        {{ exception.attendance.get_status_display }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {{ exception.reason|truncatechars:60 }}
+                                </td>
+
+                                <td class="sky-time">
+                                    {{ exception.created_at|date:"d M Y H:i" }}
+                                </td>
+
+                                <td class="text-end">
+                                    <a
+                                        href="{% url 'reviewAttendanceException' exception.uuid %}"
+                                        class="sky-edit-link"
+                                    >
+                                        Review
+                                    </a>
+                                </td>
+
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+                                <td colspan="6" class="sky-empty">
+                                    No pending attendance exceptions.
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Leave Requests{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Leaves / History</span>
+                <h1>My Leave Requests</h1>
+            </div>
+
+            <a href="{% url 'applyLeave' %}" class="sky-header-btn">
+                + Apply Leave
+            </a>
+        </div>
+
+        <div class="sky-panel mb-4">
+            <div class="sky-panel-head">
+                <h6>{{ current_year }} Balance</h6>
+            </div>
+
+            <div class="sky-panel-body">
+                <div class="row">
+                    {% for balance in balances %}
+                        <div class="col-md-3 mb-3">
+                            <div class="leave-balance-card">
+                                <span>{{ balance.leave_type.name }}</span>
+                                <strong>{{ balance.available_balance }}</strong>
+                                <small>
+                                    Allotted {{ balance.total_allotted }}
+                                    · Used {{ balance.used }}
+                                </small>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="sky-empty">
+                            No leave balance assigned.
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="sky-panel">
+            <div class="sky-panel-head">
+                <h6>Request History</h6>
+                <span class="sky-count">
+                    {{ leave_requests|length }} request(s)
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="sky-table">
+                    <thead>
+                        <tr>
+                            <th>Leave Type</th>
+                            <th>Dates</th>
+                            <th>Days</th>
+                            <th>Status</th>
+                            <th>Manager Comment</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for leave in leave_requests %}
+                            <tr>
+                                <td>
+                                    {{ leave.leave_type.name }}
+                                </td>
+
+                                <td class="sky-time">
+                                    {{ leave.start_date|date:"d M Y" }}
+                                    –
+                                    {{ leave.end_date|date:"d M Y" }}
+                                </td>
+
+                                <td>
+                                    {{ leave.number_of_days }}
+                                </td>
+
+                                <td>
+                                    <span class="leave-status leave-status-{{ leave.status|lower }}">
+                                        {{ leave.get_status_display }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {{ leave.manager_comment|default:"—" }}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="sky-empty">
+                                    No leave requests submitted yet.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

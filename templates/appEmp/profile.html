@@ -9,52 +9,348 @@
 
 {% block content %}
 <div class="sky-dashboard">
-    <div class="container" style="max-width: 760px;">
+    <div class="container" style="max-width: 900px;">
 
         <div class="sky-header">
             <div>
                 <span class="sky-eyebrow">Employee / Profile</span>
-                <h1>{{ profile.user.first_name }} {{ profile.user.last_name }}</h1>
+                <h1>
+                    {{ profile.user.first_name }}
+                    {{ profile.user.last_name }}
+                </h1>
+
+                {% if profile.user.username %}
+                    <p class="sky-help-text">
+                        Username: {{ profile.user.username }}
+                    </p>
+                {% endif %}
             </div>
         </div>
 
+        {% if messages %}
+            {% for message in messages %}
+                <div class="sky-auth-error-banner">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
         <div class="sky-panel">
             <div class="sky-panel-head">
-                <h6>Profile Details</h6>
+                <h6>Employment Details</h6>
             </div>
+
             <div class="sky-panel-body">
 
                 {% if form.non_field_errors %}
-                <div class="sky-auth-error-banner">{{ form.non_field_errors }}</div>
+                    <div class="sky-auth-error-banner">
+                        {{ form.non_field_errors }}
+                    </div>
                 {% endif %}
 
                 <form method="post">
                     {% csrf_token %}
+
                     <div class="row">
-                        {% for field in form %}
-                            <div class="{% if field.field.widget.input_type == 'checkbox' %}col-12{% else %}col-md-6{% endif %} mb-3">
 
-                                {% if field.field.widget.input_type == "checkbox" %}
-                                    <label class="sky-check">
-                                        {{ field }}
-                                        <span>{{ field.label }}</span>
-                                    </label>
-                                {% else %}
-                                    <label class="sky-form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                    {{ field }}
-                                    {% if field.help_text %}
-                                        <div class="sky-help-text">{{ field.help_text }}</div>
-                                    {% endif %}
-                                {% endif %}
+                        {% if form.role %}
+                            <div class="col-md-6 mb-3">
+                                <label
+                                    class="sky-form-label"
+                                    for="{{ form.role.id_for_label }}"
+                                >
+                                    {{ form.role.label }}
+                                </label>
 
-                                {% for error in field.errors %}
-                                    <div class="sky-form-error">{{ error }}</div>
+                                {{ form.role }}
+
+                                {% for error in form.role.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
                                 {% endfor %}
                             </div>
-                        {% endfor %}
+                        {% endif %}
+
+                        {% if form.designation %}
+                            <div class="col-md-6 mb-3">
+                                <label
+                                    class="sky-form-label"
+                                    for="{{ form.designation.id_for_label }}"
+                                >
+                                    {{ form.designation.label }}
+                                </label>
+
+                                {{ form.designation }}
+
+                                {% for error in form.designation.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% if form.manager %}
+                            <div class="col-md-6 mb-3">
+                                <label
+                                    class="sky-form-label"
+                                    for="{{ form.manager.id_for_label }}"
+                                >
+                                    Reporting Manager
+                                </label>
+
+                                {{ form.manager }}
+
+                                {% if form.manager.help_text %}
+                                    <div class="sky-help-text">
+                                        {{ form.manager.help_text }}
+                                    </div>
+                                {% endif %}
+
+                                {% for error in form.manager.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% if form.shift %}
+                            <div class="col-md-6 mb-3">
+                                <label
+                                    class="sky-form-label"
+                                    for="{{ form.shift.id_for_label }}"
+                                >
+                                    Assigned Shift
+                                </label>
+
+                                {{ form.shift }}
+
+                                {% for error in form.shift.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% if form.position %}
+                            <div class="col-md-6 mb-3">
+                                <label
+                                    class="sky-form-label"
+                                    for="{{ form.position.id_for_label }}"
+                                >
+                                    {{ form.position.label }}
+                                </label>
+
+                                {{ form.position }}
+
+                                {% for error in form.position.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% if form.date_hired %}
+                            <div class="col-md-6 mb-3">
+                                <label
+                                    class="sky-form-label"
+                                    for="{{ form.date_hired.id_for_label }}"
+                                >
+                                    {{ form.date_hired.label }}
+                                </label>
+
+                                {{ form.date_hired }}
+
+                                {% for error in form.date_hired.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
                     </div>
 
-                    <button type="submit" class="sky-header-btn">Save Changes</button>
+                    <hr>
+
+                    <div class="sky-panel-head px-0">
+                        <h6>Personal and Contact Details</h6>
+                    </div>
+
+                    <div class="row">
+                        {% if form.phone_number %}
+                            <div class="col-md-6 mb-3">
+                                <label
+                                    class="sky-form-label"
+                                    for="{{ form.phone_number.id_for_label }}"
+                                >
+                                    {{ form.phone_number.label }}
+                                </label>
+
+                                {{ form.phone_number }}
+
+                                {% for error in form.phone_number.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% if form.state %}
+                            <div class="col-md-6 mb-3">
+                                <label
+                                    class="sky-form-label"
+                                    for="{{ form.state.id_for_label }}"
+                                >
+                                    {{ form.state.label }}
+                                </label>
+
+                                {{ form.state }}
+
+                                {% for error in form.state.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% if form.zip_code %}
+                            <div class="col-md-6 mb-3">
+                                <label
+                                    class="sky-form-label"
+                                    for="{{ form.zip_code.id_for_label }}"
+                                >
+                                    {{ form.zip_code.label }}
+                                </label>
+
+                                {{ form.zip_code }}
+
+                                {% for error in form.zip_code.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% if form.address %}
+                            <div class="col-12 mb-3">
+                                <label
+                                    class="sky-form-label"
+                                    for="{{ form.address.id_for_label }}"
+                                >
+                                    {{ form.address.label }}
+                                </label>
+
+                                {{ form.address }}
+
+                                {% for error in form.address.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <hr>
+
+                    <div class="sky-panel-head px-0">
+                        <h6>Verification and Status</h6>
+                    </div>
+
+                    <div class="row">
+
+                        {% if form.is_default_manager %}
+                            <div class="col-md-6 mb-3">
+                                <label class="sky-check">
+                                    {{ form.is_default_manager }}
+                                    <span>
+                                        Default manager for new employees
+                                    </span>
+                                </label>
+
+                                {% if form.is_default_manager.help_text %}
+                                    <div class="sky-help-text">
+                                        {{ form.is_default_manager.help_text }}
+                                    </div>
+                                {% endif %}
+
+                                {% for error in form.is_default_manager.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% if form.is_active %}
+                            <div class="col-md-6 mb-3">
+                                <label class="sky-check">
+                                    {{ form.is_active }}
+                                    <span>{{ form.is_active.label }}</span>
+                                </label>
+                            </div>
+                        {% endif %}
+
+                        {% if form.is_email_verified %}
+                            <div class="col-md-6 mb-3">
+                                <label class="sky-check">
+                                    {{ form.is_email_verified }}
+                                    <span>{{ form.is_email_verified.label }}</span>
+                                </label>
+                            </div>
+                        {% endif %}
+
+                        {% if form.is_phone_verified %}
+                            <div class="col-md-6 mb-3">
+                                <label class="sky-check">
+                                    {{ form.is_phone_verified }}
+                                    <span>{{ form.is_phone_verified.label }}</span>
+                                </label>
+                            </div>
+                        {% endif %}
+
+                        {% if form.is_address_verified %}
+                            <div class="col-md-6 mb-3">
+                                <label class="sky-check">
+                                    {{ form.is_address_verified }}
+                                    <span>{{ form.is_address_verified.label }}</span>
+                                </label>
+                            </div>
+                        {% endif %}
+
+                        {% if form.is_aadhar_verified %}
+                            <div class="col-md-6 mb-3">
+                                <label class="sky-check">
+                                    {{ form.is_aadhar_verified }}
+                                    <span>{{ form.is_aadhar_verified.label }}</span>
+                                </label>
+                            </div>
+                        {% endif %}
+
+                        {% if form.is_background_check_completed %}
+                            <div class="col-md-6 mb-3">
+                                <label class="sky-check">
+                                    {{ form.is_background_check_completed }}
+                                    <span>
+                                        {{ form.is_background_check_completed.label }}
+                                    </span>
+                                </label>
+                            </div>
+                        {% endif %}
+
+                    </div>
+
+                    <button type="submit" class="sky-header-btn">
+                        Save Changes
+                    </button>
                 </form>
             </div>
         </div>

@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Review Attendance Exception{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 900px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">
+                    Attendance / Exception Review
+                </span>
+
+                <h1>Review Exception</h1>
+            </div>
+
+            <a
+                href="{% url 'pendingAttendanceExceptions' %}"
+                class="sky-edit-link"
+            >
+                Back
+            </a>
+        </div>
+
+
+        <div class="row g-3">
+
+            <!-- Request Details -->
+            <div class="col-lg-7">
+
+                <div class="sky-panel">
+
+                    <div class="sky-panel-head">
+                        <h6>Request Details</h6>
+                    </div>
+
+                    <div class="sky-panel-body">
+
+                        <div class="mb-3">
+                            <div class="sky-help-text">
+                                Employee
+                            </div>
+
+                            <strong>
+                                {{ exception_request.attendance.employee.user.get_full_name|default:exception_request.attendance.employee.user.username }}
+                            </strong>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <div class="sky-help-text">
+                                Attendance Date
+                            </div>
+
+                            <strong>
+                                {{ attendance.date|date:"d M Y" }}
+                            </strong>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <div class="sky-help-text">
+                                Current Attendance Status
+                            </div>
+
+                            <span class="sky-pill {{ attendance.status|lower }}">
+                                {{ attendance.get_status_display }}
+                            </span>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <div class="sky-help-text">
+                                Check In
+                            </div>
+
+                            <strong class="sky-time">
+                                {{ attendance.check_in|time:"H:i"|default:"—" }}
+                            </strong>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <div class="sky-help-text">
+                                Check Out
+                            </div>
+
+                            <strong class="sky-time">
+                                {{ attendance.check_out|time:"H:i"|default:"—" }}
+                            </strong>
+                        </div>
+
+
+                        <div>
+                            <div class="sky-help-text">
+                                Employee Reason
+                            </div>
+
+                            <p>
+                                {{ exception_request.reason }}
+                            </p>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Review -->
+            <div class="col-lg-5">
+
+                <div class="sky-panel">
+
+                    <div class="sky-panel-head">
+                        <h6>Manager Decision</h6>
+                    </div>
+
+                    <div class="sky-panel-body">
+
+                        <form method="post">
+                            {% csrf_token %}
+
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            {% endif %}
+
+
+                            <div class="mb-4">
+
+                                <label class="sky-form-label">
+                                    Decision
+                                </label>
+
+                                {{ form.action }}
+
+                                {% for error in form.action.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="mb-4">
+
+                                <label
+                                    class="sky-form-label"
+                                    for="{{ form.manager_comment.id_for_label }}"
+                                >
+                                    Manager Comment
+                                </label>
+
+                                {{ form.manager_comment }}
+
+                                <div class="sky-help-text mt-1">
+                                    Required when rejecting.
+                                </div>
+
+                                {% for error in form.manager_comment.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="alert alert-light border">
+                                <strong>If approved:</strong>
+                                attendance for this date will be changed
+                                from Absent to Present.
+                            </div>
+
+
+                            <button
+                                type="submit"
+                                class="sky-header-btn"
+                            >
+                                Submit Decision
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

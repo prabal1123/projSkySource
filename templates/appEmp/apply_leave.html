@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Apply Leave{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 850px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Leaves / Application</span>
+                <h1>Apply for Leave</h1>
+                <p class="sky-help-text">
+                    Submit a leave request to your reporting manager.
+                </p>
+            </div>
+
+            <a href="{% url 'myLeaveRequests' %}" class="sky-header-btn">
+                My Requests
+            </a>
+        </div>
+
+        <div class="sky-panel mb-4">
+            <div class="sky-panel-head">
+                <h6>{{ current_year }} Leave Balance</h6>
+            </div>
+
+            <div class="sky-panel-body">
+                <div class="row">
+                    {% for balance in balances %}
+                        <div class="col-md-4 mb-3">
+                            <div class="leave-balance-card">
+                                <span>{{ balance.leave_type.name }}</span>
+                                <strong>{{ balance.available_balance }}</strong>
+                                <small>days available</small>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="sky-empty">
+                            No leave balance has been assigned for {{ current_year }}.
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="sky-panel">
+            <div class="sky-panel-head">
+                <h6>Leave Details</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                {% if form.non_field_errors %}
+                    <div class="sky-auth-error-banner">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        {% for field in form %}
+                            <div class="{% if field.name == 'reason' %}col-12{% else %}col-md-6{% endif %} mb-3">
+
+                                <label
+                                    class="sky-form-label"
+                                    for="{{ field.id_for_label }}"
+                                >
+                                    {{ field.label }}
+                                </label>
+
+                                {{ field }}
+
+                                {% if field.help_text %}
+                                    <div class="sky-help-text">
+                                        {{ field.help_text }}
+                                    </div>
+                                {% endif %}
+
+                                {% for error in field.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit" class="sky-header-btn">
+                        Submit Leave Request
+                    </button>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

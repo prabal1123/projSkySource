@@ -16,7 +16,17 @@
                 <span class="sky-eyebrow">Organization</span>
                 <h1>Employees</h1>
             </div>
-            <a href="{% url 'register' %}" class="sky-punch-btn in" style="text-decoration:none; display:inline-block; padding: 0.55rem 1.4rem; font-size: 0.9rem;">
+
+            <a
+                href="{% url 'register' %}"
+                class="sky-punch-btn in"
+                style="
+                    text-decoration: none;
+                    display: inline-block;
+                    padding: 0.55rem 1.4rem;
+                    font-size: 0.9rem;
+                "
+            >
                 + Add Employee
             </a>
         </div>
@@ -24,8 +34,11 @@
         <div class="sky-panel">
             <div class="sky-panel-head">
                 <h6>All Employees</h6>
-                <span class="sky-count">{{ objects|length }} record(s)</span>
+                <span class="sky-count">
+                    {{ objects|length }} record(s)
+                </span>
             </div>
+
             <div class="table-responsive">
                 <table class="sky-table">
                     <thead>
@@ -36,18 +49,56 @@
                             <th class="text-end">Action</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         {% for obj in objects %}
-                        <tr>
-                            <td class="sky-time">{{ obj.id }}</td>
-                            <td>{{ obj.user__last_name }}, {{ obj.user__first_name }}</td>
-                            <td class="sky-time">{{ obj.phone_number|default:"—" }}</td>
-                            <td class="text-end">
-                                <a href="{% url 'editProfile' obj.uuid %}" class="sky-edit-link">Edit</a>
-                            </td>
-                        </tr>
+                            <tr>
+                                <td class="sky-time">
+                                    {{ obj.id }}
+                                </td>
+
+                                <td>
+                                    {% if obj.user__first_name or obj.user__last_name %}
+                                        {{ obj.user__last_name }},
+                                        {{ obj.user__first_name }}
+                                    {% else %}
+                                        Employee #{{ obj.id }}
+                                    {% endif %}
+                                </td>
+
+                                <td class="sky-time">
+                                    {{ obj.phone_number|default:"—" }}
+                                </td>
+
+                                <td class="text-end">
+                                    <div class="sky-employee-actions">
+                                        <a
+                                            href="{% url 'editProfile' obj.uuid %}"
+                                            class="sky-edit-link"
+                                        >
+                                            Edit
+                                        </a>
+
+                                        <span class="sky-action-divider">
+                                            |
+                                        </span>
+
+                                        <a
+                                            href="{% url 'attendanceCalendarAdmin' obj.uuid %}"
+                                            class="sky-edit-link"
+                                        >
+                                            Calendar
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+
                         {% empty %}
-                        <tr><td colspan="4" class="sky-empty">No employees found.</td></tr>
+                            <tr>
+                                <td colspan="4" class="sky-empty">
+                                    No employees found.
+                                </td>
+                            </tr>
                         {% endfor %}
                     </tbody>
                 </table>
