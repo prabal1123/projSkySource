@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Ready for Finalization{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div class="container" style="max-width: 1250px;">
+
+        <div class="sky-header">
+
+            <div>
+                <span class="sky-eyebrow">
+                    HR / Employee Exit
+                </span>
+
+                <h1>Ready for Finalization</h1>
+
+                <p class="sky-help-text">
+                    Employees whose Manager and Finance clearances
+                    have been completed.
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+                <h6>Exit Finalization Queue</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                {% if exit_requests %}
+
+                    <div class="table-responsive">
+
+                        <table class="table align-middle">
+
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Exit Type</th>
+                                    <th>Last Working Date</th>
+                                    <th>Manager NOC</th>
+                                    <th>Finance NOC</th>
+                                    <th>Exit Status</th>
+                                    <th>Finalization</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {% for exit_request in exit_requests %}
+
+                                    <tr>
+
+                                        <!-- Employee -->
+                                        <td>
+
+                                            <strong>
+                                                {{ exit_request.employee.user.get_full_name|default:exit_request.employee.user.username }}
+                                            </strong>
+
+                                            <div class="sky-help-text">
+                                                {{ exit_request.employee.user.username }}
+                                            </div>
+
+                                        </td>
+
+
+                                        <!-- Exit Type -->
+                                        <td>
+
+                                            {{ exit_request.get_exit_type_display }}
+
+                                        </td>
+
+
+                                        <!-- Last Working Date -->
+                                        <td>
+
+                                            {% if exit_request.final_last_working_date %}
+
+                                                <strong>
+                                                    {{ exit_request.final_last_working_date|date:"d M Y" }}
+                                                </strong>
+
+                                            {% else %}
+
+                                                —
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <!-- Manager NOC -->
+                                        <td>
+
+                                            {% if exit_request.clearance_request %}
+
+                                                {% for approval in exit_request.clearance_request.approvals.all %}
+
+                                                    {% if approval.approval_type == "MANAGER_NOC" %}
+
+                                                        <strong>
+                                                            {{ approval.get_status_display }}
+                                                        </strong>
+
+                                                        {% if approval.remarks %}
+
+                                                            <div class="sky-help-text">
+                                                                {{ approval.remarks }}
+                                                            </div>
+
+                                                        {% endif %}
+
+                                                    {% endif %}
+
+                                                {% endfor %}
+
+                                            {% else %}
+
+                                                —
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <!-- Finance NOC -->
+                                        <td>
+
+                                            {% if exit_request.clearance_request %}
+
+                                                {% for approval in exit_request.clearance_request.approvals.all %}
+
+                                                    {% if approval.approval_type == "FINANCE_NOC" %}
+
+                                                        <strong>
+                                                            {{ approval.get_status_display }}
+                                                        </strong>
+
+                                                        {% if approval.remarks %}
+
+                                                            <div class="sky-help-text">
+                                                                {{ approval.remarks }}
+                                                            </div>
+
+                                                        {% endif %}
+
+                                                    {% endif %}
+
+                                                {% endfor %}
+
+                                            {% else %}
+
+                                                —
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <!-- Exit Status -->
+                                        <td>
+
+                                            <strong>
+                                                {{ exit_request.get_status_display }}
+                                            </strong>
+
+                                        </td>
+
+
+                                        <!-- Finalization -->
+                                        <td>
+
+                                            {% if exit_request.final_last_working_date %}
+
+                                                {% if exit_request.final_last_working_date <= today %}
+
+                                                    <form
+                                                        method="post"
+                                                        action="{% url 'finalizeEmployeeExit' exit_request.uuid %}"
+                                                        onsubmit="return confirm('Are you sure you want to finalize this employee exit? The employee account will be deactivated.');"
+                                                    >
+
+                                                        {% csrf_token %}
+
+                                                        <button
+                                                            type="submit"
+                                                            class="sky-header-btn"
+                                                        >
+                                                            Finalize Exit
+                                                        </button>
+
+                                                    </form>
+
+                                                {% else %}
+
+                                                    <span class="text-muted">
+                                                        Available on
+                                                        {{ exit_request.final_last_working_date|date:"d M Y" }}
+                                                    </span>
+
+                                                {% endif %}
+
+                                            {% else %}
+
+                                                <span class="text-danger">
+                                                    Last Working Date Missing
+                                                </span>
+
+                                            {% endif %}
+
+                                        </td>
+
+                                    </tr>
+
+
+                                    <!-- Additional Details -->
+                                    <tr>
+
+                                        <td colspan="7">
+
+                                            <div class="sky-help-text">
+
+                                                <strong>Reason:</strong>
+                                                {{ exit_request.reason }}
+
+                                                {% if exit_request.hr_remarks %}
+
+                                                    <br>
+
+                                                    <strong>
+                                                        HR Remarks:
+                                                    </strong>
+
+                                                    {{ exit_request.hr_remarks }}
+
+                                                {% endif %}
+
+
+                                                {% if exit_request.hr_reviewed_by %}
+
+                                                    <br>
+
+                                                    <strong>
+                                                        HR Reviewed By:
+                                                    </strong>
+
+                                                    {{ exit_request.hr_reviewed_by.get_full_name|default:exit_request.hr_reviewed_by.username }}
+
+                                                {% endif %}
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                {% else %}
+
+                    <div class="sky-empty">
+
+                        There are no employee exits ready for finalization.
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

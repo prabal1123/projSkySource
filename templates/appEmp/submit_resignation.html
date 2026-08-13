@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Submit Resignation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div class="container" style="max-width: 850px;">
+
+        <div class="sky-header">
+
+            <div>
+                <span class="sky-eyebrow">
+                    Employee Exit / Resignation
+                </span>
+
+                <h1>Submit Resignation</h1>
+
+                <p class="sky-help-text">
+                    Submit your resignation for HR review.
+                    Clearance will begin only after HR accepts it.
+                </p>
+            </div>
+
+            <a
+                href="{% url 'myResignations' %}"
+                class="sky-header-btn"
+            >
+                My Resignations
+            </a>
+
+        </div>
+
+
+        <div class="sky-panel mb-4">
+
+            <div class="sky-panel-head">
+                <h6>Employee Details</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="sky-form-label">
+                            Employee
+                        </label>
+
+                        <input
+                            type="text"
+                            class="form-control"
+                            value="{{ employee.user.get_full_name|default:employee.user.username }}"
+                            readonly
+                        >
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="sky-form-label">
+                            Reporting Manager
+                        </label>
+
+                        {% if employee.manager %}
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                value="{{ employee.manager.user.get_full_name|default:employee.manager.user.username }}"
+                                readonly
+                            >
+
+                        {% else %}
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                value="No reporting manager assigned"
+                                readonly
+                            >
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+                <h6>Resignation Details</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                {% if form.non_field_errors %}
+
+                    <div class="sky-auth-error-banner">
+
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+
+                <form method="post">
+
+                    {% csrf_token %}
+
+
+                    <div class="mb-3">
+
+                        <label
+                            class="sky-form-label"
+                            for="{{ form.proposed_last_working_date.id_for_label }}"
+                        >
+                            {{ form.proposed_last_working_date.label }}
+                        </label>
+
+                        {{ form.proposed_last_working_date }}
+
+                        {% if form.proposed_last_working_date.help_text %}
+                            <div class="sky-help-text">
+                                {{ form.proposed_last_working_date.help_text }}
+                            </div>
+                        {% endif %}
+
+                        {% for error in form.proposed_last_working_date.errors %}
+
+                            <div class="sky-form-error">
+                                {{ error }}
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label
+                            class="sky-form-label"
+                            for="{{ form.reason.id_for_label }}"
+                        >
+                            {{ form.reason.label }}
+                        </label>
+
+                        {{ form.reason }}
+
+                        {% if form.reason.help_text %}
+                            <div class="sky-help-text">
+                                {{ form.reason.help_text }}
+                            </div>
+                        {% endif %}
+
+                        {% for error in form.reason.errors %}
+
+                            <div class="sky-form-error">
+                                {{ error }}
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="sky-header-btn"
+                    >
+                        Submit Resignation
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

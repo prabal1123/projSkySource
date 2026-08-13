@@ -8,156 +8,669 @@
 {% endblock %}
 
 {% block content %}
+
 <div class="sky-dashboard">
-    <div class="container" style="max-width: 1050px;">
+
+    <div
+        class="container"
+        style="max-width: 1200px;"
+    >
+
+        <!-- =====================================================
+             HEADER
+        ====================================================== -->
 
         <div class="sky-header">
+
             <div>
-                <span class="sky-eyebrow">Attendance / Calendar</span>
+
+                <span class="sky-eyebrow">
+                    Attendance / Calendar
+                </span>
 
                 <h1>
                     {{ employee.user.get_full_name|default:employee.user.username }}
                 </h1>
 
                 <p class="sky-help-text">
+
                     {{ month_name }} {{ year }}
 
                     {% if employee.shift %}
                         · Shift: {{ employee.shift }}
                     {% endif %}
+
+                    {% if employee.work_schedule %}
+                        · Schedule: {{ employee.work_schedule.name }}
+                    {% endif %}
+
                 </p>
+
             </div>
+
+
+            <!-- Calendar / List Toggle -->
+            <div class="attendance-view-switch">
+
+                <a
+                    href="?year={{ year }}&month={{ month }}&view=calendar&filter={{ status_filter }}"
+                    class="
+                        attendance-view-btn
+                        {% if view_mode == 'calendar' %}
+                            active
+                        {% endif %}
+                    "
+                >
+                    Calendar View
+                </a>
+
+                <a
+                    href="?year={{ year }}&month={{ month }}&view=list&filter={{ status_filter }}"
+                    class="
+                        attendance-view-btn
+                        {% if view_mode == 'list' %}
+                            active
+                        {% endif %}
+                    "
+                >
+                    List View
+                </a>
+
+            </div>
+
         </div>
 
+
+        <!-- =====================================================
+             MESSAGES
+        ====================================================== -->
+
         {% if messages %}
+
             {% for message in messages %}
+
                 <div class="sky-calendar-message">
                     {{ message }}
                 </div>
+
             {% endfor %}
+
         {% endif %}
 
+
+        <!-- =====================================================
+             MAIN PANEL
+        ====================================================== -->
+
         <div class="sky-panel">
-            <div class="sky-panel-head attendance-calendar-header">
 
-                {% if is_admin_calendar %}
-                    <a
-                        class="sky-header-btn"
-                        href="{% url 'attendanceCalendarAdmin' employee.uuid %}?year={{ previous_year }}&month={{ previous_month }}"
-                    >
-                        ← Previous
-                    </a>
-                {% else %}
-                    <a
-                        class="sky-header-btn"
-                        href="{% url 'attendanceCalendarSelf' %}?year={{ previous_year }}&month={{ previous_month }}"
-                    >
-                        ← Previous
-                    </a>
-                {% endif %}
 
-                <h6>{{ month_name }} {{ year }}</h6>
+            <!-- =================================================
+                 MONTH NAVIGATION
+            ================================================== -->
 
-                {% if is_admin_calendar %}
-                    <a
-                        class="sky-header-btn"
-                        href="{% url 'attendanceCalendarAdmin' employee.uuid %}?year={{ next_year }}&month={{ next_month }}"
-                    >
-                        Next →
-                    </a>
-                {% else %}
-                    <a
-                        class="sky-header-btn"
-                        href="{% url 'attendanceCalendarSelf' %}?year={{ next_year }}&month={{ next_month }}"
-                    >
-                        Next →
-                    </a>
-                {% endif %}
+            <div class="
+                sky-panel-head
+                attendance-calendar-header
+            ">
+
+                <a
+                    class="sky-header-btn"
+                    href="?year={{ previous_year }}&month={{ previous_month }}&view={{ view_mode }}&filter={{ status_filter }}"
+                >
+                    ← Previous
+                </a>
+
+
+                <h6>
+                    {{ month_name }} {{ year }}
+                </h6>
+
+
+                <a
+                    class="sky-header-btn"
+                    href="?year={{ next_year }}&month={{ next_month }}&view={{ view_mode }}&filter={{ status_filter }}"
+                >
+                    Next →
+                </a>
 
             </div>
+
 
             <div class="sky-panel-body">
 
-                <div class="attendance-legend">
-                    <span class="legend-present">Present</span>
-                    <span class="legend-late">Late</span>
-                    <span class="legend-half-day">Half Day</span>
-                    <span class="legend-absent">Absent</span>
-                    <span class="legend-leave">Leave</span>
-                    <span class="legend-pending">Request Pending</span>
+
+                <!-- =================================================
+                     FILTERS
+                ================================================== -->
+
+                <div class="attendance-filter-bar">
+
+
+                    <!-- All -->
+                    <a
+                        href="?year={{ year }}&month={{ month }}&view={{ view_mode }}&filter=ALL"
+                        class="
+                            attendance-filter-pill
+                            filter-all
+
+                            {% if status_filter == 'ALL' %}
+                                active
+                            {% endif %}
+                        "
+                    >
+                        All
+                    </a>
+
+
+                    <!-- Present -->
+                    <a
+                        href="?year={{ year }}&month={{ month }}&view={{ view_mode }}&filter=PRESENT"
+                        class="
+                            attendance-filter-pill
+                            legend-present
+
+                            {% if status_filter == 'PRESENT' %}
+                                active
+                            {% endif %}
+                        "
+                    >
+                        Present
+                    </a>
+
+
+                    <!-- Late -->
+                    <a
+                        href="?year={{ year }}&month={{ month }}&view={{ view_mode }}&filter=LATE"
+                        class="
+                            attendance-filter-pill
+                            legend-late
+
+                            {% if status_filter == 'LATE' %}
+                                active
+                            {% endif %}
+                        "
+                    >
+                        Late
+                    </a>
+
+
+                    <!-- Half Day -->
+                    <a
+                        href="?year={{ year }}&month={{ month }}&view={{ view_mode }}&filter=HALF_DAY"
+                        class="
+                            attendance-filter-pill
+                            legend-half-day
+
+                            {% if status_filter == 'HALF_DAY' %}
+                                active
+                            {% endif %}
+                        "
+                    >
+                        Half Day
+                    </a>
+
+
+                    <!-- Absent -->
+                    <a
+                        href="?year={{ year }}&month={{ month }}&view={{ view_mode }}&filter=ABSENT"
+                        class="
+                            attendance-filter-pill
+                            legend-absent
+
+                            {% if status_filter == 'ABSENT' %}
+                                active
+                            {% endif %}
+                        "
+                    >
+                        Absent
+                    </a>
+
+
+                    <!-- Leave -->
+                    <a
+                        href="?year={{ year }}&month={{ month }}&view={{ view_mode }}&filter=LEAVE"
+                        class="
+                            attendance-filter-pill
+                            legend-leave
+
+                            {% if status_filter == 'LEAVE' %}
+                                active
+                            {% endif %}
+                        "
+                    >
+                        Leave
+                    </a>
+
+
+                    <!-- Mandatory Holiday -->
+                    <a
+                        href="?year={{ year }}&month={{ month }}&view={{ view_mode }}&filter=HOLIDAY"
+                        class="
+                            attendance-filter-pill
+                            legend-holiday
+
+                            {% if status_filter == 'HOLIDAY' %}
+                                active
+                            {% endif %}
+                        "
+                    >
+                        Holiday
+                    </a>
+
+
+                    <!-- Optional Holiday -->
+                    <a
+                        href="?year={{ year }}&month={{ month }}&view={{ view_mode }}&filter=OPTIONAL_HOLIDAY"
+                        class="
+                            attendance-filter-pill
+                            legend-optional-holiday
+
+                            {% if status_filter == 'OPTIONAL_HOLIDAY' %}
+                                active
+                            {% endif %}
+                        "
+                    >
+                        Optional Holiday
+                    </a>
+
+
+                    <!-- Weekly Off -->
+                    <a
+                        href="?year={{ year }}&month={{ month }}&view={{ view_mode }}&filter=WEEKLY_OFF"
+                        class="
+                            attendance-filter-pill
+                            legend-weekly-off
+
+                            {% if status_filter == 'WEEKLY_OFF' %}
+                                active
+                            {% endif %}
+                        "
+                    >
+                        Weekly Off
+                    </a>
+
+
+                    <!-- Pending Request -->
+                    <a
+                        href="?year={{ year }}&month={{ month }}&view={{ view_mode }}&filter=PENDING"
+                        class="
+                            attendance-filter-pill
+                            legend-pending
+
+                            {% if status_filter == 'PENDING' %}
+                                active
+                            {% endif %}
+                        "
+                    >
+                        Request Pending
+                    </a>
+
                 </div>
 
-                <div class="attendance-calendar">
 
-                    <div class="attendance-weekday">Mon</div>
-                    <div class="attendance-weekday">Tue</div>
-                    <div class="attendance-weekday">Wed</div>
-                    <div class="attendance-weekday">Thu</div>
-                    <div class="attendance-weekday">Fri</div>
-                    <div class="attendance-weekday">Sat</div>
-                    <div class="attendance-weekday">Sun</div>
+                <!-- =====================================================
+                     CALENDAR VIEW
+                ====================================================== -->
 
-                    {% for week in weeks %}
-                        {% for day in week %}
-                            <div class="
-                                attendance-day
-                                {% if not day.is_current_month %}attendance-outside-month{% endif %}
-                                {% if day.is_today %}attendance-today{% endif %}
-                                {{ day.status_class }}
-                            ">
+                {% if view_mode == "calendar" %}
 
-                                <div class="attendance-day-number">
-                                    {{ day.day_number }}
+                    <div class="attendance-calendar">
+
+
+                        <!-- Weekdays -->
+                        <div class="attendance-weekday">Mon</div>
+                        <div class="attendance-weekday">Tue</div>
+                        <div class="attendance-weekday">Wed</div>
+                        <div class="attendance-weekday">Thu</div>
+                        <div class="attendance-weekday">Fri</div>
+                        <div class="attendance-weekday">Sat</div>
+                        <div class="attendance-weekday">Sun</div>
+
+
+                        <!-- Calendar Days -->
+                        {% for week in weeks %}
+
+                            {% for day in week %}
+
+                                <div class="
+                                    attendance-day
+
+                                    {% if not day.is_current_month %}
+                                        attendance-outside-month
+                                    {% endif %}
+
+                                    {% if day.is_today %}
+                                        attendance-today
+                                    {% endif %}
+
+                                    {{ day.status_class }}
+
+                                    {% if day.is_current_month and status_filter != 'ALL' and day.filter_key != status_filter %}
+                                        attendance-filter-muted
+                                    {% endif %}
+                                ">
+
+
+                                    <!-- Date -->
+                                    <div class="attendance-day-number">
+                                        {{ day.day_number }}
+                                    </div>
+
+
+                                    {% if day.is_current_month %}
+
+
+                                        <!-- Main Status -->
+                                        <div class="attendance-day-status">
+                                            {{ day.display_status }}
+                                        </div>
+
+
+                                        <!-- =================================
+                                             MANDATORY HOLIDAY
+                                        ================================== -->
+
+                                        {% if day.holiday %}
+
+                                            <div class="attendance-day-time">
+                                                {{ day.holiday.name }}
+                                            </div>
+
+
+                                        <!-- =================================
+                                             WEEKLY OFF
+                                        ================================== -->
+
+                                        {% elif day.is_weekly_off %}
+
+                                            <div class="attendance-day-time">
+                                                Non-working day
+                                            </div>
+
+
+                                        <!-- =================================
+                                             OPTIONAL HOLIDAY
+                                        ================================== -->
+
+                                        {% elif day.approved_optional_holiday %}
+
+                                            <div class="attendance-day-time">
+                                                {{ day.approved_optional_holiday.holiday.name }}
+                                            </div>
+
+                                            <div class="attendance-day-time">
+                                                Approved
+                                            </div>
+
+
+                                        <!-- =================================
+                                             APPROVED LEAVE
+                                        ================================== -->
+
+                                        {% elif day.approved_leave %}
+
+                                            <div class="attendance-day-time">
+                                                {{ day.approved_leave.leave_type.name }}
+                                            </div>
+
+
+                                            {% if day.approved_leave.duration_type == "FIRST_HALF" %}
+
+                                                <div class="attendance-day-time">
+                                                    First Half
+                                                </div>
+
+                                            {% elif day.approved_leave.duration_type == "SECOND_HALF" %}
+
+                                                <div class="attendance-day-time">
+                                                    Second Half
+                                                </div>
+
+                                            {% endif %}
+
+
+                                        <!-- =================================
+                                             NORMAL ATTENDANCE
+                                        ================================== -->
+
+                                        {% elif day.attendance %}
+
+
+                                            <!-- Check In -->
+                                            {% if day.attendance.check_in %}
+
+                                                <div class="attendance-day-time">
+                                                    In:
+                                                    {{ day.attendance.check_in|date:"h:i A" }}
+                                                </div>
+
+                                            {% endif %}
+
+
+                                            <!-- Check Out -->
+                                            {% if day.attendance.check_out %}
+
+                                                <div class="attendance-day-time">
+                                                    Out:
+                                                    {{ day.attendance.check_out|date:"h:i A" }}
+                                                </div>
+
+                                            {% endif %}
+
+
+                                            <!-- Pending Attendance Exception -->
+                                            {% if day.pending_exception %}
+
+                                                <div class="attendance-request-pending">
+                                                    Request Pending
+                                                </div>
+
+
+                                            <!-- Raise Exception -->
+                                            {% elif not is_admin_calendar and day.attendance.status == "ABSENT" %}
+
+                                                <a
+                                                    href="{% url 'raiseAttendanceException' day.attendance.uuid %}"
+                                                    class="attendance-exception-link"
+                                                >
+                                                    Raise Exception
+                                                </a>
+
+                                            {% endif %}
+
+
+                                        <!-- =================================
+                                             NOTHING RECORDED
+                                        ================================== -->
+
+                                        {% else %}
+
+                                            <div class="attendance-day-time">
+                                                No attendance recorded
+                                            </div>
+
+                                        {% endif %}
+
+                                    {% endif %}
+
                                 </div>
 
-                                {% if day.is_current_month %}
-                                    {% if day.attendance %}
+                            {% endfor %}
 
-                                        <div class="attendance-day-status">
-                                            {{ day.attendance.get_status_display }}
-                                        </div>
-
-                                        {% if day.attendance.check_in %}
-                                            <div class="attendance-day-time">
-                                                In: {{ day.attendance.check_in|date:"h:i A" }}
-                                            </div>
-                                        {% endif %}
-
-                                        {% if day.attendance.check_out %}
-                                            <div class="attendance-day-time">
-                                                Out: {{ day.attendance.check_out|date:"h:i A" }}
-                                            </div>
-                                        {% endif %}
-
-                                        {% if day.pending_exception %}
-                                            <div class="attendance-request-pending">
-                                                Request Pending
-                                            </div>
-
-                                        {% elif not is_admin_calendar and day.attendance.status == "ABSENT" %}
-                                            <a
-                                                href="{% url 'raiseAttendanceException' day.attendance.uuid %}"
-                                                class="attendance-exception-link"
-                                            >
-                                                Raise Exception
-                                            </a>
-                                        {% endif %}
-
-                                    {% else %}
-                                        <div class="attendance-day-status">
-                                            Not Marked
-                                        </div>
-                                    {% endif %}
-                                {% endif %}
-
-                            </div>
                         {% endfor %}
-                    {% endfor %}
 
-                </div>
+                    </div>
+
+
+                <!-- =====================================================
+                     LIST VIEW
+                ====================================================== -->
+
+                {% else %}
+
+                    <div class="attendance-list-wrapper">
+
+                        <table class="attendance-list-table">
+
+                            <thead>
+
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Day</th>
+                                    <th>Status</th>
+                                    <th>Details</th>
+                                    <th>Check In</th>
+                                    <th>Check Out</th>
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                {% for week in weeks %}
+
+                                    {% for day in week %}
+
+                                        {% if day.is_current_month %}
+
+                                            {% if status_filter == "ALL" or day.filter_key == status_filter %}
+
+                                                <tr>
+
+
+                                                    <!-- Date -->
+                                                    <td>
+                                                        {{ day.date|date:"d M Y" }}
+                                                    </td>
+
+
+                                                    <!-- Day -->
+                                                    <td>
+                                                        {{ day.date|date:"l" }}
+                                                    </td>
+
+
+                                                    <!-- Status -->
+                                                    <td>
+
+                                                        <span class="
+                                                            attendance-list-status
+                                                            {{ day.status_class }}
+                                                        ">
+                                                            {{ day.display_status }}
+                                                        </span>
+
+                                                    </td>
+
+
+                                                    <!-- Details -->
+                                                    <td>
+
+                                                        {% if day.holiday %}
+
+                                                            {{ day.holiday.name }}
+
+
+                                                        {% elif day.is_weekly_off %}
+
+                                                            Non-working day
+
+
+                                                        {% elif day.approved_optional_holiday %}
+
+                                                            {{ day.approved_optional_holiday.holiday.name }}
+
+                                                            <div style="
+                                                                margin-top:3px;
+                                                                font-size:11px;
+                                                                color:#c2410c;
+                                                            ">
+                                                                Approved Optional Holiday
+                                                            </div>
+
+
+                                                        {% elif day.approved_leave %}
+
+                                                            {{ day.approved_leave.leave_type.name }}
+
+                                                            {% if day.approved_leave.duration_type == "FIRST_HALF" %}
+                                                                · First Half
+                                                            {% elif day.approved_leave.duration_type == "SECOND_HALF" %}
+                                                                · Second Half
+                                                            {% endif %}
+
+
+                                                        {% elif day.pending_exception %}
+
+                                                            Request Pending
+
+
+                                                        {% else %}
+
+                                                            —
+
+                                                        {% endif %}
+
+                                                    </td>
+
+
+                                                    <!-- Check In -->
+                                                    <td>
+
+                                                        {% if day.attendance.check_in %}
+
+                                                            {{ day.attendance.check_in|date:"h:i A" }}
+
+                                                        {% else %}
+
+                                                            —
+
+                                                        {% endif %}
+
+                                                    </td>
+
+
+                                                    <!-- Check Out -->
+                                                    <td>
+
+                                                        {% if day.attendance.check_out %}
+
+                                                            {{ day.attendance.check_out|date:"h:i A" }}
+
+                                                        {% else %}
+
+                                                            —
+
+                                                        {% endif %}
+
+                                                    </td>
+
+                                                </tr>
+
+                                            {% endif %}
+
+                                        {% endif %}
+
+                                    {% endfor %}
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                {% endif %}
+
             </div>
+
         </div>
 
     </div>
+
 </div>
+
 {% endblock %}

@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Resignations{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div class="container" style="max-width: 1100px;">
+
+        <div class="sky-header">
+
+            <div>
+                <span class="sky-eyebrow">
+                    Employee Exit
+                </span>
+
+                <h1>My Resignations</h1>
+
+                <p class="sky-help-text">
+                    Track your resignation, HR review
+                    and exit clearance progress.
+                </p>
+            </div>
+
+            <a
+                href="{% url 'submitResignation' %}"
+                class="sky-header-btn"
+            >
+                Submit Resignation
+            </a>
+
+        </div>
+
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+                <h6>Resignation History</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                {% if request_rows %}
+
+                    <div class="table-responsive">
+
+                        <table class="table align-middle">
+
+                            <thead>
+                                <tr>
+                                    <th>Submitted</th>
+                                    <th>Proposed LWD</th>
+                                    <th>Final LWD</th>
+                                    <th>HR Status</th>
+                                    <th>Manager NOC</th>
+                                    <th>Finance NOC</th>
+                                    <th>Overall Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {% for row in request_rows %}
+
+                                    <tr>
+
+                                        <td>
+                                            {{ row.exit_request.created_at|date:"d M Y" }}
+                                        </td>
+
+                                        <td>
+                                            {{ row.exit_request.proposed_last_working_date|date:"d M Y" }}
+                                        </td>
+
+                                        <td>
+                                            {% if row.exit_request.final_last_working_date %}
+                                                {{ row.exit_request.final_last_working_date|date:"d M Y" }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </td>
+
+
+                                        <td>
+
+                                            {% if row.exit_request.status == "SUBMITTED" %}
+
+                                                Pending HR Review
+
+                                            {% elif row.exit_request.status == "HR_REJECTED" %}
+
+                                                Rejected by HR
+
+                                            {% elif row.exit_request.hr_reviewed_by %}
+
+                                                Accepted
+
+                                                <div class="sky-help-text">
+                                                    By:
+                                                    {{ row.exit_request.hr_reviewed_by.get_full_name|default:row.exit_request.hr_reviewed_by.username }}
+                                                </div>
+
+                                            {% else %}
+
+                                                —
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <td>
+
+                                            {% if row.manager_approval %}
+
+                                                <strong>
+                                                    {{ row.manager_approval.get_status_display }}
+                                                </strong>
+
+                                                {% if row.manager_approval.remarks %}
+                                                    <div class="sky-help-text">
+                                                        {{ row.manager_approval.remarks }}
+                                                    </div>
+                                                {% endif %}
+
+                                            {% else %}
+
+                                                Not Started
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <td>
+
+                                            {% if row.finance_approval %}
+
+                                                <strong>
+                                                    {{ row.finance_approval.get_status_display }}
+                                                </strong>
+
+                                                {% if row.finance_approval.remarks %}
+                                                    <div class="sky-help-text">
+                                                        {{ row.finance_approval.remarks }}
+                                                    </div>
+                                                {% endif %}
+
+                                            {% else %}
+
+                                                Not Started
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <td>
+                                            <strong>
+                                                {{ row.exit_request.get_status_display }}
+                                            </strong>
+                                        </td>
+
+                                    </tr>
+
+                                    <tr>
+
+                                        <td colspan="7">
+
+                                            <div class="sky-help-text">
+
+                                                <strong>Reason:</strong>
+                                                {{ row.exit_request.reason }}
+
+                                                {% if row.exit_request.hr_remarks %}
+                                                    <br>
+                                                    <strong>HR Remarks:</strong>
+                                                    {{ row.exit_request.hr_remarks }}
+                                                {% endif %}
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                {% else %}
+
+                    <div class="sky-empty">
+
+                        You have not submitted any resignation request.
+
+                        <div class="mt-3">
+
+                            <a
+                                href="{% url 'submitResignation' %}"
+                                class="sky-header-btn"
+                            >
+                                Submit Resignation
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

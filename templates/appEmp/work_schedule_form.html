@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/holiday.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div
+        class="container"
+        style="max-width: 850px;"
+    >
+
+        <div class="sky-header">
+
+            <div>
+                <span class="sky-eyebrow">
+                    HR / Work Schedule
+                </span>
+
+                <h1>{{ page_title }}</h1>
+
+                <p class="sky-help-text">
+                    Select the days employees assigned to this schedule are expected to work.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-body">
+
+                <div class="holiday-form-card">
+
+                    <form method="post">
+
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            <div class="sky-calendar-message">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <div class="holiday-form-group">
+
+                            <label for="{{ form.name.id_for_label }}">
+                                Schedule Name
+                            </label>
+
+                            {{ form.name }}
+
+                            {% if form.name.errors %}
+                                <div style="color:#dc2626;font-size:12px;">
+                                    {{ form.name.errors }}
+                                </div>
+                            {% endif %}
+
+                        </div>
+
+
+                        <div style="
+                            margin-top:26px;
+                            margin-bottom:10px;
+                            font-size:13px;
+                            font-weight:700;
+                            color:#374151;
+                        ">
+                            Working Days
+                        </div>
+
+
+                        <div style="
+                            display:grid;
+                            grid-template-columns:repeat(4,1fr);
+                            gap:12px;
+                        ">
+
+                            <label class="holiday-form-card" style="padding:14px;cursor:pointer;">
+                                {{ form.monday }} Monday
+                            </label>
+
+                            <label class="holiday-form-card" style="padding:14px;cursor:pointer;">
+                                {{ form.tuesday }} Tuesday
+                            </label>
+
+                            <label class="holiday-form-card" style="padding:14px;cursor:pointer;">
+                                {{ form.wednesday }} Wednesday
+                            </label>
+
+                            <label class="holiday-form-card" style="padding:14px;cursor:pointer;">
+                                {{ form.thursday }} Thursday
+                            </label>
+
+                            <label class="holiday-form-card" style="padding:14px;cursor:pointer;">
+                                {{ form.friday }} Friday
+                            </label>
+
+                            <label class="holiday-form-card" style="padding:14px;cursor:pointer;">
+                                {{ form.saturday }} Saturday
+                            </label>
+
+                            <label class="holiday-form-card" style="padding:14px;cursor:pointer;">
+                                {{ form.sunday }} Sunday
+                            </label>
+
+                        </div>
+
+
+                        <div style="
+                            margin-top:26px;
+                            padding-top:20px;
+                            border-top:1px solid #e8ebf0;
+                        ">
+
+                            <div style="
+                                display:flex;
+                                flex-direction:column;
+                                gap:14px;
+                            ">
+
+                                <label style="
+                                    display:flex;
+                                    align-items:center;
+                                    gap:10px;
+                                    cursor:pointer;
+                                ">
+                                    {{ form.is_default }}
+
+                                    <span>
+                                        Set as default schedule
+                                    </span>
+                                </label>
+
+                                <label style="
+                                    display:flex;
+                                    align-items:center;
+                                    gap:10px;
+                                    cursor:pointer;
+                                ">
+                                    {{ form.is_active }}
+
+                                    <span>
+                                        Active
+                                    </span>
+                                </label>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="holiday-form-actions">
+
+                            <button
+                                type="submit"
+                                class="holiday-save-btn"
+                            >
+                                {% if schedule %}
+                                    Save Changes
+                                {% else %}
+                                    Create Schedule
+                                {% endif %}
+                            </button>
+
+                            <a
+                                href="{% url 'workScheduleList' %}"
+                                class="holiday-cancel-btn"
+                            >
+                                Cancel
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

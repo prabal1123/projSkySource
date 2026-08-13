@@ -1,0 +1,2154 @@
+/* =========================================================
+   SKY SOURCE HR MAIN DASHBOARD
+========================================================= */
+
+:root {
+    --hr-green: #063b2d;
+    --hr-green-dark: #042f24;
+    --hr-green-soft: #eaf0ed;
+
+    --hr-coral: #d16d4e;
+    --hr-coral-soft: #fff0ea;
+
+    --hr-bg: #f5f6f3;
+    --hr-card: #ffffff;
+
+    --hr-border: #dde3df;
+
+    --hr-text: #07382c;
+    --hr-muted: #81918b;
+}
+
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.hr-dashboard-shell {
+    min-height: calc(100vh - 70px);
+
+    padding: 42px 0 80px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f8f9f7 0,
+            #f4f5f2 100%
+        );
+
+    font-family:
+        "Inter",
+        sans-serif;
+
+    color: var(--hr-text);
+}
+
+
+.hr-dashboard-container {
+    max-width: 1320px;
+}
+
+
+/* =========================================================
+   OVERRIDE BASE NAVBAR ONLY ON DASHBOARD
+========================================================= */
+
+body:has(.hr-dashboard-shell)
+.navbar.bg-dark {
+    background:
+        var(--hr-green) !important;
+}
+
+
+body:has(.hr-dashboard-shell)
+.navbar {
+    border-bottom:
+        1px solid
+        rgba(255, 255, 255, 0.08);
+
+    box-shadow:
+        0 8px 28px
+        rgba(4, 47, 36, 0.12) !important;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.hr-welcome {
+    margin-bottom: 32px;
+
+    display: flex;
+
+    align-items: flex-end;
+
+    justify-content: space-between;
+
+    gap: 30px;
+}
+
+
+.hr-kicker,
+.hr-section-label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: var(--hr-coral);
+
+    font-size: 10px;
+
+    font-weight: 750;
+
+    letter-spacing: 1.8px;
+}
+
+
+.hr-welcome h1 {
+    margin: 0;
+
+    color: var(--hr-green);
+
+    font-family:
+        "Space Grotesk",
+        sans-serif;
+
+    font-size: clamp(
+        34px,
+        4vw,
+        48px
+    );
+
+    letter-spacing: -2px;
+
+    font-weight: 500;
+}
+
+
+.hr-welcome h1 strong {
+    font-weight: 700;
+}
+
+
+.hr-welcome p {
+    max-width: 680px;
+
+    margin: 10px 0 0;
+
+    color: var(--hr-muted);
+
+    line-height: 1.6;
+
+    font-size: 14px;
+}
+
+
+.hr-header-side {
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+}
+
+
+.hr-live-pill {
+    padding: 7px 12px;
+
+    border-radius: 20px;
+
+    background: white;
+
+    border:
+        1px solid
+        var(--hr-border);
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    color: #5f756d;
+
+    font-size: 11px;
+}
+
+
+.hr-live-pill span {
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: #22a36a;
+
+    box-shadow:
+        0 0 0 4px
+        rgba(34, 163, 106, 0.10);
+}
+
+
+.hr-date {
+    color: #75877f;
+
+    font-size: 12px;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   TOP METRICS
+========================================================= */
+
+.hr-metric-grid {
+    margin-bottom: 24px;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, 1fr);
+
+    gap: 14px;
+}
+
+
+.hr-metric-card {
+    min-height: 145px;
+
+    padding: 20px;
+
+    border:
+        1px solid
+        var(--hr-border);
+
+    background:
+        var(--hr-card);
+
+    color:
+        var(--hr-text);
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: space-between;
+
+    transition:
+        transform 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+
+.hr-metric-card:hover {
+    transform:
+        translateY(-4px);
+
+    border-color:
+        #bdcbc5;
+
+    box-shadow:
+        0 18px 40px
+        rgba(6, 59, 45, 0.07);
+}
+
+
+.hr-metric-top {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+}
+
+
+.hr-metric-label {
+    color: #788a83;
+
+    font-size: 11px;
+
+    font-weight: 600;
+}
+
+
+.hr-metric-icon {
+    width: 30px;
+    height: 30px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background:
+        var(--hr-green-soft);
+
+    color:
+        var(--hr-green);
+
+    font-size: 12px;
+}
+
+
+.hr-metric-value {
+    margin-top: 18px;
+
+    font-family:
+        "Space Grotesk",
+        sans-serif;
+
+    font-size: 36px;
+
+    line-height: 1;
+
+    letter-spacing: -1.5px;
+}
+
+
+.hr-metric-note {
+    margin-top: 8px;
+
+    color:
+        #93a19b;
+
+    font-size: 10px;
+}
+
+
+.metric-green {
+    background:
+        #f7faf8;
+}
+
+
+.metric-coral
+.hr-metric-icon {
+    color: var(--hr-coral);
+
+    background:
+        var(--hr-coral-soft);
+}
+
+
+.metric-dark {
+    background:
+        var(--hr-green);
+
+    border-color:
+        var(--hr-green);
+
+    color: white;
+}
+
+
+.metric-dark
+.hr-metric-label,
+.metric-dark
+.hr-metric-note {
+    color:
+        rgba(255, 255, 255, 0.6);
+}
+
+
+.metric-dark
+.hr-metric-icon {
+    color:
+        var(--hr-coral);
+
+    background:
+        rgba(255, 255, 255, 0.10);
+}
+
+
+/* =========================================================
+   MAIN GRID
+========================================================= */
+
+.hr-main-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(12, 1fr);
+
+    gap: 18px;
+}
+
+
+.hr-card {
+    grid-column: span 4;
+
+    padding: 24px;
+
+    background:
+        var(--hr-card);
+
+    border:
+        1px solid
+        var(--hr-border);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
+}
+
+
+.hr-card:hover {
+    border-color:
+        #c8d2cd;
+
+    box-shadow:
+        0 17px 38px
+        rgba(6, 59, 45, 0.05);
+}
+
+
+.hr-attendance-card {
+    grid-column: span 7;
+}
+
+
+.hr-actions-panel {
+    grid-column: span 5;
+}
+
+
+.hr-wide-card {
+    grid-column: span 12;
+}
+
+
+.hr-card-header {
+    margin-bottom: 22px;
+
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 15px;
+}
+
+
+.hr-card-header h2 {
+    margin: 0;
+
+    color:
+        var(--hr-green);
+
+    font-family:
+        "Space Grotesk",
+        sans-serif;
+
+    font-size: 20px;
+
+    letter-spacing:
+        -0.6px;
+}
+
+
+.hr-large-percentage {
+    font-family:
+        "Space Grotesk",
+        sans-serif;
+
+    color:
+        var(--hr-green);
+
+    font-size: 34px;
+
+    font-weight: 650;
+}
+
+
+/* =========================================================
+   ATTENDANCE
+========================================================= */
+
+.hr-progress-track {
+    height: 7px;
+
+    overflow: hidden;
+
+    border-radius: 20px;
+
+    background:
+        #e8ece9;
+}
+
+
+.hr-progress-value {
+    height: 100%;
+
+    border-radius: inherit;
+
+    background:
+        var(--hr-green);
+
+    animation:
+        dashboardProgress
+        1.1s ease-out;
+}
+
+
+@keyframes dashboardProgress {
+
+    from {
+        max-width: 0;
+    }
+
+    to {
+        max-width: 100%;
+    }
+
+}
+
+
+.hr-attendance-summary {
+    margin-top: 24px;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 10px;
+}
+
+
+.hr-attendance-summary > div {
+    padding: 13px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    border:
+        1px solid
+        #e5e9e6;
+
+    background:
+        #fafbf9;
+}
+
+
+.summary-dot {
+    width: 8px;
+    height: 8px;
+
+    border-radius: 50%;
+
+    flex-shrink: 0;
+}
+
+
+.present-dot {
+    background: #2a8f67;
+}
+
+
+.absent-dot {
+    background: #d16d4e;
+}
+
+
+.leave-dot {
+    background: #d5a33f;
+}
+
+
+.unmarked-dot {
+    background: #aab5b0;
+}
+
+
+.hr-attendance-summary
+strong,
+.hr-attendance-summary
+span {
+    display: block;
+}
+
+
+.hr-attendance-summary
+strong {
+    font-size: 16px;
+}
+
+
+.hr-attendance-summary
+div div span {
+    margin-top: 2px;
+
+    color:
+        #91a09a;
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   TREND
+========================================================= */
+
+.hr-trend {
+    margin-top: 30px;
+
+    padding-top: 22px;
+
+    border-top:
+        1px solid
+        #e7ebe8;
+}
+
+
+.hr-subheading {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 15px;
+}
+
+
+.hr-subheading strong {
+    font-size: 11px;
+}
+
+
+.hr-subheading span {
+    color:
+        #98a49f;
+
+    font-size: 9px;
+}
+
+
+.hr-trend-bars {
+    height: 120px;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(7, 1fr);
+
+    gap: 12px;
+
+    align-items: end;
+}
+
+
+.trend-day {
+    height: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: flex-end;
+
+    align-items: center;
+
+    gap: 7px;
+}
+
+
+.trend-bar-track {
+    width: 100%;
+    height: 90px;
+
+    position: relative;
+
+    overflow: hidden;
+
+    background:
+        #eef1ef;
+}
+
+
+.trend-bar-fill {
+    position: absolute;
+
+    bottom: 0;
+
+    width: 100%;
+
+    min-height: 2px;
+
+    background:
+        var(--hr-green);
+
+    transition:
+        height 0.7s ease,
+        background 0.2s ease;
+}
+
+
+.trend-day:hover
+.trend-bar-fill {
+    background:
+        var(--hr-coral);
+}
+
+
+.trend-day > span {
+    color:
+        #899891;
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   PENDING ACTIONS
+========================================================= */
+
+.hr-action-total {
+    width: 37px;
+    height: 37px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        var(--hr-coral-soft);
+
+    color:
+        var(--hr-coral);
+
+    font-weight: 700;
+}
+
+
+.hr-action-list {
+    display: grid;
+
+    gap: 7px;
+}
+
+
+.hr-action-row {
+    padding: 12px;
+
+    display: grid;
+
+    grid-template-columns:
+        35px 1fr auto;
+
+    align-items: center;
+
+    gap: 11px;
+
+    border:
+        1px solid
+        transparent;
+
+    color:
+        var(--hr-text);
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.hr-action-row:hover {
+    transform:
+        translateX(3px);
+
+    background:
+        #f7f9f7;
+
+    border-color:
+        #e1e6e2;
+}
+
+
+.action-row-icon {
+    width: 35px;
+    height: 35px;
+
+    border-radius: 5px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background:
+        var(--hr-green-soft);
+
+    color:
+        var(--hr-green);
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+.action-row-icon.coral {
+    color:
+        var(--hr-coral);
+
+    background:
+        var(--hr-coral-soft);
+}
+
+
+.hr-action-row
+strong,
+.hr-action-row
+span {
+    display: block;
+}
+
+
+.hr-action-row
+div strong {
+    font-size: 11px;
+}
+
+
+.hr-action-row
+div span {
+    margin-top: 2px;
+
+    color:
+        #98a49f;
+
+    font-size: 9px;
+}
+
+
+.hr-action-row b {
+    color:
+        var(--hr-coral);
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   WORKFORCE
+========================================================= */
+
+.hr-workforce-stats {
+    margin-bottom: 25px;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    border:
+        1px solid
+        #e2e7e3;
+}
+
+
+.hr-workforce-stats div {
+    padding: 16px;
+
+    text-align: center;
+
+    border-right:
+        1px solid
+        #e2e7e3;
+}
+
+
+.hr-workforce-stats div:last-child {
+    border-right: 0;
+}
+
+
+.hr-workforce-stats strong,
+.hr-workforce-stats span {
+    display: block;
+}
+
+
+.hr-workforce-stats strong {
+    font-size: 21px;
+}
+
+
+.hr-workforce-stats span {
+    margin-top: 4px;
+
+    color:
+        #95a39d;
+
+    font-size: 8px;
+
+    line-height: 1.4;
+}
+
+
+.hr-people-list {
+    display: grid;
+
+    gap: 5px;
+}
+
+
+.hr-person-row {
+    padding: 10px 5px;
+
+    display: grid;
+
+    grid-template-columns:
+        35px 1fr auto;
+
+    align-items: center;
+
+    gap: 10px;
+
+    border-bottom:
+        1px solid
+        #edf0ee;
+}
+
+
+.hr-avatar,
+.table-avatar {
+    width: 34px;
+    height: 34px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background:
+        var(--hr-green-soft);
+
+    color:
+        var(--hr-green);
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+.hr-person-row
+div strong,
+.hr-person-row
+div span {
+    display: block;
+}
+
+
+.hr-person-row
+div strong {
+    font-size: 11px;
+}
+
+
+.hr-person-row
+div span {
+    margin-top: 2px;
+
+    color:
+        #96a39e;
+
+    font-size: 9px;
+}
+
+
+.hr-person-status {
+    color:
+        #26865e;
+
+    font-size: 8px;
+}
+
+
+/* =========================================================
+   LEAVE
+========================================================= */
+
+.hr-leave-highlight {
+    margin-bottom: 24px;
+
+    padding: 18px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    background:
+        var(--hr-green);
+
+    color:
+        white;
+}
+
+
+.hr-leave-highlight strong {
+    font-size: 30px;
+}
+
+
+.hr-leave-highlight span {
+    max-width: 150px;
+
+    color:
+        rgba(255,255,255,0.65);
+
+    font-size: 10px;
+
+    line-height: 1.4;
+}
+
+
+.hr-compact-list {
+    display: grid;
+
+    gap: 6px;
+}
+
+
+.hr-compact-row {
+    padding: 10px 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    border-bottom:
+        1px solid
+        #ecefec;
+}
+
+
+.hr-compact-row
+div strong,
+.hr-compact-row
+div span {
+    display: block;
+}
+
+
+.hr-compact-row
+div strong {
+    font-size: 10px;
+}
+
+
+.hr-compact-row
+div span {
+    margin-top: 2px;
+
+    color:
+        #99a59f;
+
+    font-size: 8px;
+}
+
+
+.hr-date-badge {
+    padding: 5px 8px;
+
+    border-radius: 20px;
+
+    background:
+        #f0f3f1;
+
+    color:
+        #657970;
+
+    font-size: 8px;
+}
+
+
+/* =========================================================
+   HOLIDAYS
+========================================================= */
+
+.hr-holiday-list {
+    display: grid;
+
+    gap: 8px;
+}
+
+
+.hr-holiday-row {
+    padding: 9px;
+
+    display: grid;
+
+    grid-template-columns:
+        44px 1fr auto;
+
+    align-items: center;
+
+    gap: 11px;
+
+    border:
+        1px solid
+        #e6eae7;
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease;
+}
+
+
+.hr-holiday-row:hover {
+    transform:
+        translateX(3px);
+
+    border-color:
+        #cbd5d0;
+}
+
+
+.holiday-date-box {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background:
+        var(--hr-green);
+
+    color:
+        white;
+}
+
+
+.holiday-date-box.optional-date {
+    background:
+        var(--hr-coral);
+}
+
+
+.holiday-date-box strong {
+    font-size: 14px;
+}
+
+
+.holiday-date-box span {
+    font-size: 7px;
+
+    text-transform: uppercase;
+}
+
+
+.hr-holiday-row
+div:nth-child(2)
+strong,
+.hr-holiday-row
+div:nth-child(2)
+span {
+    display: block;
+}
+
+
+.hr-holiday-row
+div:nth-child(2)
+strong {
+    font-size: 10px;
+}
+
+
+.hr-holiday-row
+div:nth-child(2)
+span {
+    margin-top: 2px;
+
+    color:
+        #96a39e;
+
+    font-size: 8px;
+}
+
+
+.holiday-type {
+    padding: 5px 8px;
+
+    border-radius: 20px;
+
+    font-size: 7px;
+
+    font-weight: 700;
+}
+
+
+.holiday-type.mandatory {
+    background:
+        var(--hr-green-soft);
+
+    color:
+        var(--hr-green);
+}
+
+
+.holiday-type.optional {
+    background:
+        var(--hr-coral-soft);
+
+    color:
+        var(--hr-coral);
+}
+
+
+/* =========================================================
+   QUICK ACTIONS
+========================================================= */
+
+.hr-quick-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 8px;
+}
+
+
+.hr-quick-grid a {
+    min-height: 85px;
+
+    padding: 14px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: space-between;
+
+    border:
+        1px solid
+        #e2e7e3;
+
+    color:
+        var(--hr-text);
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+
+.hr-quick-grid a:hover {
+    transform:
+        translateY(-3px);
+
+    background:
+        var(--hr-green);
+
+    border-color:
+        var(--hr-green);
+
+    color:
+        white;
+}
+
+
+.hr-quick-grid a span {
+    width: 27px;
+    height: 27px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        var(--hr-green-soft);
+
+    color:
+        var(--hr-green);
+
+    font-size: 9px;
+
+    font-weight: 700;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.hr-quick-grid a:hover span {
+    color:
+        var(--hr-coral);
+
+    background:
+        rgba(255,255,255,0.12);
+}
+
+
+.hr-quick-grid strong {
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   LINKS
+========================================================= */
+
+.hr-text-link {
+    color:
+        var(--hr-coral);
+
+    font-size: 9px;
+
+    font-weight: 650;
+}
+
+
+.hr-record-count {
+    color:
+        #93a19b;
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.hr-dashboard-table {
+    width: 100%;
+
+    border-collapse: collapse;
+}
+
+
+.hr-dashboard-table th {
+    padding: 11px 13px;
+
+    border-bottom:
+        1px solid
+        #dde3df;
+
+    color:
+        #899991;
+
+    font-size: 8px;
+
+    font-weight: 700;
+
+    letter-spacing: 0.7px;
+
+    text-transform: uppercase;
+}
+
+
+.hr-dashboard-table td {
+    padding: 12px 13px;
+
+    border-bottom:
+        1px solid
+        #edf0ee;
+
+    color:
+        #536b62;
+
+    font-size: 10px;
+
+    vertical-align: middle;
+}
+
+
+.hr-dashboard-table tbody tr {
+    transition:
+        background 0.2s ease;
+}
+
+
+.hr-dashboard-table tbody tr:hover {
+    background:
+        #f8faf8;
+}
+
+
+.table-person {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+
+.table-avatar {
+    width: 29px;
+    height: 29px;
+
+    font-size: 9px;
+}
+
+
+.table-person strong {
+    color:
+        var(--hr-text);
+
+    font-size: 10px;
+}
+
+
+.attendance-status {
+    display: inline-flex;
+
+    padding: 5px 8px;
+
+    border-radius: 20px;
+
+    font-size: 7px;
+
+    font-weight: 700;
+}
+
+
+.attendance-status.present {
+    color: #18734f;
+
+    background: #e8f5ef;
+}
+
+
+.attendance-status.late {
+    color: #aa7421;
+
+    background: #fff5df;
+}
+
+
+.attendance-status.absent {
+    color: #b95138;
+
+    background: #fff0eb;
+}
+
+
+.attendance-status.half_day {
+    color: #986c26;
+
+    background: #fff5df;
+}
+
+
+.attendance-status.leave {
+    color: #536f65;
+
+    background: #edf1ef;
+}
+
+
+.table-action {
+    color:
+        var(--hr-coral);
+
+    font-size: 9px;
+
+    font-weight: 600;
+}
+
+
+.hr-empty-table,
+.hr-empty-state {
+    padding: 24px;
+
+    text-align: center;
+
+    color:
+        #98a49f;
+
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   EMPLOYEE DASHBOARD
+========================================================= */
+
+.employee-dashboard-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 18px;
+}
+
+
+.employee-punch-card {
+    min-height: 280px;
+
+    padding: 31px;
+
+    position: relative;
+
+    overflow: hidden;
+
+    background:
+        var(--hr-green);
+
+    color:
+        white;
+}
+
+
+.employee-punch-card::after {
+    content: "";
+
+    position: absolute;
+
+    right: -80px;
+    bottom: -120px;
+
+    width: 260px;
+    height: 260px;
+
+    border:
+        50px solid
+        rgba(255,255,255,0.025);
+
+    border-radius: 50%;
+
+    pointer-events: none;
+}
+
+
+.hr-section-label.light {
+    color:
+        #dc8366;
+}
+
+
+.employee-punch-card h2 {
+    margin:
+        35px 0 10px;
+
+    font-family:
+        "Space Grotesk",
+        sans-serif;
+
+    font-size: 34px;
+}
+
+
+.employee-punch-card p {
+    max-width: 440px;
+
+    color:
+        rgba(255,255,255,0.62);
+
+    line-height: 1.65;
+
+    font-size: 12px;
+}
+
+
+.employee-punch-button {
+    margin-top: 22px;
+
+    padding: 11px 22px;
+
+    border: 0;
+
+    border-radius: 30px;
+
+    background:
+        var(--hr-coral);
+
+    color:
+        white;
+
+    font-size: 11px;
+
+    font-weight: 650;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease;
+}
+
+
+.employee-punch-button:hover {
+    transform:
+        translateY(-2px);
+
+    background:
+        #be5f43;
+}
+
+
+.employee-status-pill {
+    display: inline-flex;
+
+    margin-top: 15px;
+
+    padding: 6px 11px;
+
+    border-radius: 20px;
+
+    background:
+        rgba(255,255,255,0.1);
+
+    color:
+        white;
+
+    font-size: 9px;
+}
+
+
+.employee-overview-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    border:
+        1px solid
+        #e2e7e3;
+}
+
+
+.employee-overview-grid div {
+    padding: 22px 14px;
+
+    text-align: center;
+
+    border-right:
+        1px solid
+        #e2e7e3;
+}
+
+
+.employee-overview-grid div:last-child {
+    border-right: 0;
+}
+
+
+.employee-overview-grid strong,
+.employee-overview-grid span {
+    display: block;
+}
+
+
+.employee-overview-grid strong {
+    font-size: 27px;
+}
+
+
+.employee-overview-grid span {
+    margin-top: 5px;
+
+    color:
+        #97a39e;
+
+    font-size: 8px;
+}
+
+
+.employee-shortcuts {
+    margin-top: 25px;
+
+    display: grid;
+
+    gap: 8px;
+}
+
+
+.employee-shortcuts a {
+    padding: 10px 0;
+
+    border-bottom:
+        1px solid
+        #edf0ee;
+
+    color:
+        var(--hr-green);
+
+    font-size: 10px;
+
+    transition:
+        color 0.2s ease,
+        padding-left 0.2s ease;
+}
+
+
+.employee-shortcuts a:hover {
+    padding-left: 5px;
+
+    color:
+        var(--hr-coral);
+}
+
+
+.employee-wide-card {
+    grid-column: span 2;
+}
+
+
+.employee-role-actions {
+    margin-top: 18px;
+
+    padding: 24px;
+
+    background: white;
+
+    border:
+        1px solid
+        var(--hr-border);
+}
+
+
+/* =========================================================
+   LOAD ANIMATION
+========================================================= */
+
+.hr-metric-card,
+.hr-card,
+.employee-punch-card {
+    animation:
+        hrCardIn
+        0.45s ease
+        both;
+}
+
+
+.hr-metric-card:nth-child(2) {
+    animation-delay: 0.04s;
+}
+
+
+.hr-metric-card:nth-child(3) {
+    animation-delay: 0.08s;
+}
+
+
+.hr-metric-card:nth-child(4) {
+    animation-delay: 0.12s;
+}
+
+
+.hr-metric-card:nth-child(5) {
+    animation-delay: 0.16s;
+}
+
+
+@keyframes hrCardIn {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1200px) {
+
+    .hr-metric-grid {
+        grid-template-columns:
+            repeat(3, 1fr);
+    }
+
+
+    .hr-card {
+        grid-column:
+            span 6;
+    }
+
+
+    .hr-attendance-card,
+    .hr-actions-panel {
+        grid-column:
+            span 6;
+    }
+
+
+    .hr-wide-card {
+        grid-column:
+            span 12;
+    }
+
+}
+
+
+@media (max-width: 850px) {
+
+    .hr-welcome {
+        align-items:
+            flex-start;
+
+        flex-direction:
+            column;
+    }
+
+
+    .hr-metric-grid {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+
+    .hr-main-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .hr-card,
+    .hr-attendance-card,
+    .hr-actions-panel,
+    .hr-wide-card {
+        grid-column:
+            span 1;
+    }
+
+
+    .hr-attendance-summary {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+
+    .employee-dashboard-grid {
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .employee-wide-card {
+        grid-column:
+            span 1;
+    }
+
+}
+
+
+@media (max-width: 520px) {
+
+    .hr-dashboard-shell {
+        padding-top:
+            28px;
+    }
+
+
+    .hr-metric-grid {
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .hr-header-side {
+        align-items:
+            flex-start;
+
+        flex-direction:
+            column;
+    }
+
+
+    .hr-attendance-summary {
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .hr-workforce-stats,
+    .employee-overview-grid {
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .hr-workforce-stats div,
+    .employee-overview-grid div {
+        border-right: 0;
+
+        border-bottom:
+            1px solid
+            #e2e7e3;
+    }
+
+
+    .hr-quick-grid {
+        grid-template-columns:
+            1fr;
+    }
+
+}
+/* =========================================================
+   DASHBOARD POLISH FIXES
+========================================================= */
+
+
+/* ---------------------------------------------------------
+   PENDING HR WORK
+--------------------------------------------------------- */
+
+.hr-action-row {
+    text-decoration: none !important;
+
+    min-height: 64px;
+
+    padding: 10px 12px;
+
+    grid-template-columns:
+        38px 1fr 30px;
+
+    gap: 12px;
+}
+
+.hr-action-row:hover {
+    text-decoration: none !important;
+}
+
+.hr-action-row *,
+.hr-action-row:hover * {
+    text-decoration: none !important;
+}
+
+
+/* Icon alignment */
+
+.action-row-icon {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    line-height: 1;
+
+    font-size: 12px;
+}
+
+
+/* Title + description */
+
+.hr-action-row > div {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.hr-action-row div strong {
+    margin: 0;
+
+    color: var(--hr-green);
+
+    font-size: 11px;
+
+    line-height: 1.25;
+}
+
+.hr-action-row div span {
+    margin-top: 4px;
+
+    color: #94a29c;
+
+    font-size: 9px;
+
+    line-height: 1.3;
+}
+
+
+/* Right count */
+
+.hr-action-row > b {
+    min-width: 25px;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    color: var(--hr-coral);
+
+    font-size: 15px;
+
+    line-height: 1;
+}
+
+
+/* ---------------------------------------------------------
+   QUICK ACTIONS — COMPACT
+--------------------------------------------------------- */
+
+.hr-quick-actions-card {
+    padding: 22px;
+}
+
+.hr-quick-actions-card .hr-card-header {
+    margin-bottom: 16px;
+}
+
+
+.hr-quick-grid {
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 7px;
+}
+
+
+.hr-quick-grid a {
+    min-height: 66px;
+
+    padding: 11px 12px;
+
+    text-decoration: none !important;
+}
+
+
+.hr-quick-grid a *,
+.hr-quick-grid a:hover * {
+    text-decoration: none !important;
+}
+
+
+.hr-quick-grid a span {
+    width: 25px;
+    height: 25px;
+
+    font-size: 8px;
+}
+
+
+.hr-quick-grid strong {
+    font-size: 9px;
+
+    line-height: 1.25;
+}
+
+
+/* Slightly smaller heading */
+
+.hr-quick-actions-card
+.hr-card-header h2 {
+    font-size: 18px;
+}
+
+.hr-quick-actions-card
+.hr-section-label {
+    margin-bottom: 5px;
+
+    font-size: 9px;
+}
+/* =========================================================
+   ATTENDANCE PERIOD FILTER
+========================================================= */
+
+.attendance-period-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+
+.attendance-period-form {
+    margin: 0;
+}
+
+
+.attendance-period-select {
+    min-width: 135px;
+
+    padding: 8px 30px 8px 11px;
+
+    border:
+        1px solid
+        var(--hr-border);
+
+    border-radius: 6px;
+
+    background: #ffffff;
+
+    color:
+        var(--hr-green);
+
+    font-size: 10px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.attendance-period-select:hover {
+    border-color:
+        #aebdb6;
+}
+
+
+.attendance-period-select:focus {
+    border-color:
+        var(--hr-green);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(6, 59, 45, 0.07);
+}

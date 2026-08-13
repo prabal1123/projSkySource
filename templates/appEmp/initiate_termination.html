@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Initiate Termination{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div class="container" style="max-width: 900px;">
+
+        <div class="sky-header">
+
+            <div>
+                <span class="sky-eyebrow">
+                    HR / Employee Exit
+                </span>
+
+                <h1>Initiate Termination</h1>
+
+                <p class="sky-help-text">
+                    Initiate an employee exit directly.
+                    Manager and Finance clearance will start immediately.
+                </p>
+            </div>
+
+            <a
+                href="{% url 'pendingResignations' %}"
+                class="sky-header-btn"
+            >
+                Pending Resignations
+            </a>
+
+        </div>
+
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+                <h6>Termination Details</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                {% if form.non_field_errors %}
+
+                    <div class="sky-auth-error-banner">
+
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+
+                <form method="post">
+
+                    {% csrf_token %}
+
+
+                    <!-- Employee -->
+                    <div class="mb-3">
+
+                        <label
+                            class="sky-form-label"
+                            for="{{ form.employee.id_for_label }}"
+                        >
+                            {{ form.employee.label }}
+                        </label>
+
+                        {{ form.employee }}
+
+                        <div class="sky-help-text">
+                            Select the employee whose exit should be initiated.
+                        </div>
+
+                        {% for error in form.employee.errors %}
+
+                            <div class="sky-form-error">
+                                {{ error }}
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+
+                    <!-- Final Last Working Date -->
+                    <div class="mb-3">
+
+                        <label
+                            class="sky-form-label"
+                            for="{{ form.final_last_working_date.id_for_label }}"
+                        >
+                            {{ form.final_last_working_date.label }}
+                        </label>
+
+                        {{ form.final_last_working_date }}
+
+                        <div class="sky-help-text">
+                            Set the employee's final working date.
+                            The employee cannot be finalized before this date.
+                        </div>
+
+                        {% for error in form.final_last_working_date.errors %}
+
+                            <div class="sky-form-error">
+                                {{ error }}
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+
+                    <!-- Reason -->
+                    <div class="mb-3">
+
+                        <label
+                            class="sky-form-label"
+                            for="{{ form.reason.id_for_label }}"
+                        >
+                            {{ form.reason.label }}
+                        </label>
+
+                        {{ form.reason }}
+
+                        <div class="sky-help-text">
+                            Enter the reason for initiating the termination.
+                        </div>
+
+                        {% for error in form.reason.errors %}
+
+                            <div class="sky-form-error">
+                                {{ error }}
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+
+                    <div class="mt-4">
+
+                        <button
+                            type="submit"
+                            class="sky-header-btn"
+                            onclick="return confirm('Are you sure you want to initiate termination for this employee? Manager and Finance clearance will start immediately.');"
+                        >
+                            Initiate Termination
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+        <div class="sky-panel mt-4">
+
+            <div class="sky-panel-head">
+                <h6>What happens next?</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                <div class="sky-help-text">
+
+                    After termination is initiated:
+
+                    <br><br>
+
+                    1. Manager NOC is created automatically.
+                    <br>
+                    2. Finance NOC is created automatically.
+                    <br>
+                    3. Both clearances can proceed in parallel.
+                    <br>
+                    4. Once both are approved, the exit becomes
+                    <strong>Ready for Finalization</strong>.
+                    <br>
+                    5. HR can finalize the employee exit on or after
+                    the final last working date.
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

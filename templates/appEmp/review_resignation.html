@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Review Resignation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div class="container" style="max-width: 900px;">
+
+        <div class="sky-header">
+
+            <div>
+                <span class="sky-eyebrow">
+                    HR / Employee Exit
+                </span>
+
+                <h1>Review Resignation</h1>
+
+                <p class="sky-help-text">
+                    Review the employee resignation before
+                    starting exit clearance.
+                </p>
+            </div>
+
+            <a
+                href="{% url 'pendingResignations' %}"
+                class="sky-header-btn"
+            >
+                Back to Pending
+            </a>
+
+        </div>
+
+
+        <div class="sky-panel mb-4">
+
+            <div class="sky-panel-head">
+                <h6>Employee Details</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="sky-form-label">
+                            Employee
+                        </label>
+
+                        <input
+                            type="text"
+                            class="form-control"
+                            value="{{ exit_request.employee.user.get_full_name|default:exit_request.employee.user.username }}"
+                            readonly
+                        >
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="sky-form-label">
+                            Reporting Manager
+                        </label>
+
+                        <input
+                            type="text"
+                            class="form-control"
+                            value="{% if exit_request.employee.manager %}{{ exit_request.employee.manager.user.get_full_name|default:exit_request.employee.manager.user.username }}{% else %}No Manager Assigned{% endif %}"
+                            readonly
+                        >
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="sky-form-label">
+                            Submitted On
+                        </label>
+
+                        <input
+                            type="text"
+                            class="form-control"
+                            value="{{ exit_request.created_at|date:'d M Y, h:i A' }}"
+                            readonly
+                        >
+
+                    </div>
+
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="sky-form-label">
+                            Proposed Last Working Date
+                        </label>
+
+                        <input
+                            type="text"
+                            class="form-control"
+                            value="{{ exit_request.proposed_last_working_date|date:'d M Y' }}"
+                            readonly
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="mb-3">
+
+                    <label class="sky-form-label">
+                        Employee Reason
+                    </label>
+
+                    <textarea
+                        class="form-control"
+                        rows="4"
+                        readonly
+                    >{{ exit_request.reason }}</textarea>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+                <h6>HR Decision</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                <form method="post">
+
+                    {% csrf_token %}
+
+
+                    <div class="mb-3">
+
+                        <label class="sky-form-label">
+                            {{ form.decision.label }}
+                        </label>
+
+                        {{ form.decision }}
+
+                        {% for error in form.decision.errors %}
+                            <div class="sky-form-error">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label class="sky-form-label">
+                            {{ form.final_last_working_date.label }}
+                        </label>
+
+                        {{ form.final_last_working_date }}
+
+                        <div class="sky-help-text">
+                            Required when accepting. By default,
+                            the employee's proposed date is used.
+                        </div>
+
+                        {% for error in form.final_last_working_date.errors %}
+                            <div class="sky-form-error">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label class="sky-form-label">
+                            {{ form.remarks.label }}
+                        </label>
+
+                        {{ form.remarks }}
+
+                        <div class="sky-help-text">
+                            Remarks are mandatory when rejecting.
+                        </div>
+
+                        {% for error in form.remarks.errors %}
+                            <div class="sky-form-error">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="sky-header-btn"
+                    >
+                        Submit HR Decision
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

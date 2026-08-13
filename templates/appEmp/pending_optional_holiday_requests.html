@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Optional Holiday Requests{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/holiday.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div
+        class="container"
+        style="max-width: 1100px;"
+    >
+
+        <!-- Header -->
+        <div class="sky-header">
+
+            <div>
+
+                <span class="sky-eyebrow">
+                    HR / Optional Holidays
+                </span>
+
+                <h1>
+                    Pending Optional Holiday Requests
+                </h1>
+
+                <p class="sky-help-text">
+                    Review employee optional holiday requests.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- Messages -->
+        {% if messages %}
+
+            {% for message in messages %}
+
+                <div class="sky-calendar-message">
+                    {{ message }}
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+
+        <!-- Requests -->
+        <div class="sky-panel">
+
+            <div class="sky-panel-body">
+
+                <div class="holiday-table-wrapper">
+
+                    <table class="holiday-table">
+
+                        <thead>
+
+                            <tr>
+                                <th>Employee</th>
+                                <th>Holiday</th>
+                                <th>Date</th>
+                                <th>Reason</th>
+                                <th>Manager</th>
+                                <th>Action</th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for item in optional_requests %}
+
+                                <tr>
+
+                                    <!-- Employee -->
+                                    <td>
+
+                                        <div class="holiday-name">
+
+                                            {{ item.employee.user.get_full_name|default:item.employee.user.username }}
+
+                                        </div>
+
+                                        <div class="holiday-description">
+                                            {{ item.employee.user.email }}
+                                        </div>
+
+                                    </td>
+
+
+                                    <!-- Holiday -->
+                                    <td>
+
+                                        <span class="
+                                            holiday-badge
+                                            holiday-badge-optional
+                                        ">
+                                            {{ item.holiday.name }}
+                                        </span>
+
+                                    </td>
+
+
+                                    <!-- Date -->
+                                    <td>
+                                        {{ item.holiday.date|date:"d M Y" }}
+                                    </td>
+
+
+                                    <!-- Reason -->
+                                    <td>
+
+                                        {% if item.reason %}
+                                            {{ item.reason }}
+                                        {% else %}
+                                            <span style="color:#9ca3af;">
+                                                —
+                                            </span>
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- Manager -->
+                                    <td>
+
+                                        {% if item.employee.manager %}
+
+                                            {{ item.employee.manager.user.get_full_name|default:item.employee.manager.user.username }}
+
+                                        {% else %}
+
+                                            <span style="color:#9ca3af;">
+                                                —
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- Actions -->
+                                    <td>
+
+                                        <div style="
+                                            display:flex;
+                                            gap:8px;
+                                            flex-wrap:wrap;
+                                        ">
+
+                                            <!-- Approve -->
+                                            <form
+                                                method="post"
+                                                action="{% url 'reviewOptionalHolidayRequest' item.uuid %}"
+                                            >
+
+                                                {% csrf_token %}
+
+                                                <input
+                                                    type="hidden"
+                                                    name="action"
+                                                    value="approve"
+                                                >
+
+                                                <button
+                                                    type="submit"
+                                                    class="holiday-save-btn"
+                                                    style="
+                                                        padding:7px 12px;
+                                                        font-size:12px;
+                                                    "
+                                                >
+                                                    Approve
+                                                </button>
+
+                                            </form>
+
+
+                                            <!-- Reject -->
+                                            <form
+                                                method="post"
+                                                action="{% url 'reviewOptionalHolidayRequest' item.uuid %}"
+                                            >
+
+                                                {% csrf_token %}
+
+                                                <input
+                                                    type="hidden"
+                                                    name="action"
+                                                    value="reject"
+                                                >
+
+                                                <button
+                                                    type="submit"
+                                                    style="
+                                                        padding:7px 12px;
+                                                        border-radius:8px;
+                                                        border:1px solid #fecaca;
+                                                        background:#fef2f2;
+                                                        color:#b91c1c;
+                                                        font-size:12px;
+                                                        font-weight:650;
+                                                        cursor:pointer;
+                                                    "
+                                                >
+                                                    Reject
+                                                </button>
+
+                                            </form>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+
+                            {% empty %}
+
+                                <tr>
+
+                                    <td colspan="6">
+
+                                        <div style="
+                                            padding:36px;
+                                            text-align:center;
+                                            color:#8a94a6;
+                                        ">
+
+                                            No pending optional holiday requests.
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

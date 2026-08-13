@@ -1,16 +1,1066 @@
-{% extends "base.html" %}
+{% load static %}
 
-{% block title %}
-Home Page
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block content %}
+<head>
+    <meta charset="UTF-8">
 
-<div class="card shadow-sm">
-    <div class="card-body">
-        <h1>Welcome to the Home Page</h1>
-        <p>Your journey starts here.</p>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>SkySource | Modern HRMS</title>
+
+    <link
+        rel="stylesheet"
+        href="{% static 'css/landing.css' %}"
+    >
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     NAVBAR
+========================================================= -->
+
+<header class="site-header">
+
+    <div class="page-container nav-inner">
+
+        <a href="/app/" class="brand">
+
+            <span class="brand-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
+
+            <span class="brand-name">
+                SkySource
+            </span>
+
+        </a>
+
+
+        <nav class="main-nav">
+
+            <a href="#platform">
+                Platform
+            </a>
+
+            <a href="#workflow">
+                Workflow
+            </a>
+
+            <a href="#why">
+                Why SkySource
+            </a>
+
+        </nav>
+
+
+        <a
+            href="{% url 'login' %}"
+            class="nav-button"
+        >
+            Login
+        </a>
+
     </div>
-</div>
 
-{% endblock %}
+</header>
+
+
+
+<main>
+
+
+<!-- =========================================================
+     HERO
+========================================================= -->
+
+<section class="hero">
+
+    <div class="hero-shape"></div>
+
+    <div class="page-container hero-layout">
+
+
+        <!-- LEFT -->
+
+        <div class="hero-copy">
+
+            <span class="eyebrow">
+                MODERN HRMS PLATFORM
+            </span>
+
+
+            <h1>
+                Every employee.
+                <br>
+                Every HR process.
+                <br>
+                <strong>One platform.</strong>
+            </h1>
+
+
+            <p class="hero-description">
+
+                SkySource brings employee records,
+                attendance, leave, payroll, holidays
+                and exits into one connected system —
+                helping HR teams manage the entire
+                employee lifecycle from one place.
+
+            </p>
+
+
+            <div class="hero-actions">
+
+                <a
+                    href="{% url 'login' %}"
+                    class="button button-primary"
+                >
+                    Enter SkySource
+                    <span>→</span>
+                </a>
+
+
+                <a
+                    href="#platform"
+                    class="button button-secondary"
+                >
+                    Explore the Platform
+                </a>
+
+            </div>
+
+
+            <div class="hero-metrics">
+
+                <div>
+                    <strong>One</strong>
+                    <span>system of record</span>
+                </div>
+
+                <div>
+                    <strong>Connected</strong>
+                    <span>HR workflows</span>
+                </div>
+
+                <div>
+                    <strong>Secure</strong>
+                    <span>role-based access</span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- RIGHT DASHBOARD MOCKUP -->
+
+        <div class="dashboard-window">
+
+            <div class="window-bar">
+
+                <div class="window-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <span>
+                    SkySource · HR Dashboard
+                </span>
+
+            </div>
+
+
+            <div class="dashboard-content">
+
+
+                <!-- ATTENDANCE -->
+
+                <div class="dash-card attendance-card">
+
+                    <div class="dash-card-label">
+                        TODAY'S ATTENDANCE
+                    </div>
+
+                    <div class="attendance-value">
+                        96%
+                    </div>
+
+                    <span class="attendance-caption">
+                        212 of 221 present
+                    </span>
+
+                    <div class="progress-track">
+                        <div class="progress-fill"></div>
+                    </div>
+
+                </div>
+
+
+
+                <!-- APPROVALS -->
+
+                <div class="dash-card approvals-card">
+
+                    <div class="dark-label">
+                        PENDING APPROVALS
+                    </div>
+
+                    <div class="approval-row">
+                        <span>✓</span>
+                        Leave Request
+                    </div>
+
+                    <div class="approval-row">
+                        <span>✓</span>
+                        Attendance Exception
+                    </div>
+
+                    <div class="approval-row">
+                        <span>✓</span>
+                        Exit Clearance
+                    </div>
+
+                </div>
+
+
+
+                <!-- PAYROLL -->
+
+                <div class="dash-card payroll-card">
+
+                    <div>
+
+                        <div class="dash-card-label">
+                            PAYROLL
+                        </div>
+
+                        <strong class="payroll-value">
+                            Processed
+                        </strong>
+
+                        <span>
+                            Payslips generated
+                        </span>
+
+                    </div>
+
+                    <span class="status-pill">
+                        COMPLETED
+                    </span>
+
+                </div>
+
+
+
+                <!-- LEAVE -->
+
+                <div class="dash-card leave-card">
+
+                    <div class="dash-card-label">
+                        LEAVE BALANCE
+                    </div>
+
+
+                    <div class="leave-item">
+
+                        <div>
+                            <span>Earned</span>
+                            <strong>14 / 18</strong>
+                        </div>
+
+                        <div class="leave-track">
+                            <span style="width:78%"></span>
+                        </div>
+
+                    </div>
+
+
+                    <div class="leave-item">
+
+                        <div>
+                            <span>Casual</span>
+                            <strong>6 / 10</strong>
+                        </div>
+
+                        <div class="leave-track">
+                            <span style="width:60%"></span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     PLATFORM
+========================================================= -->
+
+<section
+    class="platform-section"
+    id="platform"
+>
+
+    <div class="page-container">
+
+
+        <div class="section-intro">
+
+            <span class="eyebrow">
+                THE PLATFORM
+            </span>
+
+            <h2>
+                Everything HR runs on,
+                connected by design.
+            </h2>
+
+            <p>
+                Employee information, attendance,
+                leave, payroll and HR workflows share
+                the same source of employee data.
+                Update once — use it everywhere.
+            </p>
+
+        </div>
+
+
+
+        <div class="platform-grid">
+
+
+            <!-- EMPLOYEE RECORDS -->
+
+            <article class="platform-card employee-card">
+
+                <div class="feature-top">
+
+                    <div class="feature-icon">
+                        👤
+                    </div>
+
+                    <span class="arrow">
+                        ↗
+                    </span>
+
+                </div>
+
+
+                <h3>
+                    Employee Records
+                </h3>
+
+                <p>
+                    Complete employee profiles with
+                    personal and professional information,
+                    reporting managers, designations,
+                    shifts and work schedules.
+                </p>
+
+
+                <div class="tag-list">
+
+                    <span>
+                        Employee profiles
+                    </span>
+
+                    <span>
+                        Manager mapping
+                    </span>
+
+                    <span>
+                        Employment details
+                    </span>
+
+                </div>
+
+
+                <div class="record-preview">
+
+                    <div>
+                        <span class="avatar">A</span>
+
+                        <div>
+                            <strong>Employee Profile</strong>
+                            <small>Active Employee</small>
+                        </div>
+                    </div>
+
+
+                    <div>
+                        <span class="avatar">M</span>
+
+                        <div>
+                            <strong>Reporting Manager</strong>
+                            <small>Assigned</small>
+                        </div>
+                    </div>
+
+                </div>
+
+            </article>
+
+
+
+            <!-- ATTENDANCE -->
+
+            <article class="platform-card dark-card attendance-feature">
+
+                <div class="feature-top">
+
+                    <div class="feature-icon coral-icon">
+                        ◷
+                    </div>
+
+                    <span class="arrow muted-arrow">
+                        ↗
+                    </span>
+
+                </div>
+
+
+                <h3>
+                    Attendance
+                </h3>
+
+                <p>
+                    Shift-aware check-in and check-out,
+                    attendance calendars and exception
+                    requests handled inside one workflow.
+                </p>
+
+
+                <div class="dark-tags">
+
+                    <span>Daily tracking</span>
+                    <span>Calendar</span>
+                    <span>Exceptions</span>
+                </div>
+
+            </article>
+
+
+
+            <!-- LEAVE -->
+
+            <article class="platform-card narrow-card">
+
+                <div class="feature-top">
+
+                    <div class="feature-icon">
+                        □
+                    </div>
+
+                    <span class="arrow">
+                        ↗
+                    </span>
+
+                </div>
+
+
+                <h3>
+                    Leave Management
+                </h3>
+
+                <p>
+                    Leave applications,
+                    approval workflows,
+                    leave balances and
+                    employee request history.
+                </p>
+
+
+                <div class="tag-list vertical-tags">
+
+                    <span>Applications</span>
+
+                    <span>
+                        Approvals
+                    </span>
+
+                    <span>
+                        Leave balances
+                    </span>
+
+                </div>
+
+            </article>
+
+
+
+            <!-- PAYROLL -->
+
+            <article class="platform-card payroll-feature">
+
+                <div class="feature-top">
+
+                    <div class="feature-icon">
+                        ₹
+                    </div>
+
+                    <span class="arrow">
+                        ↗
+                    </span>
+
+                </div>
+
+
+                <h3>
+                    Payroll & Salary
+                </h3>
+
+                <p>
+                    Manage salary structures,
+                    basic salary, HRA, PF,
+                    deductions, payroll processing
+                    and employee salary records.
+                </p>
+
+
+                <div class="tag-list">
+
+                    <span>
+                        Salary structure
+                    </span>
+
+                    <span>
+                        Payroll processing
+                    </span>
+
+                    <span>
+                        Deductions
+                    </span>
+
+                </div>
+
+
+                <div class="salary-preview">
+
+                    <div>
+                        <strong>Basic</strong>
+                        <span>Salary</span>
+                    </div>
+
+                    <div>
+                        <strong>HRA</strong>
+                        <span>Allowance</span>
+                    </div>
+
+                    <div>
+                        <strong>PF</strong>
+                        <span>Deduction</span>
+                    </div>
+
+                </div>
+
+            </article>
+
+
+
+            <!-- HOLIDAYS -->
+
+            <article class="platform-card">
+
+                <div class="feature-top">
+
+                    <div class="feature-icon">
+                        ◫
+                    </div>
+
+                    <span class="arrow">
+                        ↗
+                    </span>
+
+                </div>
+
+
+                <h3>
+                    Holidays & Schedules
+                </h3>
+
+                <p>
+                    Mandatory and optional holidays,
+                    monthly and yearly calendars,
+                    work schedules and employee-specific
+                    weekly offs.
+                </p>
+
+
+                <div class="tag-list vertical-tags">
+
+                    <span>
+                        Holiday calendar
+                    </span>
+
+                    <span>
+                        Optional holidays
+                    </span>
+
+                    <span>
+                        Work schedules
+                    </span>
+
+                </div>
+
+            </article>
+
+
+
+            <!-- ROLES -->
+
+            <article class="platform-card">
+
+                <div class="feature-top">
+
+                    <div class="feature-icon">
+                        ◇
+                    </div>
+
+                    <span class="arrow">
+                        ↗
+                    </span>
+
+                </div>
+
+
+                <h3>
+                    Roles & Permissions
+                </h3>
+
+                <p>
+                    HR, managers, team leads and
+                    employees see only the features
+                    and actions their permissions allow.
+                </p>
+
+
+                <div class="tag-list vertical-tags">
+
+                    <span>
+                        Role-based access
+                    </span>
+
+                    <span>
+                        Permission controls
+                    </span>
+
+                </div>
+
+            </article>
+
+
+
+            <!-- EXIT -->
+
+            <article class="platform-card">
+
+                <div class="feature-top">
+
+                    <div class="feature-icon">
+                        ↗
+                    </div>
+
+                    <span class="arrow">
+                        ↗
+                    </span>
+
+                </div>
+
+
+                <h3>
+                    Exit & Offboarding
+                </h3>
+
+                <p>
+                    Resignations, termination,
+                    manager and finance clearance,
+                    NOCs and final exit processing.
+                </p>
+
+
+                <div class="tag-list vertical-tags">
+
+                    <span>Resignations</span>
+                    <span>Clearance</span>
+                    <span>NOC workflow</span>
+
+                </div>
+
+            </article>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     WORKFLOW
+========================================================= -->
+
+<section
+    class="workflow-section"
+    id="workflow"
+>
+
+    <div class="page-container workflow-layout">
+
+
+        <div class="workflow-copy">
+
+            <span class="eyebrow">
+                HOW IT FLOWS
+            </span>
+
+            <h2>
+                Approvals that
+                move themselves.
+            </h2>
+
+            <p>
+                Requests move from employees to the
+                appropriate reviewer through a defined
+                workflow, keeping actions and records
+                connected.
+            </p>
+
+        </div>
+
+
+
+        <div class="workflow-steps">
+
+
+            <article class="workflow-card">
+
+                <div class="workflow-number">
+                    01
+                </div>
+
+                <div class="workflow-icon">
+                    ➤
+                </div>
+
+                <h3>
+                    Employee requests
+                </h3>
+
+                <p>
+                    Employees apply for leave,
+                    optional holidays or raise
+                    attendance exceptions from
+                    their own account.
+                </p>
+
+            </article>
+
+
+
+            <article class="workflow-card">
+
+                <div class="workflow-number">
+                    02
+                </div>
+
+                <div class="workflow-icon">
+                    ✓
+                </div>
+
+                <h3>
+                    Manager approves
+                </h3>
+
+                <p>
+                    Requests reach the relevant
+                    manager or HR reviewer based
+                    on permissions and workflow.
+                </p>
+
+            </article>
+
+
+
+            <article class="workflow-card">
+
+                <div class="workflow-number">
+                    03
+                </div>
+
+                <div class="workflow-icon">
+                    ↻
+                </div>
+
+                <h3>
+                    Records update
+                </h3>
+
+                <p>
+                    Approved requests are reflected
+                    across attendance calendars,
+                    employee records and related
+                    HR processes.
+                </p>
+
+            </article>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     WHY SKYSOURCE
+========================================================= -->
+
+<section
+    class="why-section"
+    id="why"
+>
+
+    <div class="page-container">
+
+
+        <div class="why-heading">
+
+            <span class="eyebrow">
+                WHY SKYSOURCE
+            </span>
+
+            <h2>
+                The complete HR lifecycle,
+                without the patchwork.
+            </h2>
+
+        </div>
+
+
+
+        <div class="lifecycle-grid">
+
+            <div class="lifecycle-box active-box">
+                <span>+</span>
+                <strong>Join</strong>
+            </div>
+
+            <div class="lifecycle-box">
+                <span>▣</span>
+                <strong>Records</strong>
+            </div>
+
+            <div class="lifecycle-box">
+                <span>◷</span>
+                <strong>Attendance</strong>
+            </div>
+
+            <div class="lifecycle-box">
+                <span>□</span>
+                <strong>Leave</strong>
+            </div>
+
+            <div class="lifecycle-box">
+                <span>₹</span>
+                <strong>Payroll</strong>
+            </div>
+
+            <div class="lifecycle-box">
+                <span>↗</span>
+                <strong>Exit</strong>
+            </div>
+
+        </div>
+
+
+
+        <div class="benefit-grid">
+
+
+            <article>
+
+                <h3>
+                    Centralized information
+                </h3>
+
+                <p>
+                    Employee data lives in one place —
+                    organized, searchable and consistent
+                    across HR workflows.
+                </p>
+
+            </article>
+
+
+            <article>
+
+                <h3>
+                    Less manual work
+                </h3>
+
+                <p>
+                    Structured workflows reduce repeated
+                    manual coordination for approvals,
+                    attendance and HR operations.
+                </p>
+
+            </article>
+
+
+            <article>
+
+                <h3>
+                    Visibility for everyone
+                </h3>
+
+                <p>
+                    HR gets the overall view while
+                    employees can track their own
+                    attendance, leave and requests.
+                </p>
+
+            </article>
+
+
+            <article>
+
+                <h3>
+                    Controlled access
+                </h3>
+
+                <p>
+                    Django groups and permissions
+                    control which capabilities each
+                    user is allowed to access.
+                </p>
+
+            </article>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     CTA
+========================================================= -->
+
+<section class="final-cta">
+
+    <div class="cta-shape"></div>
+
+    <div class="page-container cta-inner">
+
+        <span class="eyebrow light-eyebrow">
+            GET STARTED
+        </span>
+
+
+        <h2>
+            Run your entire HR
+            lifecycle from
+            <strong>one place.</strong>
+        </h2>
+
+
+        <p>
+            Bring employee records, attendance,
+            leave, payroll, holidays and offboarding
+            together with SkySource.
+        </p>
+
+
+        <a
+            href="{% url 'login' %}"
+            class="button coral-button"
+        >
+            Login to SkySource
+            <span>→</span>
+        </a>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+
+<footer class="site-footer">
+
+    <div class="page-container footer-layout">
+
+
+        <div class="footer-brand">
+
+            <span class="brand-icon footer-logo">
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
+
+            <strong>
+                SkySource
+            </strong>
+
+        </div>
+
+
+        <div class="footer-links">
+
+            <a href="#platform">
+                Platform
+            </a>
+
+            <a href="#workflow">
+                Workflow
+            </a>
+
+            <a href="#why">
+                Why SkySource
+            </a>
+
+        </div>
+
+
+        <span class="copyright">
+            © 2026 SkySource HRMS
+        </span>
+
+    </div>
+
+</footer>
+
+
+</main>
+<script src="{% static 'js/landing.js' %}"></script>
+</body>
+
+</html>

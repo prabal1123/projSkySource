@@ -1,339 +1,401 @@
 {% extends "base.html" %}
+
 {% load static %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard | SkySource{% endblock %}
+
 
 {% block extra_css %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+
+<link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+>
+
+<link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+    rel="stylesheet"
+>
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/dashboard.css' %}"
+>
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/hr_dashboard.css' %}"
+>
+
 {% endblock %}
 
+
 {% block content %}
-<div class="sky-dashboard">
-    <div class="container">
+
+<div class="hr-dashboard-shell">
+
+    <div class="container hr-dashboard-container">
+
 
         {% if is_admin_view %}
 
-            <!-- Header -->
-            <div class="sky-header">
+            <!-- =====================================================
+                 HR / ADMIN DASHBOARD
+            ====================================================== -->
+
+
+            <!-- =====================================================
+                 HEADER
+            ====================================================== -->
+
+            <section class="hr-welcome">
+
                 <div>
-                    <span class="sky-eyebrow">Organization / Live</span>
-                    <h1>Dashboard</h1>
+
+                    <span class="hr-kicker">
+                        SKYSOURCE / HR CONTROL CENTER
+                    </span>
+
+                    <h1>
+                        Good day,
+                        <strong>
+                            {{ user.first_name|default:user.username }}
+                        </strong>
+                    </h1>
+
+                    <p>
+                        Here’s what is happening across your workforce
+                        and what needs attention today.
+                    </p>
+
                 </div>
 
-                <span class="sky-date sky-mono">
-                    {% now "D, M j Y" %}
-                </span>
-            </div>
 
+                <div class="hr-header-side">
 
-            <!-- Main Stats -->
-            <div class="sky-stat-row">
+                    <span class="hr-live-pill">
+                        <span></span>
+                        Live
+                    </span>
 
-                <div class="sky-stat is-teal">
-                    <div class="sky-stat-value sky-mono">
-                        {{ total_employees }}
+                    <div class="hr-date">
+                        {% now "D, M j Y" %}
                     </div>
-                    <div class="sky-stat-label">
-                        Total Employees
-                    </div>
+
                 </div>
 
-                <div class="sky-stat is-teal">
-                    <div class="sky-stat-value sky-mono">
-                        {{ attendance_summary.present }}
-                    </div>
-                    <div class="sky-stat-label">
-                        Present Today
-                    </div>
-                </div>
-
-                <div class="sky-stat is-rose">
-                    <div class="sky-stat-value sky-mono">
-                        {{ attendance_summary.absent }}
-                    </div>
-                    <div class="sky-stat-label">
-                        Absent Today
-                    </div>
-                </div>
-
-                <div class="sky-stat is-amber">
-                    <div class="sky-stat-value sky-mono">
-                        {{ attendance_summary.not_marked }}
-                    </div>
-                    <div class="sky-stat-label">
-                        Not Marked
-                    </div>
-                </div>
-
-            </div>
+            </section>
 
 
-            <!-- Action Required -->
-            <div class="sky-panel mb-4">
 
-                <div class="sky-panel-head">
-                    <div>
-                        <span class="sky-eyebrow">
-                            HR Operations
+            <!-- =====================================================
+                 TOP METRICS
+            ====================================================== -->
+
+            <section class="hr-metric-grid">
+
+
+                <!-- Total Employees -->
+
+                <a
+                    {% if can_manage_employees %}
+                        href="{% url 'employeeList' %}"
+                    {% else %}
+                        href="#"
+                    {% endif %}
+                    class="hr-metric-card"
+                >
+
+                    <div class="hr-metric-top">
+
+                        <span class="hr-metric-label">
+                            Total Employees
                         </span>
 
-                        <h6>
-                            Action Required
-                        </h6>
-                    </div>
-                </div>
-
-                <div class="sky-panel-body">
-
-                    <div class="row g-3">
-
-                        <!-- Pending Leave Requests -->
-                        <div class="col-md-6 col-xl-4">
-
-                            <a
-                                href="{% url 'pendingLeaveRequests' %}"
-                                class="sky-action-card"
-                            >
-
-                                <div class="sky-action-card-top">
-
-                                    <div class="sky-action-icon">
-                                        L
-                                    </div>
-
-                                    {% if pending_leave_requests_count %}
-                                        <span class="sky-action-count">
-                                            {{ pending_leave_requests_count }}
-                                        </span>
-                                    {% endif %}
-
-                                </div>
-
-                                <strong>
-                                    Pending Leave Requests
-                                </strong>
-
-                                <span>
-                                    Review and approve or reject
-                                    employee leave applications.
-                                </span>
-
-                            </a>
-
-                        </div>
-
-
-                        <!-- Attendance Exceptions -->
-                        <div class="col-md-6 col-xl-4">
-
-                            <a
-                                href="{% url 'pendingAttendanceExceptions' %}"
-                                class="sky-action-card"
-                            >
-
-                                <div class="sky-action-card-top">
-
-                                    <div class="sky-action-icon">
-                                        A
-                                    </div>
-
-                                    {% if pending_attendance_exceptions_count %}
-                                        <span class="sky-action-count">
-                                            {{ pending_attendance_exceptions_count }}
-                                        </span>
-                                    {% endif %}
-
-                                </div>
-
-                                <strong>
-                                    Attendance Exceptions
-                                </strong>
-
-                                <span>
-                                    {{ pending_attendance_exceptions_count }}
-                                    attendance correction request(s)
-                                    are pending.
-                                </span>
-
-                            </a>
-
-                        </div>
-
-
-                        <!-- Leave Balances -->
-                        <div class="col-md-6 col-xl-4">
-
-                            <a
-                                href="{% url 'leaveBalanceList' %}"
-                                class="sky-action-card"
-                            >
-
-                                <div class="sky-action-card-top">
-
-                                    <div class="sky-action-icon">
-                                        B
-                                    </div>
-
-                                    {% if employees_without_leave_balance %}
-                                        <span class="sky-action-count">
-                                            {{ employees_without_leave_balance }}
-                                        </span>
-                                    {% endif %}
-
-                                </div>
-
-                                <strong>
-                                    Leave Balances
-                                </strong>
-
-                                <span>
-                                    Assign or adjust employee
-                                    leave balances.
-                                </span>
-
-                            </a>
-
-                        </div>
-
-
-                        <!-- All Leave Requests -->
-                        <div class="col-md-6 col-xl-4">
-
-                            <a
-                                href="{% url 'allLeaveRequests' %}"
-                                class="sky-action-card"
-                            >
-
-                                <div class="sky-action-card-top">
-
-                                    <div class="sky-action-icon">
-                                        R
-                                    </div>
-
-                                </div>
-
-                                <strong>
-                                    All Leave Requests
-                                </strong>
-
-                                <span>
-                                    View pending, approved,
-                                    rejected and cancelled requests.
-                                </span>
-
-                            </a>
-
-                        </div>
-
-
-                        <!-- Employee Management -->
-                        <div class="col-md-6 col-xl-4">
-
-                            <a
-                                href="{% url 'employeeList' %}"
-                                class="sky-action-card"
-                            >
-
-                                <div class="sky-action-card-top">
-
-                                    <div class="sky-action-icon">
-                                        E
-                                    </div>
-
-                                </div>
-
-                                <strong>
-                                    Employee Management
-                                </strong>
-
-                                <span>
-                                    Manage employee profiles,
-                                    reporting managers and employment details.
-                                </span>
-
-                            </a>
-
-                        </div>
-
-
-                        <!-- Add Employee -->
-                        <div class="col-md-6 col-xl-4">
-
-                            <a
-                                href="{% url 'register' %}"
-                                class="sky-action-card"
-                            >
-
-                                <div class="sky-action-card-top">
-
-                                    <div class="sky-action-icon">
-                                        +
-                                    </div>
-
-                                </div>
-
-                                <strong>
-                                    Add Employee
-                                </strong>
-
-                                <span>
-                                    Create and onboard a
-                                    new employee.
-                                </span>
-
-                            </a>
-
-                        </div>
+                        <span class="hr-metric-icon">
+                            ◇
+                        </span>
 
                     </div>
 
+                    <strong class="hr-metric-value">
+                        {{ total_employees }}
+                    </strong>
+
+                    <span class="hr-metric-note">
+                        {{ active_employees }} active employees
+                    </span>
+
+                </a>
+
+
+
+                <!-- Present Today -->
+
+                <div class="hr-metric-card metric-green">
+
+                    <div class="hr-metric-top">
+
+                        <span class="hr-metric-label">
+                            Present Today
+                        </span>
+
+                        <span class="hr-metric-icon">
+                            ✓
+                        </span>
+
+                    </div>
+
+                    <strong class="hr-metric-value">
+                        {{ attendance_summary.present }}
+                    </strong>
+
+                    <span class="hr-metric-note">
+                        {{ attendance_percentage }}% attendance
+                    </span>
+
                 </div>
 
-            </div>
 
 
-            <!-- Verification + Today's Attendance -->
-            <div class="row g-3">
+                <!-- Absent Today -->
 
-                <!-- Verification -->
-                <div class="col-lg-5">
+                <div class="hr-metric-card metric-coral">
 
-                    <div class="sky-panel">
+                    <div class="hr-metric-top">
 
-                        <div class="sky-panel-head">
-                            <h6>
-                                Verification Status
-                            </h6>
+                        <span class="hr-metric-label">
+                            Absent Today
+                        </span>
+
+                        <span class="hr-metric-icon">
+                            ×
+                        </span>
+
+                    </div>
+
+                    <strong class="hr-metric-value">
+                        {{ attendance_summary.absent }}
+                    </strong>
+
+                    <span class="hr-metric-note">
+                        Attendance marked absent
+                    </span>
+
+                </div>
+
+
+
+                <!-- On Leave -->
+
+                <div class="hr-metric-card">
+
+                    <div class="hr-metric-top">
+
+                        <span class="hr-metric-label">
+                            On Leave
+                        </span>
+
+                        <span class="hr-metric-icon">
+                            □
+                        </span>
+
+                    </div>
+
+                    <strong class="hr-metric-value">
+                        {{ attendance_summary.leave }}
+                    </strong>
+
+                    <span class="hr-metric-note">
+                        Approved leave today
+                    </span>
+
+                </div>
+
+
+
+                <!-- Pending Actions -->
+
+                <div class="hr-metric-card metric-dark">
+
+                    <div class="hr-metric-top">
+
+                        <span class="hr-metric-label">
+                            Pending Actions
+                        </span>
+
+                        <span class="hr-metric-icon">
+                            !
+                        </span>
+
+                    </div>
+
+                    <strong class="hr-metric-value">
+                        {{ pending_hr_actions_count }}
+                    </strong>
+
+                    <span class="hr-metric-note">
+                        Items waiting for review
+                    </span>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================================
+                 MAIN DASHBOARD
+            ====================================================== -->
+
+            <section class="hr-main-grid">
+
+
+                <!-- =================================================
+                     ATTENDANCE OVERVIEW
+                ================================================== -->
+
+                <article class="hr-card hr-attendance-card">
+
+                    <div class="hr-card-header">
+
+                        <div>
+
+                            <span class="hr-section-label">
+                                ATTENDANCE
+                            </span>
+
+                            <h2>
+                                Today’s attendance
+                            </h2>
+
                         </div>
 
-                        <div class="sky-panel-body">
+                        <span class="hr-large-percentage">
+                            {{ attendance_percentage }}%
+                        </span>
 
-                            {% for label, count in verification_stats.items %}
+                    </div>
 
-                                <div class="sky-meter-row">
 
-                                    <div class="sky-meter-top">
+                    <div class="hr-progress-track">
 
-                                        <span class="sky-meter-name">
-                                            {{ label|cut:"_"|title }}
-                                        </span>
+                        <div
+                            class="hr-progress-value"
+                            style="width: {{ attendance_percentage }}%;"
+                        ></div>
 
-                                        <span class="sky-meter-count sky-mono">
-                                            {{ count }}/{{ total_employees }}
-                                        </span>
+                    </div>
 
-                                    </div>
 
-                                    <div class="sky-meter-track">
+                    <div class="hr-attendance-summary">
+
+                        <div>
+
+                            <span class="summary-dot present-dot"></span>
+
+                            <div>
+                                <strong>
+                                    {{ attendance_summary.present }}
+                                </strong>
+
+                                <span>
+                                    Present
+                                </span>
+                            </div>
+
+                        </div>
+
+
+                        <div>
+
+                            <span class="summary-dot absent-dot"></span>
+
+                            <div>
+                                <strong>
+                                    {{ attendance_summary.absent }}
+                                </strong>
+
+                                <span>
+                                    Absent
+                                </span>
+                            </div>
+
+                        </div>
+
+
+                        <div>
+
+                            <span class="summary-dot leave-dot"></span>
+
+                            <div>
+                                <strong>
+                                    {{ attendance_summary.leave }}
+                                </strong>
+
+                                <span>
+                                    Leave
+                                </span>
+                            </div>
+
+                        </div>
+
+
+                        <div>
+
+                            <span class="summary-dot unmarked-dot"></span>
+
+                            <div>
+                                <strong>
+                                    {{ attendance_summary.not_marked }}
+                                </strong>
+
+                                <span>
+                                    Not Marked
+                                </span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- 7 Day Trend -->
+
+                    <div class="hr-trend">
+
+                        <div class="hr-subheading">
+
+                            <strong>
+                                Last 7 days
+                            </strong>
+
+                            <span>
+                                Attendance trend
+                            </span>
+
+                        </div>
+
+
+                        <div class="hr-trend-bars">
+
+                            {% for item in attendance_trend %}
+
+                                <div class="trend-day">
+
+                                    <div class="trend-bar-track">
 
                                         <div
-                                            class="sky-meter-fill"
-                                            style="width: {% widthratio count total_employees 100 %}%"
+                                            class="trend-bar-fill"
+                                            style="height: {{ item.present_percent }}%;"
+                                            title="{{ item.present }} present"
                                         ></div>
 
                                     </div>
+
+                                    <span>
+                                        {{ item.label }}
+                                    </span>
 
                                 </div>
 
@@ -343,274 +405,1608 @@
 
                     </div>
 
-                </div>
+                </article>
 
 
-                <!-- Today's Attendance -->
-                <div class="col-lg-7">
 
-                    <div class="sky-panel">
+                <!-- =================================================
+                     PENDING HR ACTIONS
+                ================================================== -->
 
-                        <div class="sky-panel-head">
+                <article class="hr-card hr-actions-panel">
 
-                            <h6>
-                                Today's Attendance
-                            </h6>
+                    <div class="hr-card-header">
 
-                            <span class="sky-count">
-                                {{ today_attendance|length }} record(s)
+                        <div>
+
+                            <span class="hr-section-label">
+                                ACTION REQUIRED
                             </span>
 
-                        </div>
-
-                        <div class="table-responsive">
-
-                            <table class="sky-table">
-
-                                <thead>
-                                    <tr>
-                                        <th>Employee</th>
-                                        <th>Status</th>
-                                        <th>In</th>
-                                        <th>Out</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-
-                                    {% for record in today_attendance %}
-
-                                        <tr>
-
-                                            <td>
-                                                {{ record.employee.user.first_name }}
-                                                {{ record.employee.user.last_name }}
-                                            </td>
-
-                                            <td>
-                                                <span class="sky-pill {{ record.status|lower }}">
-                                                    {{ record.get_status_display }}
-                                                </span>
-                                            </td>
-
-                                            <td class="sky-time">
-                                                {{ record.check_in|time:"H:i"|default:"—" }}
-                                            </td>
-
-                                            <td class="sky-time">
-                                                {{ record.check_out|time:"H:i"|default:"—" }}
-                                            </td>
-
-                                            <td>
-                                                <a
-                                                    href="{% url 'editAttendance' record.uuid %}"
-                                                    class="sky-edit-link"
-                                                >
-                                                    Edit
-                                                </a>
-                                            </td>
-
-                                        </tr>
-
-                                    {% empty %}
-
-                                        <tr>
-                                            <td
-                                                colspan="5"
-                                                class="sky-empty"
-                                            >
-                                                No attendance marked yet today.
-                                            </td>
-                                        </tr>
-
-                                    {% endfor %}
-
-                                </tbody>
-
-                            </table>
+                            <h2>
+                                Pending HR work
+                            </h2>
 
                         </div>
+
+                        <span class="hr-action-total">
+                            {{ pending_hr_actions_count }}
+                        </span>
 
                     </div>
 
-                </div>
 
-            </div>
-
-
-        {% else %}
-
-            <!-- Employee Dashboard -->
-            <div class="sky-header">
-
-                <div>
-                    <span class="sky-eyebrow">
-                        Your Day
-                    </span>
-
-                    <h1>
-                        Welcome, {{ profile.user.first_name }}
-                    </h1>
-                </div>
-
-                <span class="sky-date sky-mono">
-                    {% now "D, M j Y" %}
-                </span>
-
-            </div>
+                    <div class="hr-action-list">
 
 
-            <div class="row g-3">
+                        {% if can_review_leave %}
 
-                <!-- Punch Card -->
-                <div class="col-md-5">
+                            <!-- Leave -->
 
-                    <div class="sky-punch-card">
-
-                        {% if my_attendance_today.check_out %}
-
-                            <div class="sky-punch-status">
-                                You're checked out for today.
-                            </div>
-
-                            <span class="sky-pill {{ my_attendance_today.status|lower }}">
-                                {{ my_attendance_today.get_status_display }}
-                            </span>
-
-                            <div class="sky-punch-times">
-                                In {{ my_attendance_today.check_in|time:"H:i" }}
-                                &middot;
-                                Out {{ my_attendance_today.check_out|time:"H:i" }}
-                            </div>
-
-                        {% elif my_attendance_today.check_in %}
-
-                            <div class="sky-punch-status">
-                                Checked in at
-                                {{ my_attendance_today.check_in|time:"H:i" }}
-                            </div>
-
-                            <form
-                                method="post"
-                                action="{% url 'checkinCheckout' %}"
+                            <a
+                                href="{% url 'pendingLeaveRequests' %}"
+                                class="hr-action-row"
                             >
-                                {% csrf_token %}
 
-                                <button
-                                    type="submit"
-                                    class="sky-punch-btn out"
-                                >
-                                    Check Out
-                                </button>
+                                <span class="action-row-icon">
+                                    L
+                                </span>
 
-                            </form>
+                                <div>
 
-                        {% else %}
+                                    <strong>
+                                        Leave Requests
+                                    </strong>
 
-                            <div class="sky-punch-status">
-                                You haven't checked in yet.
-                            </div>
+                                    <span>
+                                        Awaiting approval
+                                    </span>
 
-                            <form
-                                method="post"
-                                action="{% url 'checkinCheckout' %}"
+                                </div>
+
+                                <b>
+                                    {{ pending_leave_requests_count }}
+                                </b>
+
+                            </a>
+
+
+                            <!-- Optional Holiday -->
+
+                            <a
+                                href="{% url 'pendingOptionalHolidayRequests' %}"
+                                class="hr-action-row"
                             >
-                                {% csrf_token %}
 
-                                <button
-                                    type="submit"
-                                    class="sky-punch-btn in"
-                                >
-                                    Check In
-                                </button>
+                                <span class="action-row-icon coral">
+                                    H
+                                </span>
 
-                            </form>
+                                <div>
+
+                                    <strong>
+                                        Optional Holidays
+                                    </strong>
+
+                                    <span>
+                                        Requests waiting for review
+                                    </span>
+
+                                </div>
+
+                                <b>
+                                    {{ pending_optional_holiday_requests_count }}
+                                </b>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_review_attendance_exception %}
+
+                            <a
+                                href="{% url 'pendingAttendanceExceptions' %}"
+                                class="hr-action-row"
+                            >
+
+                                <span class="action-row-icon">
+                                    A
+                                </span>
+
+                                <div>
+
+                                    <strong>
+                                        Attendance Exceptions
+                                    </strong>
+
+                                    <span>
+                                        Correction requests
+                                    </span>
+
+                                </div>
+
+                                <b>
+                                    {{ pending_attendance_exceptions_count }}
+                                </b>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_view_all_clearance_requests %}
+
+                            <a
+                                href="{% url 'pendingResignations' %}"
+                                class="hr-action-row"
+                            >
+
+                                <span class="action-row-icon coral">
+                                    X
+                                </span>
+
+                                <div>
+
+                                    <strong>
+                                        Resignations
+                                    </strong>
+
+                                    <span>
+                                        Awaiting HR action
+                                    </span>
+
+                                </div>
+
+                                <b>
+                                    {{ pending_resignations_count }}
+                                </b>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_review_manager_noc %}
+
+                            <a
+                                href="{% url 'managerClearanceQueue' %}"
+                                class="hr-action-row"
+                            >
+
+                                <span class="action-row-icon">
+                                    M
+                                </span>
+
+                                <div>
+
+                                    <strong>
+                                        Manager NOCs
+                                    </strong>
+
+                                    <span>
+                                        Clearance pending
+                                    </span>
+
+                                </div>
+
+                                <b>
+                                    {{ pending_manager_noc_count }}
+                                </b>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_review_finance_noc %}
+
+                            <a
+                                href="{% url 'financeClearanceQueue' %}"
+                                class="hr-action-row"
+                            >
+
+                                <span class="action-row-icon">
+                                    F
+                                </span>
+
+                                <div>
+
+                                    <strong>
+                                        Finance NOCs
+                                    </strong>
+
+                                    <span>
+                                        Finance clearance pending
+                                    </span>
+
+                                </div>
+
+                                <b>
+                                    {{ pending_finance_noc_count }}
+                                </b>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_finalize_employee_exit %}
+
+                            <a
+                                href="{% url 'readyForFinalization' %}"
+                                class="hr-action-row"
+                            >
+
+                                <span class="action-row-icon coral">
+                                    ✓
+                                </span>
+
+                                <div>
+
+                                    <strong>
+                                        Exit Finalization
+                                    </strong>
+
+                                    <span>
+                                        Ready to finalize
+                                    </span>
+
+                                </div>
+
+                                <b>
+                                    {{ ready_for_finalization_count }}
+                                </b>
+
+                            </a>
 
                         {% endif %}
 
                     </div>
 
-                </div>
+                </article>
 
 
-                <!-- Recent Attendance -->
-                <div class="col-md-7">
 
-                    <div class="sky-panel">
+                <!-- =================================================
+                     WORKFORCE
+                ================================================== -->
 
-                        <div class="sky-panel-head">
-                            <h6>
-                                Recent Attendance
-                            </h6>
+                <article class="hr-card">
+
+                    <div class="hr-card-header">
+
+                        <div>
+
+                            <span class="hr-section-label">
+                                WORKFORCE
+                            </span>
+
+                            <h2>
+                                Employee overview
+                            </h2>
+
                         </div>
 
-                        <div class="table-responsive">
 
-                            <table class="sky-table">
+                        {% if can_manage_employees %}
 
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Status</th>
-                                        <th>In</th>
-                                        <th>Out</th>
-                                    </tr>
-                                </thead>
+                            <a
+                                href="{% url 'employeeList' %}"
+                                class="hr-text-link"
+                            >
+                                View all →
+                            </a>
 
-                                <tbody>
+                        {% endif %}
 
-                                    {% for record in recent_attendance %}
+                    </div>
 
-                                        <tr>
 
-                                            <td>
-                                                {{ record.date|date:"M d" }}
-                                            </td>
+                    <div class="hr-workforce-stats">
 
-                                            <td>
-                                                <span class="sky-pill {{ record.status|lower }}">
-                                                    {{ record.get_status_display }}
-                                                </span>
-                                            </td>
+                        <div>
 
-                                            <td class="sky-time">
-                                                {{ record.check_in|time:"H:i"|default:"—" }}
-                                            </td>
+                            <strong>
+                                {{ active_employees }}
+                            </strong>
 
-                                            <td class="sky-time">
-                                                {{ record.check_out|time:"H:i"|default:"—" }}
-                                            </td>
+                            <span>
+                                Active
+                            </span>
 
-                                        </tr>
+                        </div>
 
-                                    {% empty %}
 
-                                        <tr>
-                                            <td
-                                                colspan="4"
-                                                class="sky-empty"
-                                            >
-                                                No records yet.
-                                            </td>
-                                        </tr>
+                        <div>
 
-                                    {% endfor %}
+                            <strong>
+                                {{ exiting_employees_count }}
+                            </strong>
 
-                                </tbody>
+                            <span>
+                                Exiting
+                            </span>
 
-                            </table>
+                        </div>
+
+
+                        <div>
+
+                            <strong>
+                                {{ employees_without_leave_balance }}
+                            </strong>
+
+                            <span>
+                                Leave balance pending
+                            </span>
 
                         </div>
 
                     </div>
 
+
+                    <div class="hr-subheading">
+
+                        <strong>
+                            Recently added
+                        </strong>
+
+                        <span>
+                            Latest employee records
+                        </span>
+
+                    </div>
+
+
+                    <div class="hr-people-list">
+
+                        {% for employee in recent_employees %}
+
+                            <div class="hr-person-row">
+
+                                <span class="hr-avatar">
+
+                                    {{ employee.user.first_name|first|default:employee.user.username|first|upper }}
+
+                                </span>
+
+
+                                <div>
+
+                                    <strong>
+                                        {{ employee.user.get_full_name|default:employee.user.username }}
+                                    </strong>
+
+                                    <span>
+
+                                        {% if employee.designation %}
+                                            {{ employee.designation }}
+                                        {% else %}
+                                            Employee
+                                        {% endif %}
+
+                                    </span>
+
+                                </div>
+
+
+                                <span class="hr-person-status">
+                                    Active
+                                </span>
+
+                            </div>
+
+
+                        {% empty %}
+
+                            <div class="hr-empty-state">
+                                No employee records available.
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </article>
+
+
+
+                <!-- =================================================
+                     LEAVE OVERVIEW
+                ================================================== -->
+
+                <article class="hr-card">
+
+                    <div class="hr-card-header">
+
+                        <div>
+
+                            <span class="hr-section-label">
+                                LEAVE
+                            </span>
+
+                            <h2>
+                                Leave overview
+                            </h2>
+
+                        </div>
+
+
+                        {% if can_review_leave %}
+
+                            <a
+                                href="{% url 'allLeaveRequests' %}"
+                                class="hr-text-link"
+                            >
+                                View requests →
+                            </a>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="hr-leave-highlight">
+
+                        <strong>
+                            {{ employees_on_leave_today }}
+                        </strong>
+
+                        <span>
+                            employees on approved leave today
+                        </span>
+
+                    </div>
+
+
+                    <div class="hr-subheading">
+
+                        <strong>
+                            Upcoming approved leave
+                        </strong>
+
+                        <span>
+                            Next employee absences
+                        </span>
+
+                    </div>
+
+
+                    <div class="hr-compact-list">
+
+                        {% for leave in upcoming_approved_leaves %}
+
+                            <div class="hr-compact-row">
+
+                                <div>
+
+                                    <strong>
+                                        {{ leave.employee.user.get_full_name|default:leave.employee.user.username }}
+                                    </strong>
+
+                                    <span>
+                                        {{ leave.leave_type.name }}
+                                    </span>
+
+                                </div>
+
+
+                                <span class="hr-date-badge">
+                                    {{ leave.start_date|date:"d M" }}
+                                </span>
+
+                            </div>
+
+
+                        {% empty %}
+
+                            <div class="hr-empty-state">
+                                No upcoming approved leave.
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </article>
+
+
+
+                <!-- =================================================
+                     UPCOMING HOLIDAYS
+                ================================================== -->
+
+                <article class="hr-card">
+
+                    <div class="hr-card-header">
+
+                        <div>
+
+                            <span class="hr-section-label">
+                                CALENDAR
+                            </span>
+
+                            <h2>
+                                Upcoming holidays
+                            </h2>
+
+                        </div>
+
+
+                        {% if can_manage_attendance %}
+
+                            <a
+                                href="{% url 'holidayCalendar' %}"
+                                class="hr-text-link"
+                            >
+                                Calendar →
+                            </a>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="hr-holiday-list">
+
+                        {% for holiday in upcoming_holidays %}
+
+                            <div class="hr-holiday-row">
+
+                                <div class="holiday-date-box">
+
+                                    <strong>
+                                        {{ holiday.date|date:"d" }}
+                                    </strong>
+
+                                    <span>
+                                        {{ holiday.date|date:"M" }}
+                                    </span>
+
+                                </div>
+
+
+                                <div>
+
+                                    <strong>
+                                        {{ holiday.name }}
+                                    </strong>
+
+                                    <span>
+                                        {{ holiday.date|date:"l" }}
+                                    </span>
+
+                                </div>
+
+
+                                {% if holiday.holiday_type == "OPTIONAL" %}
+
+                                    <span class="holiday-type optional">
+                                        Optional
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="holiday-type mandatory">
+                                        Company
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+
+                        {% empty %}
+
+                            <div class="hr-empty-state">
+                                No upcoming holidays.
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </article>
+
+
+
+                <!-- =================================================
+                     QUICK ACTIONS
+                ================================================== -->
+
+                <article class="hr-card hr-quick-actions-card">
+
+                    <div class="hr-card-header">
+
+                        <div>
+
+                            <span class="hr-section-label">
+                                SHORTCUTS
+                            </span>
+
+                            <h2>
+                                Quick actions
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="hr-quick-grid">
+
+
+                        {% if can_manage_employees %}
+
+                            <a href="{% url 'register' %}">
+
+                                <span>+</span>
+
+                                <strong>
+                                    Add Employee
+                                </strong>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_review_leave %}
+
+                            <a href="{% url 'pendingLeaveRequests' %}">
+
+                                <span>L</span>
+
+                                <strong>
+                                    Review Leaves
+                                </strong>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_review_attendance_exception %}
+
+                            <a href="{% url 'pendingAttendanceExceptions' %}">
+
+                                <span>A</span>
+
+                                <strong>
+                                    Attendance Exceptions
+                                </strong>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_manage_attendance %}
+
+                            <a href="{% url 'holidayList' %}">
+
+                                <span>H</span>
+
+                                <strong>
+                                    Manage Holidays
+                                </strong>
+
+                            </a>
+
+
+                            <a href="{% url 'workScheduleList' %}">
+
+                                <span>W</span>
+
+                                <strong>
+                                    Work Schedules
+                                </strong>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_manage_leave_balance %}
+
+                            <a href="{% url 'leaveBalanceList' %}">
+
+                                <span>B</span>
+
+                                <strong>
+                                    Leave Balances
+                                </strong>
+
+                            </a>
+
+                        {% endif %}
+
+                    </div>
+
+                </article>
+
+
+
+                <!-- =================================================
+                     ATTENDANCE HISTORY
+                ================================================== -->
+
+                <article class="hr-card hr-wide-card">
+
+                    <div class="hr-card-header">
+
+                        <div>
+
+                            <span class="hr-section-label">
+                                ATTENDANCE HISTORY
+                            </span>
+
+                            <h2>
+                                Attendance records
+                            </h2>
+
+                        </div>
+
+
+                        <div class="attendance-period-controls">
+
+
+                            <!-- PERIOD FILTER -->
+
+                            <form
+                                method="get"
+                                class="attendance-period-form"
+                            >
+
+                                <select
+                                    name="attendance_period"
+                                    class="attendance-period-select"
+                                    onchange="this.form.submit()"
+                                >
+
+                                    <option
+                                        value="today"
+                                        {% if attendance_period == "today" %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        Today
+                                    </option>
+
+
+                                    <option
+                                        value="7"
+                                        {% if attendance_period == "7" %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        Last 7 Days
+                                    </option>
+
+
+                                    <option
+                                        value="30"
+                                        {% if attendance_period == "30" %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        Last 30 Days
+                                    </option>
+
+                                </select>
+
+                            </form>
+
+
+                            <span class="hr-record-count">
+                                {{ attendance_records|length }} records
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="table-responsive">
+
+                        <table class="hr-dashboard-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Date
+                                    </th>
+
+                                    <th>
+                                        Employee
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                    <th>
+                                        Check In
+                                    </th>
+
+                                    <th>
+                                        Check Out
+                                    </th>
+
+                                    {% if can_manage_attendance %}
+                                        <th></th>
+                                    {% endif %}
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                {% for record in attendance_records %}
+
+                                    <tr>
+
+
+                                        <!-- Date -->
+
+                                        <td>
+                                            {{ record.date|date:"d M Y" }}
+                                        </td>
+
+
+                                        <!-- Employee -->
+
+                                        <td>
+
+                                            <div class="table-person">
+
+                                                <span class="table-avatar">
+
+                                                    {{ record.employee.user.first_name|first|default:record.employee.user.username|first|upper }}
+
+                                                </span>
+
+                                                <strong>
+
+                                                    {{ record.employee.user.get_full_name|default:record.employee.user.username }}
+
+                                                </strong>
+
+                                            </div>
+
+                                        </td>
+
+
+                                        <!-- Status -->
+
+                                        <td>
+
+                                            <span class="attendance-status {{ record.status|lower }}">
+
+                                                {{ record.get_status_display }}
+
+                                            </span>
+
+                                        </td>
+
+
+                                        <!-- Check In -->
+
+                                        <td>
+                                            {{ record.check_in|time:"H:i"|default:"—" }}
+                                        </td>
+
+
+                                        <!-- Check Out -->
+
+                                        <td>
+                                            {{ record.check_out|time:"H:i"|default:"—" }}
+                                        </td>
+
+
+                                        <!-- Edit -->
+
+                                        {% if can_manage_attendance %}
+
+                                            <td>
+
+                                                <a
+                                                    href="{% url 'editAttendance' record.uuid %}"
+                                                    class="table-action"
+                                                >
+                                                    Edit
+                                                </a>
+
+                                            </td>
+
+                                        {% endif %}
+
+                                    </tr>
+
+
+                                {% empty %}
+
+                                    <tr>
+
+                                        <td
+                                            {% if can_manage_attendance %}
+                                                colspan="6"
+                                            {% else %}
+                                                colspan="5"
+                                            {% endif %}
+                                            class="hr-empty-table"
+                                        >
+                                            No attendance records found
+                                            for {{ attendance_period_label }}.
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </article>
+
+
+            </section>
+
+
+
+        {% else %}
+
+
+            <!-- =====================================================
+                 NORMAL EMPLOYEE DASHBOARD
+            ====================================================== -->
+
+
+            <!-- HEADER -->
+
+            <section class="hr-welcome employee-welcome">
+
+                <div>
+
+                    <span class="hr-kicker">
+                        YOUR WORKSPACE
+                    </span>
+
+                    <h1>
+
+                        Welcome,
+                        <strong>
+                            {{ profile.user.first_name|default:profile.user.username }}
+                        </strong>
+
+                    </h1>
+
+                    <p>
+                        Your attendance, leave and upcoming
+                        schedule in one place.
+                    </p>
+
                 </div>
 
-            </div>
+
+                <div class="hr-header-side">
+
+                    <div class="hr-date">
+                        {% now "D, M j Y" %}
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================================
+                 EMPLOYEE MAIN GRID
+            ====================================================== -->
+
+            <section class="employee-dashboard-grid">
+
+
+                <!-- =================================================
+                     TODAY / CHECK IN
+                ================================================== -->
+
+                <article class="employee-punch-card">
+
+                    <span class="hr-section-label light">
+                        TODAY'S ATTENDANCE
+                    </span>
+
+
+                    {% if day_context.holiday %}
+
+                        <h2>
+                            {{ day_context.holiday.name }}
+                        </h2>
+
+                        <p>
+                            Today is a company holiday.
+                            Attendance is not required.
+                        </p>
+
+
+                    {% elif day_context.is_weekly_off %}
+
+                        <h2>
+                            Weekly Off
+                        </h2>
+
+                        <p>
+                            Today is a non-working day based
+                            on your assigned work schedule.
+                        </p>
+
+
+                    {% elif day_context.approved_optional_holiday %}
+
+                        <h2>
+                            {{ day_context.approved_optional_holiday.holiday.name }}
+                        </h2>
+
+                        <p>
+                            Your optional holiday has been approved.
+                            Attendance is not required.
+                        </p>
+
+
+                    {% elif day_context.approved_leave and day_context.approved_leave.duration_type == "FULL_DAY" %}
+
+                        <h2>
+                            On Leave
+                        </h2>
+
+                        <p>
+                            {{ day_context.approved_leave.leave_type.name }}
+                            is approved for today.
+                        </p>
+
+
+                    {% elif my_attendance_today.check_out %}
+
+                        <h2>
+                            Day completed
+                        </h2>
+
+                        <p>
+                            Checked in at
+                            {{ my_attendance_today.check_in|time:"H:i" }}
+                            and checked out at
+                            {{ my_attendance_today.check_out|time:"H:i" }}.
+                        </p>
+
+                        <span class="employee-status-pill">
+                            {{ my_attendance_today.get_status_display }}
+                        </span>
+
+
+                    {% elif my_attendance_today.check_in %}
+
+                        <h2>
+                            You're checked in
+                        </h2>
+
+                        <p>
+                            Started at
+                            {{ my_attendance_today.check_in|time:"H:i" }}.
+                        </p>
+
+
+                        <form
+                            method="post"
+                            action="{% url 'checkinCheckout' %}"
+                        >
+
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="employee-punch-button"
+                            >
+                                Check Out →
+                            </button>
+
+                        </form>
+
+
+                    {% else %}
+
+                        <h2>
+                            Ready to start?
+                        </h2>
+
+                        <p>
+                            Check in when you begin your workday.
+                        </p>
+
+
+                        <form
+                            method="post"
+                            action="{% url 'checkinCheckout' %}"
+                        >
+
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="employee-punch-button"
+                            >
+                                Check In →
+                            </button>
+
+                        </form>
+
+                    {% endif %}
+
+                </article>
+
+
+
+                <!-- =================================================
+                     EMPLOYEE OVERVIEW
+                ================================================== -->
+
+                <article class="hr-card">
+
+                    <div class="hr-card-header">
+
+                        <div>
+
+                            <span class="hr-section-label">
+                                OVERVIEW
+                            </span>
+
+                            <h2>
+                                My workspace
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="employee-overview-grid">
+
+                        <div>
+
+                            <strong>
+                                {{ my_pending_leave_requests }}
+                            </strong>
+
+                            <span>
+                                Pending Leaves
+                            </span>
+
+                        </div>
+
+
+                        <div>
+
+                            <strong>
+                                {{ active_resignation_count }}
+                            </strong>
+
+                            <span>
+                                Active Exit Requests
+                            </span>
+
+                        </div>
+
+
+                        <div>
+
+                            <strong>
+                                {{ recent_attendance|length }}
+                            </strong>
+
+                            <span>
+                                Recent Records
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="employee-shortcuts">
+
+                        <a href="{% url 'attendanceCalendarSelf' %}">
+                            Attendance Calendar →
+                        </a>
+
+                        <a href="{% url 'applyLeave' %}">
+                            Apply Leave →
+                        </a>
+
+                        <a href="{% url 'optionalHolidayApply' %}">
+                            Optional Holidays →
+                        </a>
+
+                    </div>
+
+                </article>
+
+
+
+                <!-- =================================================
+                     RECENT ATTENDANCE
+                ================================================== -->
+
+                <article class="hr-card employee-wide-card">
+
+                    <div class="hr-card-header">
+
+                        <div>
+
+                            <span class="hr-section-label">
+                                ATTENDANCE
+                            </span>
+
+                            <h2>
+                                Recent attendance
+                            </h2>
+
+                        </div>
+
+
+                        <a
+                            href="{% url 'attendanceCalendarSelf' %}"
+                            class="hr-text-link"
+                        >
+                            Calendar →
+                        </a>
+
+                    </div>
+
+
+                    <div class="table-responsive">
+
+                        <table class="hr-dashboard-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Date
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                    <th>
+                                        Check In
+                                    </th>
+
+                                    <th>
+                                        Check Out
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                {% for record in recent_attendance %}
+
+                                    <tr>
+
+                                        <td>
+                                            {{ record.date|date:"d M Y" }}
+                                        </td>
+
+
+                                        <td>
+
+                                            <span class="attendance-status {{ record.status|lower }}">
+
+                                                {{ record.get_status_display }}
+
+                                            </span>
+
+                                        </td>
+
+
+                                        <td>
+                                            {{ record.check_in|time:"H:i"|default:"—" }}
+                                        </td>
+
+
+                                        <td>
+                                            {{ record.check_out|time:"H:i"|default:"—" }}
+                                        </td>
+
+                                    </tr>
+
+
+                                {% empty %}
+
+                                    <tr>
+
+                                        <td
+                                            colspan="4"
+                                            class="hr-empty-table"
+                                        >
+                                            No attendance records yet.
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </article>
+
+
+
+                <!-- =================================================
+                     MY UPCOMING LEAVE
+                ================================================== -->
+
+                <article class="hr-card">
+
+                    <div class="hr-card-header">
+
+                        <div>
+
+                            <span class="hr-section-label">
+                                LEAVE
+                            </span>
+
+                            <h2>
+                                Upcoming leave
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="hr-compact-list">
+
+                        {% for leave in my_upcoming_leaves %}
+
+                            <div class="hr-compact-row">
+
+                                <div>
+
+                                    <strong>
+                                        {{ leave.leave_type.name }}
+                                    </strong>
+
+                                    <span>
+
+                                        {{ leave.start_date|date:"d M" }}
+
+                                        –
+
+                                        {{ leave.end_date|date:"d M" }}
+
+                                    </span>
+
+                                </div>
+
+
+                                <span class="holiday-type mandatory">
+                                    Approved
+                                </span>
+
+                            </div>
+
+
+                        {% empty %}
+
+                            <div class="hr-empty-state">
+                                No upcoming approved leave.
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </article>
+
+
+
+                <!-- =================================================
+                     MY HOLIDAYS
+                ================================================== -->
+
+                <article class="hr-card">
+
+                    <div class="hr-card-header">
+
+                        <div>
+
+                            <span class="hr-section-label">
+                                CALENDAR
+                            </span>
+
+                            <h2>
+                                Upcoming holidays
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="hr-holiday-list">
+
+
+                        <!-- Mandatory -->
+
+                        {% for holiday in upcoming_holidays %}
+
+                            <div class="hr-holiday-row">
+
+                                <div class="holiday-date-box">
+
+                                    <strong>
+                                        {{ holiday.date|date:"d" }}
+                                    </strong>
+
+                                    <span>
+                                        {{ holiday.date|date:"M" }}
+                                    </span>
+
+                                </div>
+
+
+                                <div>
+
+                                    <strong>
+                                        {{ holiday.name }}
+                                    </strong>
+
+                                    <span>
+                                        Company Holiday
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+
+                        <!-- Approved Optional -->
+
+                        {% for optional in my_upcoming_optional_holidays %}
+
+                            <div class="hr-holiday-row">
+
+                                <div class="holiday-date-box optional-date">
+
+                                    <strong>
+                                        {{ optional.holiday.date|date:"d" }}
+                                    </strong>
+
+                                    <span>
+                                        {{ optional.holiday.date|date:"M" }}
+                                    </span>
+
+                                </div>
+
+
+                                <div>
+
+                                    <strong>
+                                        {{ optional.holiday.name }}
+                                    </strong>
+
+                                    <span>
+                                        Approved Optional Holiday
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </article>
+
+            </section>
+
+
+
+            <!-- =====================================================
+                 MANAGER / FINANCE ACTIONS
+            ====================================================== -->
+
+            {% if can_review_manager_noc or can_review_finance_noc %}
+
+                <section class="employee-role-actions">
+
+                    <div class="hr-card-header">
+
+                        <div>
+
+                            <span class="hr-section-label">
+                                WORKFLOW
+                            </span>
+
+                            <h2>
+                                Actions assigned to you
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="hr-quick-grid">
+
+                        {% if can_review_manager_noc %}
+
+                            <a href="{% url 'managerClearanceQueue' %}">
+
+                                <span>
+                                    M
+                                </span>
+
+                                <strong>
+                                    Manager NOCs
+                                    ({{ pending_manager_noc_count }})
+                                </strong>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_review_finance_noc %}
+
+                            <a href="{% url 'financeClearanceQueue' %}">
+
+                                <span>
+                                    F
+                                </span>
+
+                                <strong>
+                                    Finance NOCs
+                                    ({{ pending_finance_noc_count }})
+                                </strong>
+
+                            </a>
+
+                        {% endif %}
+
+                    </div>
+
+                </section>
+
+            {% endif %}
+
 
         {% endif %}
 
     </div>
+
 </div>
+
 {% endblock %}

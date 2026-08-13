@@ -1,21 +1,45 @@
 {% extends "base.html" %}
+
 {% load static %}
+
 
 {% block title %}Leave Balances{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/dashboard.css' %}"
+>
+
 {% endblock %}
 
+
 {% block content %}
+
 <div class="sky-dashboard">
+
     <div class="container">
 
+
+        <!-- ====================================== -->
+        <!-- HEADER -->
+        <!-- ====================================== -->
+
         <div class="sky-header">
+
             <div>
-                <span class="sky-eyebrow">Leaves / Administration</span>
-                <h1>Leave Balances</h1>
+
+                <span class="sky-eyebrow">
+                    Leaves / Administration
+                </span>
+
+                <h1>
+                    Leave Balances
+                </h1>
+
             </div>
+
 
             <a
                 href="{% url 'addLeaveBalance' %}"
@@ -23,74 +47,161 @@
             >
                 + Assign Leave
             </a>
+
         </div>
 
+
+        <!-- ====================================== -->
+        <!-- FILTERS -->
+        <!-- ====================================== -->
+
         <div class="sky-panel mb-4">
+
             <div class="sky-panel-head">
-                <h6>Filters</h6>
+
+                <h6>
+                    Filters
+                </h6>
+
             </div>
 
+
             <div class="sky-panel-body">
+
                 <form method="get">
+
                     <div class="row">
 
-                        <div class="col-md-4 mb-3">
-                            <label class="sky-form-label">Employee</label>
 
-                            <select name="employee" class="form-control">
-                                <option value="">All Employees</option>
+                        <!-- Employee Filter -->
+
+                        <div class="col-md-4 mb-3">
+
+                            <label class="sky-form-label">
+                                Employee
+                            </label>
+
+
+                            <select
+                                name="employee"
+                                class="form-control"
+                            >
+
+                                <option value="">
+                                    All Employees
+                                </option>
+
 
                                 {% for employee in employees %}
+
                                     <option
                                         value="{{ employee.id }}"
-                                        {% if selected_employee == employee.id|stringformat:"s" %}selected{% endif %}
+                                        {% if selected_employee == employee.id|stringformat:"s" %}
+                                            selected
+                                        {% endif %}
                                     >
+
                                         {{ employee.user.get_full_name|default:employee.user.username }}
+
                                     </option>
+
                                 {% endfor %}
+
                             </select>
+
                         </div>
 
-                        <div class="col-md-4 mb-3">
-                            <label class="sky-form-label">Leave Type</label>
 
-                            <select name="leave_type" class="form-control">
-                                <option value="">All Leave Types</option>
+                        <!-- Leave Type Filter -->
+
+                        <div class="col-md-4 mb-3">
+
+                            <label class="sky-form-label">
+                                Leave Type
+                            </label>
+
+
+                            <select
+                                name="leave_type"
+                                class="form-control"
+                            >
+
+                                <option value="">
+                                    All Leave Types
+                                </option>
+
 
                                 {% for leave_type in leave_types %}
+
                                     <option
                                         value="{{ leave_type.id }}"
-                                        {% if selected_leave_type == leave_type.id|stringformat:"s" %}selected{% endif %}
+                                        {% if selected_leave_type == leave_type.id|stringformat:"s" %}
+                                            selected
+                                        {% endif %}
                                     >
+
                                         {{ leave_type.name }}
+
                                     </option>
+
                                 {% endfor %}
+
                             </select>
+
                         </div>
+
+
+                        <!-- Year Filter -->
 
                         <div class="col-md-4 mb-3">
-                            <label class="sky-form-label">Year</label>
 
-                            <select name="year" class="form-control">
-                                <option value="">All Years</option>
+                            <label class="sky-form-label">
+                                Year
+                            </label>
+
+
+                            <select
+                                name="year"
+                                class="form-control"
+                            >
+
+                                <option value="">
+                                    All Years
+                                </option>
+
 
                                 {% for item_year in years %}
+
                                     <option
                                         value="{{ item_year }}"
-                                        {% if selected_year == item_year|stringformat:"s" %}selected{% endif %}
+                                        {% if selected_year == item_year|stringformat:"s" %}
+                                            selected
+                                        {% endif %}
                                     >
+
                                         {{ item_year }}
+
                                     </option>
+
                                 {% endfor %}
+
                             </select>
+
                         </div>
+
 
                     </div>
 
+
                     <div class="d-flex gap-2">
-                        <button type="submit" class="sky-header-btn">
+
+                        <button
+                            type="submit"
+                            class="sky-header-btn"
+                        >
                             Apply Filters
                         </button>
+
 
                         <a
                             href="{% url 'leaveBalanceList' %}"
@@ -98,75 +209,223 @@
                         >
                             Clear
                         </a>
+
                     </div>
+
                 </form>
+
             </div>
+
         </div>
 
+
+        <!-- ====================================== -->
+        <!-- LEAVE BALANCE LIST -->
+        <!-- ====================================== -->
+
         <div class="sky-panel">
+
             <div class="sky-panel-head">
-                <h6>Employee Leave Balances</h6>
+
+                <div>
+
+                    <h6>
+                        Employee Leave Balances
+                    </h6>
+
+                    <span class="sky-help-text">
+                        Leave availability depends on the
+                        employee's configured eligibility date.
+                    </span>
+
+                </div>
+
 
                 <span class="sky-count">
                     {{ balances|length }} record(s)
                 </span>
+
             </div>
 
+
             <div class="table-responsive">
+
                 <table class="sky-table">
+
                     <thead>
+
                         <tr>
-                            <th>Employee</th>
-                            <th>Leave Type</th>
-                            <th>Year</th>
-                            <th>Allotted</th>
-                            <th>Used</th>
-                            <th>Adjustment</th>
-                            <th>Available</th>
-                            <th class="text-end">Action</th>
+
+                            <th>
+                                Employee
+                            </th>
+
+                            <th>
+                                Leave Type
+                            </th>
+
+                            <th>
+                                Year
+                            </th>
+
+                            <th>
+                                Allotted
+                            </th>
+
+                            <th>
+                                Used
+                            </th>
+
+                            <th>
+                                Available
+                            </th>
+
+                            <th>
+                                Leave Facility From
+                            </th>
+
                         </tr>
+
                     </thead>
 
+
                     <tbody>
+
                         {% for balance in balances %}
+
                             <tr>
+
+
+                                <!-- Employee -->
+
                                 <td>
+
                                     {{ balance.employee.user.get_full_name|default:balance.employee.user.username }}
+
                                 </td>
 
-                                <td>{{ balance.leave_type.name }}</td>
-                                <td>{{ balance.year }}</td>
-                                <td>{{ balance.total_allotted }}</td>
-                                <td>{{ balance.used }}</td>
-                                <td>{{ balance.adjustment }}</td>
+
+                                <!-- Leave Type -->
 
                                 <td>
-                                    <strong>{{ balance.available_balance }}</strong>
+
+                                    {{ balance.leave_type.name }}
+
                                 </td>
 
-                                <td class="text-end">
-                                    <a
-                                        href="{% url 'editLeaveBalance' balance.uuid %}"
-                                        class="sky-edit-link"
-                                    >
-                                        Edit
-                                    </a>
+
+                                <!-- Year -->
+
+                                <td>
+
+                                    {{ balance.year }}
+
                                 </td>
+
+
+                                <!-- Total Allotted -->
+
+                                <td>
+
+                                    {{ balance.total_allotted }}
+
+                                </td>
+
+
+                                <!-- Used -->
+
+                                <td>
+
+                                    {{ balance.used }}
+
+                                </td>
+
+
+                                <!-- Available -->
+
+                                <td>
+
+                                    <strong>
+                                        {{ balance.available_balance }}
+                                    </strong>
+
+                                </td>
+
+
+                                <!-- Leave Eligibility -->
+
+                                <td>
+
+                                    {% if balance.employee.effective_leave_eligible_from %}
+
+                                        <div>
+
+                                            {{ balance.employee.effective_leave_eligible_from|date:"d M Y" }}
+
+                                        </div>
+
+
+                                        <div class="mt-1">
+
+                                            {% if balance.employee.is_leave_eligible %}
+
+                                                <span class="sky-pill approved">
+                                                    Available
+                                                </span>
+
+                                            {% else %}
+
+                                                <span class="sky-pill pending">
+                                                    Probation
+                                                </span>
+
+                                            {% endif %}
+
+                                        </div>
+
+
+                                    {% else %}
+
+                                        <span class="sky-pill rejected">
+                                            Joining Date Required
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
                             </tr>
+
 
                         {% empty %}
+
                             <tr>
-                                <td colspan="8" class="sky-empty">
+
+                                <td
+                                    colspan="7"
+                                    class="sky-empty"
+                                >
+
                                     No leave balances found.
+
                                 </td>
+
                             </tr>
+
                         {% endfor %}
+
                     </tbody>
 
                 </table>
+
             </div>
+
         </div>
 
+
     </div>
+
 </div>
+
 {% endblock %}

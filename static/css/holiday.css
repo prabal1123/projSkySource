@@ -1,0 +1,404 @@
+.holiday-page {
+    padding: 32px 0 60px;
+}
+
+.holiday-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.holiday-filter-form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.holiday-filter-form input,
+.holiday-filter-form select {
+    min-height: 42px;
+    padding: 0 14px;
+    border: 1px solid #d8dee9;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 14px;
+    outline: none;
+    transition: 0.2s ease;
+}
+
+.holiday-filter-form input:focus,
+.holiday-filter-form select:focus {
+    border-color: #8aa4ff;
+    box-shadow: 0 0 0 3px rgba(80, 110, 230, 0.1);
+}
+
+.holiday-filter-btn {
+    min-height: 42px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #1f2937;
+    color: #fff;
+}
+
+.holiday-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid #e8ebf0;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.holiday-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.holiday-table th {
+    text-align: left;
+    padding: 15px 18px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #6b7280;
+    background: #f8fafc;
+    border-bottom: 1px solid #e8ebf0;
+}
+
+.holiday-table td {
+    padding: 17px 18px;
+    border-bottom: 1px solid #eef1f5;
+    font-size: 14px;
+    color: #253047;
+}
+
+.holiday-table tr:last-child td {
+    border-bottom: none;
+}
+
+.holiday-table tbody tr {
+    transition: 0.18s ease;
+}
+
+.holiday-table tbody tr:hover {
+    background: #fafbff;
+}
+
+.holiday-name {
+    font-weight: 650;
+    color: #111827;
+}
+
+.holiday-description {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #8a94a6;
+}
+
+.holiday-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.holiday-badge-mandatory {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.holiday-badge-optional {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.holiday-status-active {
+    color: #15803d;
+    font-weight: 600;
+}
+
+.holiday-status-inactive {
+    color: #9ca3af;
+    font-weight: 600;
+}
+
+.holiday-edit-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 12px;
+    border: 1px solid #dce1e8;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+.holiday-edit-link:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+
+
+/* Add / Edit form */
+
+.holiday-form-card {
+    background: #fff;
+    border: 1px solid #e8ebf0;
+    border-radius: 16px;
+    padding: 28px;
+}
+
+.holiday-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.holiday-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.holiday-form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.holiday-form-group label {
+    font-size: 13px;
+    font-weight: 650;
+    color: #374151;
+}
+
+.holiday-form-group input,
+.holiday-form-group select,
+.holiday-form-group textarea {
+    width: 100%;
+    border: 1px solid #d8dee9;
+    border-radius: 10px;
+    padding: 11px 13px;
+    font-size: 14px;
+    background: #fff;
+    outline: none;
+    transition: 0.2s ease;
+}
+
+.holiday-form-group input:focus,
+.holiday-form-group select:focus,
+.holiday-form-group textarea:focus {
+    border-color: #8aa4ff;
+    box-shadow: 0 0 0 3px rgba(80, 110, 230, 0.1);
+}
+
+.holiday-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 26px;
+}
+
+.holiday-save-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 11px 20px;
+    background: #1f2937;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.holiday-cancel-btn {
+    text-decoration: none;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .holiday-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .holiday-form-group.full-width {
+        grid-column: auto;
+    }
+}
+/* Compact Holiday Calendar */
+
+.holiday-calendar-compact .attendance-day {
+    min-height: 82px;
+    padding: 7px;
+}
+
+.holiday-calendar-compact .attendance-day-number {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.holiday-calendar-compact .attendance-weekday {
+    padding: 8px 4px;
+    font-size: 12px;
+}
+
+.holiday-calendar-compact .holiday-badge {
+    padding: 4px 7px;
+    font-size: 10px;
+    line-height: 1.2;
+    white-space: normal;
+}
+
+.holiday-calendar-compact .attendance-calendar {
+    gap: 4px;
+}
+
+.holiday-calendar-compact .attendance-day a {
+    margin-top: 5px !important;
+}
+/* -------------------------------------------------
+   Holiday Year View
+-------------------------------------------------- */
+
+.holiday-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.holiday-year-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 22px;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.holiday-year-navigation h5 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.holiday-year-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.holiday-mini-calendar {
+    border: 1px solid #e6eaf0;
+    border-radius: 14px;
+    background: #ffffff;
+    padding: 14px;
+    transition: 0.2s ease;
+}
+
+.holiday-mini-calendar:hover {
+    border-color: #cfd6e3;
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.05);
+}
+
+.holiday-mini-month {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+    text-decoration: none;
+}
+
+.holiday-mini-month:hover {
+    color: #4f46e5;
+}
+
+.holiday-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+}
+
+.holiday-mini-weekdays {
+    margin-bottom: 5px;
+}
+
+.holiday-mini-weekdays div {
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #9ca3af;
+}
+
+.holiday-mini-day {
+    position: relative;
+    min-height: 32px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+}
+
+.holiday-mini-number {
+    color: #4b5563;
+}
+
+.holiday-mini-outside {
+    opacity: 0;
+}
+
+.holiday-mini-today {
+    background: #f1f5f9;
+    font-weight: 700;
+}
+
+.holiday-mini-has-holiday {
+    font-weight: 700;
+}
+
+.holiday-mini-dot {
+    position: absolute;
+    bottom: 3px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+}
+
+.holiday-mini-dot-mandatory {
+    background: #4f46e5;
+}
+
+.holiday-mini-dot-optional {
+    background: #ea580c;
+}
+
+.holiday-mini-dot:nth-of-type(2) {
+    margin-left: 9px;
+}
+
+.holiday-mini-dot:nth-of-type(3) {
+    margin-left: -9px;
+}
+
+@media (max-width: 1000px) {
+    .holiday-year-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 650px) {
+    .holiday-year-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -14,16 +14,23 @@
         <div class="sky-header">
             <div>
                 <span class="sky-eyebrow">Employee / Profile</span>
-                <h1>
-                    {{ profile.user.first_name }}
-                    {{ profile.user.last_name }}
-                </h1>
 
-                {% if profile.user.username %}
-                    <p class="sky-help-text">
-                        Username: {{ profile.user.username }}
-                    </p>
-                {% endif %}
+                <h1>
+    {% if profile.user.first_name or profile.user.last_name %}
+        {{ profile.user.first_name }} {{ profile.user.last_name }}
+    {% else %}
+        {{ profile.user.username }}
+    {% endif %}
+</h1>
+
+<p class="sky-help-text">
+    Username: {{ profile.user.username }}
+
+    {% if profile.user.email %}
+        &nbsp;·&nbsp;
+        {{ profile.user.email }}
+    {% endif %}
+</p>
             </div>
         </div>
 
@@ -36,6 +43,7 @@
         {% endif %}
 
         <div class="sky-panel">
+
             <div class="sky-panel-head">
                 <h6>Employment Details</h6>
             </div>
@@ -52,28 +60,133 @@
                     {% csrf_token %}
 
                     <div class="row">
+                        <div class="row">
 
-                        {% if form.role %}
+    <!-- Username -->
+    {% if form.username %}
+        <div class="col-md-6 mb-3">
+
+            <label
+                class="sky-form-label"
+                for="{{ form.username.id_for_label }}"
+            >
+                {{ form.username.label }}
+            </label>
+
+            {{ form.username }}
+
+            {% for error in form.username.errors %}
+                <div class="sky-form-error">
+                    {{ error }}
+                </div>
+            {% endfor %}
+
+        </div>
+    {% endif %}
+
+
+    <!-- First Name -->
+    {% if form.first_name %}
+        <div class="col-md-6 mb-3">
+
+            <label
+                class="sky-form-label"
+                for="{{ form.first_name.id_for_label }}"
+            >
+                {{ form.first_name.label }}
+            </label>
+
+            {{ form.first_name }}
+
+            {% for error in form.first_name.errors %}
+                <div class="sky-form-error">
+                    {{ error }}
+                </div>
+            {% endfor %}
+
+        </div>
+    {% endif %}
+
+
+    <!-- Last Name -->
+    {% if form.last_name %}
+        <div class="col-md-6 mb-3">
+
+            <label
+                class="sky-form-label"
+                for="{{ form.last_name.id_for_label }}"
+            >
+                {{ form.last_name.label }}
+            </label>
+
+            {{ form.last_name }}
+
+            {% for error in form.last_name.errors %}
+                <div class="sky-form-error">
+                    {{ error }}
+                </div>
+            {% endfor %}
+
+        </div>
+    {% endif %}
+
+
+    <!-- Email -->
+    {% if form.email %}
+        <div class="col-md-6 mb-3">
+
+            <label
+                class="sky-form-label"
+                for="{{ form.email.id_for_label }}"
+            >
+                {{ form.email.label }}
+            </label>
+
+            {{ form.email }}
+
+            {% for error in form.email.errors %}
+                <div class="sky-form-error">
+                    {{ error }}
+                </div>
+            {% endfor %}
+
+        </div>
+    {% endif %}
+
+
+                        <!-- Access Group -->
+                        {% if form.access_group %}
                             <div class="col-md-6 mb-3">
+
                                 <label
                                     class="sky-form-label"
-                                    for="{{ form.role.id_for_label }}"
+                                    for="{{ form.access_group.id_for_label }}"
                                 >
-                                    {{ form.role.label }}
+                                    {{ form.access_group.label }}
                                 </label>
 
-                                {{ form.role }}
+                                {{ form.access_group }}
 
-                                {% for error in form.role.errors %}
+                                {% if form.access_group.help_text %}
+                                    <div class="sky-help-text">
+                                        {{ form.access_group.help_text }}
+                                    </div>
+                                {% endif %}
+
+                                {% for error in form.access_group.errors %}
                                     <div class="sky-form-error">
                                         {{ error }}
                                     </div>
                                 {% endfor %}
+
                             </div>
                         {% endif %}
 
+
+                        <!-- Designation -->
                         {% if form.designation %}
                             <div class="col-md-6 mb-3">
+
                                 <label
                                     class="sky-form-label"
                                     for="{{ form.designation.id_for_label }}"
@@ -88,11 +201,15 @@
                                         {{ error }}
                                     </div>
                                 {% endfor %}
+
                             </div>
                         {% endif %}
 
+
+                        <!-- Manager -->
                         {% if form.manager %}
                             <div class="col-md-6 mb-3">
+
                                 <label
                                     class="sky-form-label"
                                     for="{{ form.manager.id_for_label }}"
@@ -113,11 +230,15 @@
                                         {{ error }}
                                     </div>
                                 {% endfor %}
+
                             </div>
                         {% endif %}
 
+
+                        <!-- Shift -->
                         {% if form.shift %}
                             <div class="col-md-6 mb-3">
+
                                 <label
                                     class="sky-form-label"
                                     for="{{ form.shift.id_for_label }}"
@@ -132,11 +253,15 @@
                                         {{ error }}
                                     </div>
                                 {% endfor %}
+
                             </div>
                         {% endif %}
 
+
+                        <!-- Position -->
                         {% if form.position %}
                             <div class="col-md-6 mb-3">
+
                                 <label
                                     class="sky-form-label"
                                     for="{{ form.position.id_for_label }}"
@@ -151,11 +276,15 @@
                                         {{ error }}
                                     </div>
                                 {% endfor %}
+
                             </div>
                         {% endif %}
 
+
+                        <!-- Date Hired -->
                         {% if form.date_hired %}
                             <div class="col-md-6 mb-3">
+
                                 <label
                                     class="sky-form-label"
                                     for="{{ form.date_hired.id_for_label }}"
@@ -170,20 +299,27 @@
                                         {{ error }}
                                     </div>
                                 {% endfor %}
+
                             </div>
                         {% endif %}
 
                     </div>
 
+
                     <hr>
 
+
+                    <!-- Personal Details -->
                     <div class="sky-panel-head px-0">
                         <h6>Personal and Contact Details</h6>
                     </div>
 
                     <div class="row">
+
+                        <!-- Phone -->
                         {% if form.phone_number %}
                             <div class="col-md-6 mb-3">
+
                                 <label
                                     class="sky-form-label"
                                     for="{{ form.phone_number.id_for_label }}"
@@ -198,11 +334,15 @@
                                         {{ error }}
                                     </div>
                                 {% endfor %}
+
                             </div>
                         {% endif %}
 
+
+                        <!-- State -->
                         {% if form.state %}
                             <div class="col-md-6 mb-3">
+
                                 <label
                                     class="sky-form-label"
                                     for="{{ form.state.id_for_label }}"
@@ -217,11 +357,15 @@
                                         {{ error }}
                                     </div>
                                 {% endfor %}
+
                             </div>
                         {% endif %}
 
+
+                        <!-- Zip -->
                         {% if form.zip_code %}
                             <div class="col-md-6 mb-3">
+
                                 <label
                                     class="sky-form-label"
                                     for="{{ form.zip_code.id_for_label }}"
@@ -236,11 +380,15 @@
                                         {{ error }}
                                     </div>
                                 {% endfor %}
+
                             </div>
                         {% endif %}
 
+
+                        <!-- Address -->
                         {% if form.address %}
                             <div class="col-12 mb-3">
+
                                 <label
                                     class="sky-form-label"
                                     for="{{ form.address.id_for_label }}"
@@ -255,25 +403,35 @@
                                         {{ error }}
                                     </div>
                                 {% endfor %}
+
                             </div>
                         {% endif %}
+
                     </div>
+
 
                     <hr>
 
+
+                    <!-- Verification -->
                     <div class="sky-panel-head px-0">
                         <h6>Verification and Status</h6>
                     </div>
 
                     <div class="row">
 
+                        <!-- Default Manager -->
                         {% if form.is_default_manager %}
                             <div class="col-md-6 mb-3">
+
                                 <label class="sky-check">
+
                                     {{ form.is_default_manager }}
+
                                     <span>
                                         Default manager for new employees
                                     </span>
+
                                 </label>
 
                                 {% if form.is_default_manager.help_text %}
@@ -287,73 +445,170 @@
                                         {{ error }}
                                     </div>
                                 {% endfor %}
+
                             </div>
                         {% endif %}
 
+
+                        <!-- Active -->
                         {% if form.is_active %}
                             <div class="col-md-6 mb-3">
+
                                 <label class="sky-check">
+
                                     {{ form.is_active }}
-                                    <span>{{ form.is_active.label }}</span>
+
+                                    <span>
+                                        {{ form.is_active.label }}
+                                    </span>
+
                                 </label>
+
+                                {% for error in form.is_active.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+
                             </div>
                         {% endif %}
 
+
+                        <!-- Email -->
                         {% if form.is_email_verified %}
                             <div class="col-md-6 mb-3">
+
                                 <label class="sky-check">
+
                                     {{ form.is_email_verified }}
-                                    <span>{{ form.is_email_verified.label }}</span>
+
+                                    <span>
+                                        {{ form.is_email_verified.label }}
+                                    </span>
+
                                 </label>
+
+                                {% for error in form.is_email_verified.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+
                             </div>
                         {% endif %}
 
+
+                        <!-- Phone -->
                         {% if form.is_phone_verified %}
                             <div class="col-md-6 mb-3">
+
                                 <label class="sky-check">
+
                                     {{ form.is_phone_verified }}
-                                    <span>{{ form.is_phone_verified.label }}</span>
+
+                                    <span>
+                                        {{ form.is_phone_verified.label }}
+                                    </span>
+
                                 </label>
+
+                                {% for error in form.is_phone_verified.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+
                             </div>
                         {% endif %}
 
+
+                        <!-- Address -->
                         {% if form.is_address_verified %}
                             <div class="col-md-6 mb-3">
+
                                 <label class="sky-check">
+
                                     {{ form.is_address_verified }}
-                                    <span>{{ form.is_address_verified.label }}</span>
+
+                                    <span>
+                                        {{ form.is_address_verified.label }}
+                                    </span>
+
                                 </label>
+
+                                {% for error in form.is_address_verified.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+
                             </div>
                         {% endif %}
 
+
+                        <!-- Aadhar -->
                         {% if form.is_aadhar_verified %}
                             <div class="col-md-6 mb-3">
+
                                 <label class="sky-check">
+
                                     {{ form.is_aadhar_verified }}
-                                    <span>{{ form.is_aadhar_verified.label }}</span>
+
+                                    <span>
+                                        {{ form.is_aadhar_verified.label }}
+                                    </span>
+
                                 </label>
+
+                                {% for error in form.is_aadhar_verified.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+
                             </div>
                         {% endif %}
 
+
+                        <!-- Background Check -->
                         {% if form.is_background_check_completed %}
                             <div class="col-md-6 mb-3">
+
                                 <label class="sky-check">
+
                                     {{ form.is_background_check_completed }}
+
                                     <span>
                                         {{ form.is_background_check_completed.label }}
                                     </span>
+
                                 </label>
+
+                                {% for error in form.is_background_check_completed.errors %}
+                                    <div class="sky-form-error">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+
                             </div>
                         {% endif %}
 
                     </div>
 
-                    <button type="submit" class="sky-header-btn">
+
+                    <button
+                        type="submit"
+                        class="sky-header-btn"
+                    >
                         Save Changes
                     </button>
+
                 </form>
+
             </div>
+
         </div>
+
 
         {% include "appEmp/_salary_block.html" %}
 

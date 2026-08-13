@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Finance Clearances{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div class="container" style="max-width: 1200px;">
+
+        <div class="sky-header">
+
+            <div>
+                <span class="sky-eyebrow">
+                    Finance / Exit Clearance
+                </span>
+
+                <h1>Pending Finance NOCs</h1>
+
+                <p class="sky-help-text">
+                    Review financial clearance requests for employee exits.
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+                <h6>Awaiting Finance Review</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                {% if pending_approvals %}
+
+                    <div class="table-responsive">
+
+                        <table class="table align-middle">
+
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Exit Type</th>
+                                    <th>Last Working Date</th>
+                                    <th>Reason</th>
+                                    <th>Manager NOC</th>
+                                    <th>Finance Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {% for approval in pending_approvals %}
+
+                                    <tr>
+
+                                        <!-- Employee -->
+                                        <td>
+
+                                            <strong>
+                                                {{ approval.clearance_request.employee.user.get_full_name|default:approval.clearance_request.employee.user.username }}
+                                            </strong>
+
+                                            <div class="sky-help-text">
+                                                {{ approval.clearance_request.employee.user.username }}
+                                            </div>
+
+                                        </td>
+
+
+                                        <!-- Exit Type -->
+                                        <td>
+
+                                            {% if approval.clearance_request.employee_exit_request %}
+
+                                                {{ approval.clearance_request.employee_exit_request.get_exit_type_display }}
+
+                                            {% else %}
+
+                                                Clearance
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <!-- Last Working Date -->
+                                        <td>
+
+                                            {% if approval.clearance_request.employee_exit_request.final_last_working_date %}
+
+                                                {{ approval.clearance_request.employee_exit_request.final_last_working_date|date:"d M Y" }}
+
+                                            {% elif approval.clearance_request.employee_exit_request.proposed_last_working_date %}
+
+                                                {{ approval.clearance_request.employee_exit_request.proposed_last_working_date|date:"d M Y" }}
+
+                                            {% else %}
+
+                                                —
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <!-- Exit Reason -->
+                                        <td style="max-width: 300px;">
+
+                                            {% if approval.clearance_request.employee_exit_request %}
+
+                                                {{ approval.clearance_request.employee_exit_request.reason }}
+
+                                            {% else %}
+
+                                                {{ approval.clearance_request.reason }}
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <!-- Manager NOC -->
+                                        <td>
+
+                                            {% for item in approval.clearance_request.approvals.all %}
+
+                                                {% if item.approval_type == "MANAGER_NOC" %}
+
+                                                    <strong>
+                                                        {{ item.get_status_display }}
+                                                    </strong>
+
+                                                    {% if item.remarks %}
+
+                                                        <div class="sky-help-text">
+                                                            {{ item.remarks }}
+                                                        </div>
+
+                                                    {% endif %}
+
+                                                {% endif %}
+
+                                            {% endfor %}
+
+                                        </td>
+
+
+                                        <!-- Finance Status -->
+                                        <td>
+
+                                            <strong>
+                                                {{ approval.get_status_display }}
+                                            </strong>
+
+                                        </td>
+
+
+                                        <!-- Action -->
+                                        <td>
+
+                                            <a
+                                                href="{% url 'financeClearanceReview' approval.uuid %}"
+                                                class="sky-header-btn"
+                                            >
+                                                Review
+                                            </a>
+
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                {% else %}
+
+                    <div class="sky-empty">
+
+                        There are no pending Finance NOC requests.
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

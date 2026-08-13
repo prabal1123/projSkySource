@@ -1,42 +1,4 @@
 
-# from . import views
-# from django.urls import path
-# from .views import (
-#     empProfile_view,
-#     empList_view,
-#     profileDetail_view,
-#     dashboard_view,
-#     checkin_checkout_view,
-#     update_attendance_view,
-#     salary_update_view,
-#     salary_slip_self_view,
-#     salary_slip_admin_view,
-#     attendance_calendar_self_view,
-#     attendance_calendar_admin_view,raise_attendance_exception_view
-# )
-
-# urlpatterns = [
-#     path("profile/<uuid:uuid>/", profileDetail_view, name="editProfile"),
-#     path('empProfile', empProfile_view, name='myProfile'),
-#     path('empList/', empList_view, name='employeeList'),
-#     path('dashboard/', dashboard_view, name='dashboard'),
-#     path('attendance/checkin-checkout/', checkin_checkout_view, name='checkinCheckout'),
-#     path('attendance/<uuid:uuid>/edit/', update_attendance_view, name='editAttendance'),
-#     # ── Add to appEmp/urls.py, inside urlpatterns ────────────────────────────
-
-#     path("attendance/calendar/",attendance_calendar_self_view,name="attendanceCalendarSelf",),
-
-#     path("attendance/calendar/<uuid:uuid>/",attendance_calendar_admin_view,name="attendanceCalendarAdmin",),
-#     path(
-#     "attendance/<uuid:attendance_uuid>/raise-exception/",
-#     raise_attendance_exception_view,
-#     name="raiseAttendanceException",
-# ),
-#     path('salary/save/<uuid:uuid>/', views.salary_update_view, name='salaryUpdate'),
-#     path('salary/slip/<int:year>/<int:month>/', views.salary_slip_self_view, name='salarySlipSelf'),
-#     path('salary/<uuid:uuid>/slip/<int:year>/<int:month>/', views.salary_slip_admin_view, name='salarySlipAdmin'),
-# ] 
-
 from django.urls import path
 
 from . import views
@@ -98,6 +60,12 @@ urlpatterns = [
         update_attendance_view,
         name="editAttendance",
     ),
+    path(
+    "holidays/optional/apply/",
+    views.optional_holiday_apply_view,
+    name="optionalHolidayApply",
+),
+
 
     path(
         "attendance/calendar/",
@@ -174,11 +142,11 @@ path(
     name="addLeaveBalance",
 ),
 
-path(
-    "leave/balances/<uuid:uuid>/edit/",
-    leave_balance_edit_view,
-    name="editLeaveBalance",
-),
+# path(
+#     "leave/balances/<uuid:uuid>/edit/",
+#     leave_balance_edit_view,
+#     name="editLeaveBalance",
+# ),
 path(
     "attendance/exceptions/pending/",
     pending_attendance_exceptions_view,
@@ -186,8 +154,129 @@ path(
 ),
 
 path(
+    "holidays/",
+    views.holiday_list_view,
+    name="holidayList",
+),
+
+path(
+    "holidays/add/",
+    views.holiday_create_view,
+    name="addHoliday",
+),
+
+path(
+    "holidays/<uuid:uuid>/edit/",
+    views.holiday_edit_view,
+    name="editHoliday",
+),
+path(
+    "holidays/calendar/",
+    views.holiday_calendar_view,
+    name="holidayCalendar",
+),
+path(
+    "holidays/year/",
+    views.holiday_year_view,
+    name="holidayYear",
+),
+path(
+    "holidays/bulk-upload/",
+    views.holiday_bulk_upload_view,
+    name="holidayBulkUpload",
+),
+path(
     "attendance/exceptions/<uuid:uuid>/review/",
     review_attendance_exception_view,
     name="reviewAttendanceException",
+),
+path(
+    "work-schedules/",
+    views.work_schedule_list_view,
+    name="workScheduleList",
+),
+
+path(
+    "work-schedules/add/",
+    views.work_schedule_create_view,
+    name="addWorkSchedule",
+),
+
+path(
+    "work-schedules/<uuid:uuid>/edit/",
+    views.work_schedule_edit_view,
+    name="editWorkSchedule",
+),
+
+path(
+    "exit/resign/",
+    views.submit_resignation_view,
+    name="submitResignation",
+),
+path(
+    "exit/my-resignations/",
+    views.my_resignations_view,
+    name="myResignations",
+),
+path(
+    "exit/hr/pending-resignations/",
+    views.pending_resignations_view,
+    name="pendingResignations",
+),
+path(
+    "exit/hr/resignation/<uuid:uuid>/review/",
+    views.review_resignation_view,
+    name="reviewResignation",
+),
+path(
+    "clearance/manager/pending/",
+    views.manager_clearance_queue_view,
+    name="managerClearanceQueue",
+),
+path(
+    "clearance/manager/<uuid:uuid>/review/",
+    views.manager_clearance_review_view,
+    name="managerClearanceReview",
+),
+path(
+    "clearance/finance/pending/",
+    views.finance_clearance_queue_view,
+    name="financeClearanceQueue",
+),
+path(
+    "clearance/finance/<uuid:uuid>/review/",
+    views.finance_clearance_review_view,
+    name="financeClearanceReview",
+),
+path(
+    "exit/hr/ready-for-finalization/",
+    views.ready_for_finalization_view,
+    name="readyForFinalization",
+),
+path(
+    "exit/hr/<uuid:uuid>/finalize/",
+    views.finalize_employee_exit_view,
+    name="finalizeEmployeeExit",
+),
+path(
+    "exit/hr/initiate-termination/",
+    views.initiate_termination_view,
+    name="initiateTermination",
+),
+path(
+    "exit/hr/all/",
+    views.all_exit_requests_view,
+    name="allExitRequests",
+),
+path(
+    "holidays/optional/pending/",
+    views.pending_optional_holiday_requests_view,
+    name="pendingOptionalHolidayRequests",
+),
+
+path(
+    "holidays/optional/<uuid:uuid>/review/",
+    views.review_optional_holiday_request_view,
+    name="reviewOptionalHolidayRequest",
 ),
 ]

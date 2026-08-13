@@ -1,13 +1,13 @@
 from django.contrib import admin
-from .models import empProfile, Attendance , ShiftMaster, DesignationMaster, RoleMaster,AttendanceException,LeaveTypeMaster,LeaveBalance,LeaveRequest
-
+from .models import empProfile, Attendance , ShiftMaster, DesignationMaster,AttendanceException,LeaveTypeMaster,LeaveBalance,LeaveRequest
+from .models import Holiday,WorkSchedule
 
 # admin.site.register(empProfile)
 @admin.register(empProfile)
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = (
         "user",
-        "role",
+        # "role",
         "designation",
         "shift",
         "manager",
@@ -15,7 +15,7 @@ class EmployeeAdmin(admin.ModelAdmin):
     )
 
     list_filter = (
-        "role",
+        # "role",
         "is_active",
         "designation",
         "shift",
@@ -52,11 +52,11 @@ class DesignationMasterAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 
-@admin.register(RoleMaster)
-class RoleMasterAdmin(admin.ModelAdmin):
-    list_display = ('name', 'is_active', 'created_at')
-    list_filter = ('is_active',)
-    search_fields = ('name',)
+# @admin.register(RoleMaster)
+# class RoleMasterAdmin(admin.ModelAdmin):
+#     list_display = ('name', 'is_active', 'created_at')
+#     list_filter = ('is_active',)
+#     search_fields = ('name',)
 
 @admin.register(AttendanceException)
 class AttendanceExceptionAdmin(admin.ModelAdmin):
@@ -291,3 +291,74 @@ class LeaveRequestAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+@admin.register(Holiday)
+class HolidayAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "date",
+        "holiday_type",
+        "is_active",
+        "created_by",
+    )
+
+    list_filter = (
+        "holiday_type",
+        "is_active",
+        "date",
+    )
+
+    search_fields = (
+        "name",
+        "description",
+    )
+
+    ordering = ("date",)
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+    )
+
+    def save_model(self, request, obj, form, change):
+        if not obj.created_by:
+            obj.created_by = request.user
+
+        super().save_model(request, obj, form, change)
+
+@admin.register(WorkSchedule)
+class WorkScheduleAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+        "is_default",
+        "is_active",
+    )
+
+    list_filter = (
+        "is_default",
+        "is_active",
+    )
+
+    search_fields = (
+        "name",
+    )
+
+    list_editable = (
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+        "is_default",
+        "is_active",
+    )
+    

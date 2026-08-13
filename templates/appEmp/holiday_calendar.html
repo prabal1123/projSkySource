@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Holiday Calendar{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/holiday.css' %}">
+{% endblock %}
+
+{% block content %}
+
+
+<div class="sky-dashboard">
+
+    <div
+        class="container"
+        style="max-width: 1100px;"
+    >
+
+        <div class="sky-header">
+
+            <div>
+
+                <span class="sky-eyebrow">
+                    HR / Holiday Management
+                </span>
+                
+
+                <h1>Holiday Calendar</h1>
+
+                <p class="sky-help-text">
+                    {{ month_name }} {{ year }}
+                </p>
+
+            </div>
+            
+            <div style="
+                display: flex;
+                gap: 10px;
+            ">
+
+                <a
+                    href="{% url 'holidayList' %}"
+                    class="sky-header-btn"
+                >
+                    List View
+                </a>
+
+                <a
+                    href="{% url 'addHoliday' %}"
+                    class="sky-header-btn"
+                >
+                    + Add Holiday
+                </a>
+                <a
+    href="{% url 'holidayYear' %}?year={{ year }}"
+    class="sky-header-btn"
+>
+    Year View
+</a>
+
+            </div>
+
+        </div>
+
+
+        <div class="sky-panel">
+
+            <div class="
+                sky-panel-head
+                attendance-calendar-header
+            ">
+
+                <a
+                    class="sky-header-btn"
+                    href="{% url 'holidayCalendar' %}?year={{ previous_year }}&month={{ previous_month }}"
+                >
+                    ← Previous
+                </a>
+
+                <h6>
+                    {{ month_name }} {{ year }}
+                </h6>
+
+                <a
+                    class="sky-header-btn"
+                    href="{% url 'holidayCalendar' %}?year={{ next_year }}&month={{ next_month }}"
+                >
+                    Next →
+                </a>
+
+            </div>
+
+
+            <div class="sky-panel-body">
+
+                <div class="attendance-legend">
+
+                    <span class="holiday-badge holiday-badge-mandatory">
+                        Mandatory
+                    </span>
+
+                    <span class="holiday-badge holiday-badge-optional">
+                        Optional
+                    </span>
+
+                </div>
+
+
+                <div class="attendance-calendar holiday-calendar-compact">
+
+                    <div class="attendance-weekday">Mon</div>
+                    <div class="attendance-weekday">Tue</div>
+                    <div class="attendance-weekday">Wed</div>
+                    <div class="attendance-weekday">Thu</div>
+                    <div class="attendance-weekday">Fri</div>
+                    <div class="attendance-weekday">Sat</div>
+                    <div class="attendance-weekday">Sun</div>
+
+
+                    {% for week in weeks %}
+
+                        {% for day in week %}
+
+                            <div class="
+                                attendance-day
+
+                                {% if not day.is_current_month %}
+                                    attendance-outside-month
+                                {% endif %}
+
+                                {% if day.is_today %}
+                                    attendance-today
+                                {% endif %}
+                            ">
+
+                                <div class="attendance-day-number">
+                                    {{ day.day_number }}
+                                </div>
+
+
+                                {% if day.is_current_month %}
+
+                                    {% if day.holiday %}
+
+                                        <a
+                                            href="{% url 'editHoliday' day.holiday.uuid %}"
+                                            style="
+                                                text-decoration: none;
+                                                display: block;
+                                                margin-top: 10px;
+                                            "
+                                        >
+
+                                            {% if day.holiday.holiday_type == "MANDATORY" %}
+
+                                                <span class="
+                                                    holiday-badge
+                                                    holiday-badge-mandatory
+                                                ">
+                                                    {{ day.holiday.name }}
+                                                </span>
+
+                                            {% else %}
+
+                                                <span class="
+                                                    holiday-badge
+                                                    holiday-badge-optional
+                                                ">
+                                                    {{ day.holiday.name }}
+                                                </span>
+
+                                            {% endif %}
+
+                                        </a>
+
+                                    {% endif %}
+
+                                {% endif %}
+
+                            </div>
+
+                        {% endfor %}
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

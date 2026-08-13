@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/holiday.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div
+        class="container"
+        style="max-width: 850px;"
+    >
+
+        <!-- Header -->
+        <div class="sky-header">
+
+            <div>
+
+                <span class="sky-eyebrow">
+                    HR / Holiday Management
+                </span>
+
+                <h1>
+                    {{ page_title }}
+                </h1>
+
+                <p class="sky-help-text">
+
+                    {% if holiday %}
+                        Update holiday details and availability.
+                    {% else %}
+                        Add a new mandatory or optional holiday.
+                    {% endif %}
+
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- Form Panel -->
+        <div class="sky-panel">
+
+            <div class="sky-panel-body">
+
+                <div class="holiday-form-card">
+
+                    <form method="post">
+
+                        {% csrf_token %}
+
+
+                        <!-- General Form Errors -->
+                        {% if form.non_field_errors %}
+                            <div class="sky-calendar-message">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+
+                        <div class="holiday-form-grid">
+
+
+                            <!-- Holiday Name -->
+                            <div class="holiday-form-group">
+
+                                <label for="{{ form.name.id_for_label }}">
+                                    Holiday Name
+                                </label>
+
+                                {{ form.name }}
+
+                                {% if form.name.errors %}
+                                    <div style="
+                                        color: #dc2626;
+                                        font-size: 12px;
+                                    ">
+                                        {{ form.name.errors }}
+                                    </div>
+                                {% endif %}
+
+                            </div>
+
+
+                            <!-- Date -->
+                            <div class="holiday-form-group">
+
+                                <label for="{{ form.date.id_for_label }}">
+                                    Holiday Date
+                                </label>
+
+                                {{ form.date }}
+
+                                {% if form.date.errors %}
+                                    <div style="
+                                        color: #dc2626;
+                                        font-size: 12px;
+                                    ">
+                                        {{ form.date.errors }}
+                                    </div>
+                                {% endif %}
+
+                            </div>
+
+
+                            <!-- Holiday Type -->
+                            <div class="holiday-form-group">
+
+                                <label for="{{ form.holiday_type.id_for_label }}">
+                                    Holiday Type
+                                </label>
+
+                                {{ form.holiday_type }}
+
+                                <small style="
+                                    color: #8a94a6;
+                                    line-height: 1.5;
+                                ">
+                                    Mandatory holidays apply to everyone.
+                                    Optional holidays can later be selected by employees.
+                                </small>
+
+                                {% if form.holiday_type.errors %}
+                                    <div style="
+                                        color: #dc2626;
+                                        font-size: 12px;
+                                    ">
+                                        {{ form.holiday_type.errors }}
+                                    </div>
+                                {% endif %}
+
+                            </div>
+
+
+                            <!-- Active Status -->
+                            <div class="holiday-form-group">
+
+                                <label>
+                                    Holiday Status
+                                </label>
+
+                                <div style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 10px;
+                                    min-height: 44px;
+                                ">
+
+                                    {{ form.is_active }}
+
+                                    <label
+                                        for="{{ form.is_active.id_for_label }}"
+                                        style="
+                                            margin: 0;
+                                            cursor: pointer;
+                                            font-weight: 500;
+                                        "
+                                    >
+                                        Active
+                                    </label>
+
+                                </div>
+
+                                <small style="
+                                    color: #8a94a6;
+                                    line-height: 1.5;
+                                ">
+                                    Inactive holidays will remain saved
+                                    but can be excluded from employee calendars.
+                                </small>
+
+                                {% if form.is_active.errors %}
+                                    <div style="
+                                        color: #dc2626;
+                                        font-size: 12px;
+                                    ">
+                                        {{ form.is_active.errors }}
+                                    </div>
+                                {% endif %}
+
+                            </div>
+
+
+                            <!-- Description -->
+                            <div class="
+                                holiday-form-group
+                                full-width
+                            ">
+
+                                <label for="{{ form.description.id_for_label }}">
+                                    Description
+                                </label>
+
+                                {{ form.description }}
+
+                                <small style="
+                                    color: #8a94a6;
+                                    line-height: 1.5;
+                                ">
+                                    Optional note about the holiday.
+                                </small>
+
+                                {% if form.description.errors %}
+                                    <div style="
+                                        color: #dc2626;
+                                        font-size: 12px;
+                                    ">
+                                        {{ form.description.errors }}
+                                    </div>
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Actions -->
+                        <div class="holiday-form-actions">
+
+                            <button
+                                type="submit"
+                                class="holiday-save-btn"
+                            >
+
+                                {% if holiday %}
+                                    Save Changes
+                                {% else %}
+                                    Add Holiday
+                                {% endif %}
+
+                            </button>
+
+                            <a
+                                href="{% url 'holidayList' %}"
+                                class="holiday-cancel-btn"
+                            >
+                                Cancel
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

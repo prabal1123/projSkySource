@@ -5,62 +5,32 @@ from datetime import time
 from django.utils import timezone
 from decimal import Decimal
 from django.core.exceptions import ValidationError
+import calendar
 
-# ROLE_CHOICES = (
-#     ('SUPER_ADMIN','Super Admin'),
-#     ('HR_ADMIN','HR Admin'),
-#     ('RECRUITER','Recruiter'),
-#     ('HIRING_MANAGER','Hiring Manager'),
-#     ('TEAM_LEAD','Team Lead'),
-#     ('EMPLOYEE','Employee'),
-# )
-# ADMIN_ROLES = ['SUPER_ADMIN', 'HR_ADMIN', 'RECRUITER', 'HIRING_MANAGER', 'TEAM_LEAD']
 
-# class empProfile(models.Model):
-#     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
-#     user = models.OneToOneField(User, on_delete=models.CASCADE)
-#     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='EMPLOYEE')
-#     # first_name = models.CharField(max_length=30)
-#     # last_name = models.CharField(max_length=30)
-#     phone_number = models.CharField(max_length=15, null=True, blank=True)
-#     # email = models.EmailField(unique=True)
-#     position = models.CharField(max_length=50, null=True, blank=True)
-#     date_hired = models.DateField(null=True, blank=True)
-#     address = models.TextField(null=True, blank=True)
-#     state = models.CharField(max_length=30, null=True, blank=True)
-#     zip_code = models.CharField(max_length=10, null=True, blank=True)
-#     is_address_verified = models.BooleanField(default=False)
-#     is_email_verified = models.BooleanField(default=False)
-#     is_phone_verified = models.BooleanField(default=False)
-#     is_background_check_completed = models.BooleanField(default=False)
-#     is_aadhar_verified = models.BooleanField(default=False)
-#     is_active = models.BooleanField(default=True)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
+def add_calendar_months(source_date, months):
+    """
+    Add calendar months while keeping the date valid.
 
-#     class Meta:
-#         verbose_name = "Employee"
-#         verbose_name_plural = "Employees"
+    Example:
+    31 Aug + 3 months -> 30 Nov
+    """
+    month_index = source_date.month - 1 + months
 
-#     def __str__(self):
-#         return f"{self.user.first_name} {self.user.last_name}"
+    year = source_date.year + month_index // 12
+    month = month_index % 12 + 1
 
-ROLE_CHOICES = (
-    ("SUPER_ADMIN", "Super Admin"),
-    ("HR_ADMIN", "HR Admin"),
-    ("RECRUITER", "Recruiter"),
-    ("HIRING_MANAGER", "Hiring Manager"),
-    ("TEAM_LEAD", "Team Lead"),
-    ("EMPLOYEE", "Employee"),
-)
+    day = min(
+        source_date.day,
+        calendar.monthrange(year, month)[1],
+    )
 
-ADMIN_ROLES = [
-    "SUPER_ADMIN",
-    "HR_ADMIN",
-    "RECRUITER",
-    "HIRING_MANAGER",
-    "TEAM_LEAD",
-]
+    return source_date.replace(
+        year=year,
+        month=month,
+        day=day,
+    )
+
 
 
 class empProfile(models.Model):
@@ -75,11 +45,11 @@ class empProfile(models.Model):
         on_delete=models.CASCADE
     )
 
-    role = models.CharField(
-        max_length=20,
-        choices=ROLE_CHOICES,
-        default="EMPLOYEE"
-    )
+    # role = models.CharField(
+    #     max_length=20,
+    #     choices=ROLE_CHOICES,
+    #     default="EMPLOYEE"
+    # )
 
     manager = models.ForeignKey(
         "self",
@@ -105,6 +75,13 @@ class empProfile(models.Model):
         blank=True,
         related_name="employees"
     )
+    work_schedule = models.ForeignKey(
+    "WorkSchedule",
+    on_delete=models.SET_NULL,
+    null=True,
+    blank=True,
+    related_name="employees"
+)
 
     is_default_manager = models.BooleanField(
         default=False,
@@ -129,6 +106,15 @@ class empProfile(models.Model):
     date_hired = models.DateField(
         null=True,
         blank=True
+    )
+
+    leave_eligible_from = models.DateField(
+    null=True,
+    blank=True,
+    help_text=(
+        "Date from which the employee becomes eligible "
+        "to use the leave facility."
+        ),
     )
 
     address = models.TextField(
@@ -162,6 +148,58 @@ class empProfile(models.Model):
         verbose_name = "Employee"
         verbose_name_plural = "Employees"
         ordering = ["user__first_name", "user__last_name"]
+        permissions = [
+        (
+            "view_hr_dashboard",
+            "Can view HR dashboard",
+        ),
+        (
+            "manage_employees",
+            "Can manage employees",
+        ),
+        (
+            "manage_attendance",
+            "Can manage attendance",
+        ),
+        (
+            "review_leave",
+            "Can review leave requests",
+        ),
+        (
+            "manage_leave_balance",
+            "Can manage leave balances",
+        ),
+        (
+            "review_attendance_exception",
+            "Can review attendance exceptions",
+        ),
+        (
+            "manage_salary",
+            "Can manage salary",
+        ),
+
+        # Clearance / NOC permissions
+        (
+            "view_all_clearance_requests",
+            "Can view all clearance requests",
+        ),
+        (
+            "apply_clearance_for_employee",
+            "Can apply clearance for an employee",
+        ),
+        (
+            "review_finance_noc",
+            "Can review finance NOC requests",
+        ),
+        (
+            "initiate_employee_exit",
+            "Can initiate employee exit",
+        ),
+        (
+            "finalize_employee_exit",
+            "Can finalize employee exit",
+        ),
+    ]
 
     def clean(self):
         """
@@ -187,7 +225,57 @@ class empProfile(models.Model):
                 is_default_manager=False
             )
 
+        if not self.work_schedule_id:
+            default_schedule = WorkSchedule.objects.filter(
+                is_default=True,
+                is_active=True
+            ).first()
+
+            if default_schedule:
+                self.work_schedule = default_schedule
+
         super().save(*args, **kwargs)
+
+    @property
+    def default_leave_eligible_from(self):
+        """
+        Default company leave policy:
+        employee becomes leave-eligible after
+        completing 3 calendar months from date of joining.
+        """
+        if not self.date_hired:
+            return None
+
+        return add_calendar_months(
+            self.date_hired,
+            3,
+        )
+
+    @property
+    def effective_leave_eligible_from(self):
+        """
+        HR-selected eligibility date takes priority.
+
+        If HR has not provided an override,
+        use the default 3-month probation rule.
+        """
+        if self.leave_eligible_from:
+            return self.leave_eligible_from
+
+        return self.default_leave_eligible_from
+
+    @property
+    def is_leave_eligible(self):
+        """
+        True once the employee reaches their
+        effective leave eligibility date.
+        """
+        eligible_from = self.effective_leave_eligible_from
+
+        if not eligible_from:
+            return False
+
+        return timezone.localdate() >= eligible_from
 
     def __str__(self):
         full_name = self.user.get_full_name().strip()
@@ -411,7 +499,97 @@ class Salary(models.Model):
         """Net Pay = Gross (Basic + HRA) minus PF (employee contribution) minus TDS."""
         return self.gross_monthly - self.pf - self.calculate_monthly_tds()
 
+class WorkSchedule(models.Model):
+    """
+    Defines weekly working days for employees.
 
+    Example:
+    Monday-Friday = Working
+    Saturday-Sunday = Weekly Off
+    """
+
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False
+    )
+
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Example: Standard 5-Day Week"
+    )
+
+    monday = models.BooleanField(default=True)
+    tuesday = models.BooleanField(default=True)
+    wednesday = models.BooleanField(default=True)
+    thursday = models.BooleanField(default=True)
+    friday = models.BooleanField(default=True)
+
+    saturday = models.BooleanField(
+        default=False
+    )
+
+    sunday = models.BooleanField(
+        default=False
+    )
+
+    is_default = models.BooleanField(
+        default=False,
+        help_text=(
+            "Default work schedule assigned to employees "
+            "unless another schedule is selected."
+        )
+    )
+
+    is_active = models.BooleanField(
+        default=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        verbose_name = "Work Schedule"
+        verbose_name_plural = "Work Schedules"
+        ordering = ["name"]
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            WorkSchedule.objects.filter(
+                is_default=True
+            ).exclude(
+                pk=self.pk
+            ).update(
+                is_default=False
+            )
+
+        super().save(*args, **kwargs)
+
+    def is_working_day(self, check_date):
+        weekday_map = {
+            0: self.monday,
+            1: self.tuesday,
+            2: self.wednesday,
+            3: self.thursday,
+            4: self.friday,
+            5: self.saturday,
+            6: self.sunday,
+        }
+
+        return weekday_map.get(
+            check_date.weekday(),
+            False
+        )
+
+    def __str__(self):
+        return self.name
+    
 
 class ShiftMaster(models.Model):
     """
@@ -472,25 +650,25 @@ class DesignationMaster(models.Model):
         return self.name
 
 
-class RoleMaster(models.Model):
-    """
-    Standalone role lookup table. Not yet wired into empProfile or permission
-    checks — this phase just creates the model per current requirements.
-    """
-    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+# class RoleMaster(models.Model):
+#     """
+#     Standalone role lookup table. Not yet wired into empProfile or permission
+#     checks — this phase just creates the model per current requirements.
+#     """
+#     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+#     name = models.CharField(max_length=100, unique=True)
+#     description = models.TextField(null=True, blank=True)
+#     is_active = models.BooleanField(default=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        verbose_name = "Role"
-        verbose_name_plural = "Roles"
-        ordering = ['name']
+#     class Meta:
+#         verbose_name = "Role"
+#         verbose_name_plural = "Roles"
+#         ordering = ['name']
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
 # ── Leave Module: Phase 1 ──────────────────────────────────────────────
 
@@ -836,4 +1014,568 @@ class LeaveRequest(models.Model):
             f"{self.employee} — "
             f"{self.leave_type.code} — "
             f"{self.start_date} to {self.end_date}"
+        )
+    # ── Clearance / NOC Module ─────────────────────────────────────────────
+
+
+
+# ── Holiday Calendar Module: Phase 1 ──────────────────────────────────
+
+HOLIDAY_TYPE_CHOICES = (
+    ("MANDATORY", "Mandatory"),
+    ("OPTIONAL", "Optional"),
+)
+
+
+class Holiday(models.Model):
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False
+    )
+
+    name = models.CharField(
+        max_length=150
+    )
+
+    date = models.DateField()
+
+    holiday_type = models.CharField(
+        max_length=10,
+        choices=HOLIDAY_TYPE_CHOICES,
+        default="MANDATORY"
+    )
+
+    description = models.TextField(
+        null=True,
+        blank=True
+    )
+
+    is_active = models.BooleanField(
+        default=True
+    )
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="holidays_created"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        ordering = ["date"]
+        verbose_name = "Holiday"
+        verbose_name_plural = "Holidays"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "date"],
+                name="unique_holiday_name_per_date"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.name} - {self.date}"
+
+
+OPTIONAL_HOLIDAY_REQUEST_STATUS_CHOICES = (
+    ("PENDING", "Pending"),
+    ("APPROVED", "Approved"),
+    ("REJECTED", "Rejected"),
+    ("CANCELLED", "Cancelled"),
+)
+
+
+class OptionalHolidayRequest(models.Model):
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+    )
+
+    employee = models.ForeignKey(
+        empProfile,
+        on_delete=models.CASCADE,
+        related_name="optional_holiday_requests",
+    )
+
+    holiday = models.ForeignKey(
+        Holiday,
+        on_delete=models.PROTECT,
+        related_name="employee_requests",
+    )
+
+    reason = models.TextField(
+        null=True,
+        blank=True,
+    )
+
+    status = models.CharField(
+        max_length=10,
+        choices=OPTIONAL_HOLIDAY_REQUEST_STATUS_CHOICES,
+        default="PENDING",
+    )
+
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="optional_holiday_requests_reviewed",
+    )
+
+    reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = ["-holiday__date"]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "employee",
+                    "holiday",
+                ],
+                name="unique_employee_optional_holiday_request",
+            )
+        ]
+
+    def clean(self):
+        super().clean()
+
+        if (
+            self.holiday_id
+            and self.holiday.holiday_type != "OPTIONAL"
+        ):
+            raise ValidationError({
+                "holiday":
+                    "Only optional holidays can be selected."
+            })
+
+    def __str__(self):
+        return (
+            f"{self.employee} — "
+            f"{self.holiday.name} — "
+            f"{self.get_status_display()}"
+        )
+
+
+CLEARANCE_REQUEST_TYPE_CHOICES = (
+    ("NOC", "NOC / Clearance"),
+    ("TERMINATION", "Termination / Exit"),
+)
+
+
+CLEARANCE_REQUEST_STATUS_CHOICES = (
+    ("PENDING", "Pending"),
+    ("REJECTED", "Rejected"),
+    ("READY_FOR_FINALIZATION", "Ready for Finalization"),
+    ("COMPLETED", "Completed"),
+)
+
+
+CLEARANCE_APPROVAL_TYPE_CHOICES = (
+    ("MANAGER_NOC", "Manager NOC"),
+    ("FINANCE_NOC", "Finance NOC"),
+)
+
+
+CLEARANCE_APPROVAL_STATUS_CHOICES = (
+    ("PENDING", "Pending"),
+    ("APPROVED", "Approved"),
+    ("REJECTED", "Rejected"),
+)
+
+
+class ClearanceRequest(models.Model):
+    """
+    Represents the overall NOC / clearance request for an employee.
+
+    A request may be created:
+    - by an employee for themselves
+    - by HR on behalf of an employee
+    - by HR as part of an employee termination / exit
+
+    Individual manager and finance decisions are stored separately in
+    ClearanceApproval.
+    """
+
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False
+    )
+
+    employee = models.ForeignKey(
+        empProfile,
+        on_delete=models.PROTECT,
+        related_name="clearance_requests"
+    )
+
+    request_type = models.CharField(
+        max_length=20,
+        choices=CLEARANCE_REQUEST_TYPE_CHOICES,
+        default="NOC"
+    )
+
+    requested_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="clearance_requests_created"
+    )
+
+    reason = models.TextField()
+
+    status = models.CharField(
+        max_length=30,
+        choices=CLEARANCE_REQUEST_STATUS_CHOICES,
+        default="PENDING"
+    )
+
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    finalized_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="clearance_requests_finalized"
+    )
+
+    finalized_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        verbose_name = "Clearance Request"
+        verbose_name_plural = "Clearance Requests"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        employee_name = (
+            self.employee.user.get_full_name()
+            or self.employee.user.username
+        )
+
+        return (
+            f"{employee_name} — "
+            f"{self.get_request_type_display()} — "
+            f"{self.get_status_display()}"
+        )
+
+
+class ClearanceApproval(models.Model):
+    """
+    Represents one approval step belonging to a ClearanceRequest.
+
+    Initial approval types:
+    - MANAGER_NOC
+    - FINANCE_NOC
+    """
+
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False
+    )
+
+    clearance_request = models.ForeignKey(
+        ClearanceRequest,
+        on_delete=models.CASCADE,
+        related_name="approvals"
+    )
+
+    approval_type = models.CharField(
+        max_length=20,
+        choices=CLEARANCE_APPROVAL_TYPE_CHOICES
+    )
+
+    # Manager NOC will be assigned to the employee's reporting manager.
+    # Finance NOC initially remains a shared FINANCE queue.
+    assigned_to = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="clearance_approvals_assigned"
+    )
+
+    status = models.CharField(
+        max_length=10,
+        choices=CLEARANCE_APPROVAL_STATUS_CHOICES,
+        default="PENDING"
+    )
+
+    decided_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="clearance_approvals_decided"
+    )
+
+    decided_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    remarks = models.TextField(
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        verbose_name = "Clearance Approval"
+        verbose_name_plural = "Clearance Approvals"
+        ordering = ["-created_at"]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "clearance_request",
+                    "approval_type",
+                ],
+                name="unique_clearance_approval_type_per_request"
+            )
+        ]
+
+    def clean(self):
+        super().clean()
+
+        if (
+            self.approval_type == "MANAGER_NOC"
+            and not self.assigned_to
+        ):
+            raise ValidationError({
+                "assigned_to": (
+                    "Manager NOC must be assigned "
+                    "to the employee's reporting manager."
+                )
+            })
+
+        if (
+            self.status == "REJECTED"
+            and not (self.remarks or "").strip()
+        ):
+            raise ValidationError({
+                "remarks": (
+                    "Remarks are required when rejecting "
+                    "a clearance approval."
+                )
+            })
+
+    def __str__(self):
+        employee = self.clearance_request.employee
+
+        employee_name = (
+            employee.user.get_full_name()
+            or employee.user.username
+        )
+
+        return (
+            f"{employee_name} — "
+            f"{self.get_approval_type_display()} — "
+            f"{self.get_status_display()}"
+        )
+
+
+# ── Employee Exit / Resignation Module ─────────────────────────────────
+
+
+EMPLOYEE_EXIT_TYPE_CHOICES = (
+    ("RESIGNATION", "Resignation"),
+    ("TERMINATION", "Termination"),
+)
+
+
+EMPLOYEE_EXIT_STATUS_CHOICES = (
+    ("SUBMITTED", "Submitted"),
+    ("HR_REJECTED", "HR Rejected"),
+    ("CLEARANCE_IN_PROGRESS", "Clearance In Progress"),
+    ("CLEARANCE_REJECTED", "Clearance Rejected"),
+    ("READY_FOR_FINALIZATION", "Ready for Finalization"),
+    ("COMPLETED", "Completed"),
+)
+
+
+class EmployeeExitRequest(models.Model):
+    """
+    Represents an employee resignation or an HR-initiated termination.
+
+    Resignation flow:
+    Employee submits
+        -> HR reviews
+        -> Clearance starts
+        -> Manager + Finance NOC
+        -> HR finalizes exit
+
+    Termination flow:
+    HR initiates
+        -> Clearance starts immediately
+        -> Manager + Finance NOC
+        -> HR finalizes exit
+    """
+
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+
+    employee = models.ForeignKey(
+        empProfile,
+        on_delete=models.PROTECT,
+        related_name="exit_requests",
+    )
+
+    exit_type = models.CharField(
+        max_length=20,
+        choices=EMPLOYEE_EXIT_TYPE_CHOICES,
+    )
+
+    initiated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="employee_exit_requests_initiated",
+    )
+
+    reason = models.TextField()
+
+    proposed_last_working_date = models.DateField(
+        null=True,
+        blank=True,
+    )
+
+    final_last_working_date = models.DateField(
+        null=True,
+        blank=True,
+    )
+
+    status = models.CharField(
+        max_length=30,
+        choices=EMPLOYEE_EXIT_STATUS_CHOICES,
+        default="SUBMITTED",
+    )
+
+    hr_reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="employee_exit_requests_reviewed",
+    )
+
+    hr_reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    hr_remarks = models.TextField(
+        null=True,
+        blank=True,
+    )
+
+    clearance_request = models.OneToOneField(
+        ClearanceRequest,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="employee_exit_request",
+    )
+
+    # HR user who performed the final exit action.
+    finalized_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="employee_exit_requests_finalized",
+    )
+
+    # Exact date/time when the exit was finalized.
+    finalized_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def clean(self):
+        super().clean()
+
+        if not (self.reason or "").strip():
+            raise ValidationError(
+                {
+                    "reason": "A reason is required."
+                }
+            )
+
+        if (
+            self.exit_type == "RESIGNATION"
+            and not self.proposed_last_working_date
+        ):
+            raise ValidationError(
+                {
+                    "proposed_last_working_date":
+                        "Proposed last working date is required "
+                        "for a resignation."
+                }
+            )
+
+    def __str__(self):
+        return (
+            f"{self.employee} - "
+            f"{self.get_exit_type_display()} - "
+            f"{self.get_status_display()}"
         )

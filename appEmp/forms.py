@@ -86,53 +86,241 @@ from .models import (
     LeaveRequest,
     LeaveTypeMaster,
     LeaveBalance,
+    Holiday,
+    WorkSchedule,
+    OptionalHolidayRequest,
+    Holiday,
 )
+from django import forms
+
+from django.contrib.auth.models import Group
 from django.db.models import Q
+
+
 
 
 class EmployeeForm(forms.ModelForm):
     """
-    Employee apni basic personal details update kar sakta hai.
-    Manager, designation aur shift employee khud change nahi karega.
+    Employee can update their own personal/contact details.
+
+    Employment-related fields such as manager, designation,
+    shift, joining date and verification status are controlled
+    by HR and are not editable from My Profile.
     """
+
+    username = forms.CharField(
+        required=False,
+        label="Username",
+        disabled=True,
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+            }
+        ),
+    )
+
+    first_name = forms.CharField(
+        required=False,
+        label="First Name",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+            }
+        ),
+    )
+
+    last_name = forms.CharField(
+        required=False,
+        label="Last Name",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+            }
+        ),
+    )
+
+    email = forms.EmailField(
+        required=False,
+        label="Email Address",
+        widget=forms.EmailInput(
+            attrs={
+                "class": "form-control",
+            }
+        ),
+    )
 
     class Meta:
         model = empProfile
+
         fields = [
+            "username",
+            "first_name",
+            "last_name",
+            "email",
             "phone_number",
-            "address",
             "state",
             "zip_code",
+            "address",
         ]
 
         widgets = {
             "phone_number": forms.TextInput(
-                attrs={"class": "form-control"}
+                attrs={
+                    "class": "form-control",
+                }
             ),
-            "address": forms.Textarea(
-                attrs={"rows": 3, "class": "form-control"}
-            ),
+
             "state": forms.TextInput(
-                attrs={"class": "form-control"}
+                attrs={
+                    "class": "form-control",
+                }
             ),
+
             "zip_code": forms.TextInput(
-                attrs={"class": "form-control"}
+                attrs={
+                    "class": "form-control",
+                }
+            ),
+
+            "address": forms.Textarea(
+                attrs={
+                    "rows": 3,
+                    "class": "form-control",
+                }
             ),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # User-related fields are stored on Django's User model,
+        # not directly on empProfile.
+        if (
+            self.instance
+            and self.instance.pk
+            and self.instance.user_id
+        ):
+            user = self.instance.user
+
+            self.fields["username"].initial = (
+                user.username
+            )
+
+            self.fields["first_name"].initial = (
+                user.first_name
+            )
+
+            self.fields["last_name"].initial = (
+                user.last_name
+            )
+
+            self.fields["email"].initial = (
+                user.email
+            )
+
+    def clean_email(self):
+        email = (
+            self.cleaned_data.get("email") or ""
+        ).strip()
+
+        if not email:
+            return email
+
+        # Prevent another user from already using the email.
+        user_model = self.instance.user.__class__
+
+        existing = (
+            user_model.objects
+            .filter(email__iexact=email)
+            .exclude(pk=self.instance.user_id)
+        )
+
+        if existing.exists():
+            raise forms.ValidationError(
+                "Another account is already using this email address."
+            )
+
+        return email
+
+    def save(self, commit=True):
+        profile = super().save(
+            commit=False
+        )
+
+        user = profile.user
+
+        user.first_name = (
+            self.cleaned_data.get("first_name") or ""
+        ).strip()
+
+        user.last_name = (
+            self.cleaned_data.get("last_name") or ""
+        ).strip()
+
+        user.email = (
+            self.cleaned_data.get("email") or ""
+        ).strip()
+
+        if commit:
+            user.save(
+                update_fields=[
+                    "first_name",
+                    "last_name",
+                    "email",
+                ]
+            )
+
+            profile.save()
+
+        return profile
 
 class ProfileFormAdmin(forms.ModelForm):
     """
     HR/Admin/Manager employee profile update form.
     """
 
+    username = forms.CharField(
+        required=False,
+        label="Username",
+        disabled=True,
+    )
+
+    first_name = forms.CharField(
+        required=False,
+        label="First Name",
+    )
+
+    last_name = forms.CharField(
+        required=False,
+        label="Last Name",
+    )
+
+    email = forms.EmailField(
+        required=False,
+        label="Email Address",
+    )
+
+    access_group = forms.ModelChoiceField(
+        queryset=Group.objects.none(),
+        required=True,
+        label="Access Group",
+        help_text=(
+            "Controls the employee's access level in the HRMS."
+        ),
+    )
+
     class Meta:
         model = empProfile
         fields = [
-            "role",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "access_group",
             "manager",
             "designation",
             "shift",
+            "work_schedule",
             "phone_number",
             "position",
             "date_hired",
@@ -155,6 +343,7 @@ class ProfileFormAdmin(forms.ModelForm):
                     "class": "form-control",
                 }
             ),
+
             "address": forms.Textarea(
                 attrs={
                     "rows": 3,
@@ -167,39 +356,119 @@ class ProfileFormAdmin(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         current_employee = self.instance
+        if (
+            current_employee
+            and current_employee.pk
+            and current_employee.user_id
+        ):
+            self.fields["username"].initial = (
+                current_employee.user.username
+            )
 
-        # Only active shifts and designations should be selectable.
+            self.fields["first_name"].initial = (
+                current_employee.user.first_name
+            )
+
+            self.fields["last_name"].initial = (
+                current_employee.user.last_name
+            )
+
+            self.fields["email"].initial = (
+                current_employee.user.email
+            )
+
+        # -----------------------------------------------------
+        # Groups
+        # -----------------------------------------------------
+
+        self.fields["access_group"].queryset = (
+            Group.objects
+            .all()
+            .order_by("name")
+        )
+
+        # Pre-select employee's current role/group.
+        if (
+            current_employee
+            and current_employee.pk
+            and current_employee.user_id
+        ):
+            current_group = (
+                current_employee.user.groups
+                .order_by("name")
+                .first()
+            )
+
+            if current_group:
+                self.fields["access_group"].initial = (
+                    current_group
+                )
+
+        # -----------------------------------------------------
+        # Designations
+        # -----------------------------------------------------
+
         self.fields["designation"].queryset = (
             DesignationMaster.objects
             .filter(is_active=True)
             .order_by("name")
         )
 
+        # -----------------------------------------------------
+        # Shifts
+        # -----------------------------------------------------
+
         self.fields["shift"].queryset = (
             ShiftMaster.objects
             .filter(is_active=True)
             .order_by("name")
         )
+        # -----------------------------------------------------
+        # Work Schedules
+        # -----------------------------------------------------
 
-        # Only active employees can be selected as manager.
+        self.fields["work_schedule"].queryset = (
+            WorkSchedule.objects
+            .filter(is_active=True)
+            .order_by("name")
+        )
+
+        # -----------------------------------------------------
+        # Managers
+        # -----------------------------------------------------
+
         manager_queryset = (
             empProfile.objects
             .filter(is_active=True)
             .select_related("user")
-            .order_by("user__first_name", "user__last_name")
+            .order_by(
+                "user__first_name",
+                "user__last_name",
+            )
         )
 
-        # Employee cannot select themselves as manager.
         if current_employee and current_employee.pk:
             manager_queryset = manager_queryset.exclude(
                 pk=current_employee.pk
             )
 
-        self.fields["manager"].queryset = manager_queryset
+        self.fields["manager"].queryset = (
+            manager_queryset
+        )
+
+        # -----------------------------------------------------
+        # Bootstrap classes
+        # -----------------------------------------------------
 
         for name, field in self.fields.items():
-            if isinstance(field.widget, forms.CheckboxInput):
-                field.widget.attrs["class"] = "form-check-input"
+            if isinstance(
+                field.widget,
+                forms.CheckboxInput
+            ):
+                field.widget.attrs["class"] = (
+                    "form-check-input"
+                )
+
             else:
                 field.widget.attrs.setdefault(
                     "class",
@@ -207,7 +476,9 @@ class ProfileFormAdmin(forms.ModelForm):
                 )
 
     def clean_manager(self):
-        manager = self.cleaned_data.get("manager")
+        manager = self.cleaned_data.get(
+            "manager"
+        )
 
         if (
             manager
@@ -221,6 +492,53 @@ class ProfileFormAdmin(forms.ModelForm):
 
         return manager
 
+    def save(self, commit=True):
+        profile = super().save(
+            commit=False
+        )
+
+        selected_group = self.cleaned_data.get(
+            "access_group"
+        )
+
+        if commit:
+            profile.save()
+            self.save_m2m()
+
+            user = profile.user
+
+            user.first_name = self.cleaned_data.get(
+                "first_name",
+                ""
+            )
+
+            user.last_name = self.cleaned_data.get(
+                "last_name",
+                ""
+            )
+
+            user.email = self.cleaned_data.get(
+                "email",
+                ""
+            )
+
+            user.save(
+                update_fields=[
+                    "first_name",
+                    "last_name",
+                    "email",
+                ]
+            )
+
+            if not user.is_superuser:
+                user.groups.clear()
+
+                if selected_group:
+                    user.groups.add(
+                        selected_group
+                    )
+
+        return profile    
 
 class AttendanceUpdateForm(forms.ModelForm):
     class Meta:
@@ -336,176 +654,6 @@ class AttendanceExceptionForm(forms.ModelForm):
         }
 
 
-# class LeaveRequestForm(forms.ModelForm):
-#     class Meta:
-#         model = LeaveRequest
-#         fields = [
-#             "leave_type",
-#             "start_date",
-#             "end_date",
-#             "duration_type",
-#             "reason",
-#         ]
-
-#         widgets = {
-#             "leave_type": forms.Select(
-#                 attrs={"class": "form-control"}
-#             ),
-#             "start_date": forms.DateInput(
-#                 attrs={
-#                     "type": "date",
-#                     "class": "form-control",
-#                 }
-#             ),
-#             "end_date": forms.DateInput(
-#                 attrs={
-#                     "type": "date",
-#                     "class": "form-control",
-#                 }
-#             ),
-#             "duration_type": forms.Select(
-#                 attrs={"class": "form-control"}
-#             ),
-#             "reason": forms.Textarea(
-#                 attrs={
-#                     "class": "form-control",
-#                     "rows": 5,
-#                     "placeholder": "Enter the reason for your leave request.",
-#                 }
-#             ),
-#         }
-
-#     def __init__(self, *args, employee=None, **kwargs):
-#         super().__init__(*args, **kwargs)
-
-#         self.employee = employee
-
-#         self.fields["leave_type"].queryset = (
-#             LeaveTypeMaster.objects
-#             .filter(is_active=True)
-#             .order_by("name")
-#         )
-
-#         # Set employee before ModelForm runs model-level validation.
-#         if self.employee:
-#             self.instance.employee = self.employee
-
-#     def clean(self):
-#         cleaned_data = super().clean()
-
-#         leave_type = cleaned_data.get("leave_type")
-#         start_date = cleaned_data.get("start_date")
-#         end_date = cleaned_data.get("end_date")
-#         duration_type = cleaned_data.get("duration_type")
-
-#         if not all([
-#             self.employee,
-#             leave_type,
-#             start_date,
-#             end_date,
-#             duration_type,
-#         ]):
-#             return cleaned_data
-
-#         today = timezone.localdate()
-
-#         if start_date < today:
-#             self.add_error(
-#                 "start_date",
-#                 "Past-date leave applications are not enabled yet."
-#             )
-
-#         if end_date < start_date:
-#             self.add_error(
-#                 "end_date",
-#                 "End date cannot be before start date."
-#             )
-#             return cleaned_data
-
-#         if start_date.year != end_date.year:
-#             self.add_error(
-#                 "end_date",
-#                 "A leave request cannot currently span two calendar years."
-#             )
-#             return cleaned_data
-
-#         if (
-#             duration_type in ["FIRST_HALF", "SECOND_HALF"]
-#             and start_date != end_date
-#         ):
-#             self.add_error(
-#                 "duration_type",
-#                 "Half-day leave can only be applied for one date."
-#             )
-
-#         if (
-#             duration_type in ["FIRST_HALF", "SECOND_HALF"]
-#             and not leave_type.allow_half_day
-#         ):
-#             self.add_error(
-#                 "duration_type",
-#                 f"{leave_type.name} does not allow half-day leave."
-#             )
-
-#         if duration_type in ["FIRST_HALF", "SECOND_HALF"]:
-#             requested_days = Decimal("0.5")
-#         else:
-#             requested_days = Decimal(
-#                 str((end_date - start_date).days + 1)
-#             )
-
-#         overlapping_request = LeaveRequest.objects.filter(
-#             employee=self.employee,
-#             status__in=["PENDING", "APPROVED"],
-#             start_date__lte=end_date,
-#             end_date__gte=start_date,
-#         )
-
-#         if self.instance.pk:
-#             overlapping_request = overlapping_request.exclude(
-#                 pk=self.instance.pk
-#             )
-
-#         if overlapping_request.exists():
-#             raise forms.ValidationError(
-#                 "A pending or approved leave request already exists for these dates."
-#             )
-
-#         present_attendance_exists = Attendance.objects.filter(
-#             employee=self.employee,
-#             date__range=(start_date, end_date),
-#             status="PRESENT",
-#         ).exists()
-
-#         if present_attendance_exists:
-#             raise forms.ValidationError(
-#                 "Leave cannot be applied because attendance is already marked Present for one or more selected dates."
-#             )
-
-#         leave_balance = LeaveBalance.objects.filter(
-#             employee=self.employee,
-#             leave_type=leave_type,
-#             year=start_date.year,
-#         ).first()
-
-#         if not leave_balance:
-#             self.add_error(
-#                 "leave_type",
-#                 f"No {start_date.year} leave balance has been assigned for this leave type."
-#             )
-#             return cleaned_data
-
-#         if leave_balance.available_balance < requested_days:
-#             self.add_error(
-#                 "leave_type",
-#                 (
-#                     f"Insufficient balance. Available: "
-#                     f"{leave_balance.available_balance}, "
-#                     f"Requested: {requested_days}."
-#                 )
-#             )
-
-#         return cleaned_data
 
 
 class LeaveRequestForm(forms.ModelForm):
@@ -835,38 +983,86 @@ class LeaveRequestReviewForm(forms.ModelForm):
 
         return cleaned_data
 
+
 class LeaveBalanceForm(forms.ModelForm):
+
+    LEAVE_START_CHOICES = (
+        ("TODAY", "From Today"),
+        ("AFTER_PROBATION", "After 3 Months"),
+        ("SELECTED_DATE", "From Selected Date"),
+    )
+
+    leave_start_mode = forms.ChoiceField(
+        label="Leave Facility Starts",
+        choices=LEAVE_START_CHOICES,
+        initial="AFTER_PROBATION",
+        widget=forms.Select(
+            attrs={
+                "class": "form-control",
+            }
+        ),
+        help_text=(
+            "Default company policy is after "
+            "3 months from the employee's joining date."
+        ),
+    )
+
+    selected_leave_start_date = forms.DateField(
+        label="Selected Start Date",
+        required=False,
+        widget=forms.DateInput(
+            attrs={
+                "type": "date",
+                "class": "form-control",
+            }
+        ),
+    )
+
     class Meta:
         model = LeaveBalance
+
         fields = [
             "employee",
             "leave_type",
             "year",
             "total_allotted",
-            "adjustment",
             "remarks",
         ]
 
         widgets = {
-            "employee": forms.Select(attrs={"class": "form-control"}),
-            "leave_type": forms.Select(attrs={"class": "form-control"}),
-            "year": forms.NumberInput(attrs={
-                "class": "form-control",
-                "min": "2020",
-            }),
-            "total_allotted": forms.NumberInput(attrs={
-                "class": "form-control",
-                "step": "0.5",
-                "min": "0",
-            }),
-            "adjustment": forms.NumberInput(attrs={
-                "class": "form-control",
-                "step": "0.5",
-            }),
-            "remarks": forms.Textarea(attrs={
-                "class": "form-control",
-                "rows": 3,
-            }),
+            "employee": forms.Select(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
+
+            "leave_type": forms.Select(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
+
+            "year": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "2020",
+                }
+            ),
+
+            "total_allotted": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.5",
+                    "min": "0",
+                }
+            ),
+
+            "remarks": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                }
+            ),
         }
 
     def __init__(self, *args, **kwargs):
@@ -876,7 +1072,10 @@ class LeaveBalanceForm(forms.ModelForm):
             empProfile.objects
             .filter(is_active=True)
             .select_related("user")
-            .order_by("user__first_name", "user__last_name")
+            .order_by(
+                "user__first_name",
+                "user__last_name",
+            )
         )
 
         self.fields["leave_type"].queryset = (
@@ -892,7 +1091,20 @@ class LeaveBalanceForm(forms.ModelForm):
         leave_type = cleaned_data.get("leave_type")
         year = cleaned_data.get("year")
 
+        leave_start_mode = cleaned_data.get(
+            "leave_start_mode"
+        )
+
+        selected_date = cleaned_data.get(
+            "selected_leave_start_date"
+        )
+
+        # -------------------------------------------------
+        # Prevent duplicate yearly leave balance
+        # -------------------------------------------------
+
         if employee and leave_type and year:
+
             existing = LeaveBalance.objects.filter(
                 employee=employee,
                 leave_type=leave_type,
@@ -900,15 +1112,56 @@ class LeaveBalanceForm(forms.ModelForm):
             )
 
             if self.instance.pk:
-                existing = existing.exclude(pk=self.instance.pk)
+                existing = existing.exclude(
+                    pk=self.instance.pk
+                )
 
             if existing.exists():
                 raise forms.ValidationError(
-                    "A leave balance already exists for this employee, leave type and year."
+                    (
+                        "A leave balance already exists "
+                        "for this employee, leave type "
+                        "and year."
+                    )
+                )
+
+        # -------------------------------------------------
+        # Leave facility start validation
+        # -------------------------------------------------
+
+        if (
+            leave_start_mode == "AFTER_PROBATION"
+            and employee
+            and not employee.date_hired
+        ):
+            self.add_error(
+                "leave_start_mode",
+                (
+                    "This employee does not have a joining "
+                    "date. Add the joining date before using "
+                    "the 3-month probation policy."
+                ),
+            )
+
+        if leave_start_mode == "SELECTED_DATE":
+
+            if not selected_date:
+                self.add_error(
+                    "selected_leave_start_date",
+                    "Please select the leave facility start date.",
+                )
+
+            elif selected_date < timezone.localdate():
+                self.add_error(
+                    "selected_leave_start_date",
+                    (
+                        "Selected start date cannot "
+                        "be in the past."
+                    ),
                 )
 
         return cleaned_data
-
+    
 class AttendanceExceptionReviewForm(forms.Form):
     action = forms.ChoiceField(
         choices=(
@@ -942,3 +1195,338 @@ class AttendanceExceptionReviewForm(forms.Form):
             )
 
         return cleaned_data
+
+class ResignationForm(forms.Form):
+    proposed_last_working_date = forms.DateField(
+        label="Proposed Last Working Date",
+        widget=forms.DateInput(
+            attrs={
+                "type": "date",
+                "class": "form-control",
+            }
+        ),
+    )
+
+    reason = forms.CharField(
+        label="Reason for Resignation",
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "rows": 5,
+                "placeholder": (
+                    "Enter your reason for resignation."
+                ),
+            }
+        ),
+    )
+
+    def clean_proposed_last_working_date(self):
+        proposed_date = self.cleaned_data[
+            "proposed_last_working_date"
+        ]
+
+        if proposed_date < timezone.localdate():
+            raise forms.ValidationError(
+                "Proposed last working date cannot be in the past."
+            )
+
+        return proposed_date
+
+class ResignationReviewForm(forms.Form):
+    decision = forms.ChoiceField(
+        choices=(
+            ("APPROVED", "Accept Resignation"),
+            ("REJECTED", "Reject Resignation"),
+        ),
+        widget=forms.Select(
+            attrs={
+                "class": "form-control",
+            }
+        ),
+    )
+
+    final_last_working_date = forms.DateField(
+        label="Final Last Working Date",
+        required=False,
+        widget=forms.DateInput(
+            attrs={
+                "type": "date",
+                "class": "form-control",
+            }
+        ),
+    )
+
+    remarks = forms.CharField(
+        label="HR Remarks",
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "rows": 4,
+                "placeholder": "Add HR remarks.",
+            }
+        ),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        decision = cleaned_data.get("decision")
+        remarks = (cleaned_data.get("remarks") or "").strip()
+
+        if decision == "REJECTED" and not remarks:
+            self.add_error(
+                "remarks",
+                "HR remarks are required when rejecting a resignation.",
+            )
+
+        final_date = cleaned_data.get(
+            "final_last_working_date"
+        )
+
+        if (
+            decision == "APPROVED"
+            and final_date
+            and final_date < timezone.localdate()
+        ):
+            self.add_error(
+                "final_last_working_date",
+                "Final last working date cannot be in the past.",
+            )
+
+        return cleaned_data
+
+class ClearanceApprovalDecisionForm(forms.Form):
+    decision = forms.ChoiceField(
+        choices=(
+            ("APPROVED", "Approve"),
+            ("REJECTED", "Reject"),
+        ),
+        widget=forms.Select(
+            attrs={
+                "class": "form-control",
+            }
+        ),
+    )
+
+    remarks = forms.CharField(
+        label="Remarks",
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "rows": 4,
+                "placeholder": "Add remarks for this clearance decision.",
+            }
+        ),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        decision = cleaned_data.get("decision")
+        remarks = (cleaned_data.get("remarks") or "").strip()
+
+        if decision == "REJECTED" and not remarks:
+            self.add_error(
+                "remarks",
+                "Remarks are required when rejecting a clearance.",
+            )
+
+        return cleaned_data
+
+class TerminationForm(forms.Form):
+    employee = forms.ModelChoiceField(
+        queryset=empProfile.objects.none(),
+        label="Employee",
+        widget=forms.Select(
+            attrs={
+                "class": "form-control",
+            }
+        ),
+    )
+
+    final_last_working_date = forms.DateField(
+        label="Final Last Working Date",
+        required=False,
+        widget=forms.DateInput(
+            attrs={
+                "type": "date",
+                "class": "form-control",
+            }
+        ),
+    )
+
+    reason = forms.CharField(
+        label="Termination Reason",
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "rows": 5,
+                "placeholder": "Enter the reason for termination.",
+            }
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["employee"].queryset = (
+            empProfile.objects
+            .filter(is_active=True)
+            .select_related("user")
+            .order_by(
+                "user__first_name",
+                "user__last_name",
+            )
+        )
+
+    def clean_final_last_working_date(self):
+        final_date = self.cleaned_data.get(
+            "final_last_working_date"
+        )
+
+        if final_date and final_date < timezone.localdate():
+            raise forms.ValidationError(
+                "Final last working date cannot be in the past."
+            )
+
+        return final_date
+
+class HolidayForm(forms.ModelForm):
+    class Meta:
+        model = Holiday
+        fields = [
+            "name",
+            "date",
+            "holiday_type",
+            "description",
+            "is_active",
+        ]
+
+        widgets = {
+            "name": forms.TextInput(
+                attrs={"class": "form-control"}
+            ),
+            "date": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+            "holiday_type": forms.Select(
+                attrs={"class": "form-control"}
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                }
+            ),
+        }
+
+class HolidayBulkUploadForm(forms.Form):
+    file = forms.FileField(
+        label="Holiday File",
+        help_text="Upload .xlsx or .csv file."
+    )
+
+    def clean_file(self):
+        uploaded_file = self.cleaned_data["file"]
+
+        allowed_extensions = (
+            ".xlsx",
+            ".csv",
+        )
+
+        if not uploaded_file.name.lower().endswith(
+            allowed_extensions
+        ):
+            raise forms.ValidationError(
+                "Please upload an Excel (.xlsx) or CSV (.csv) file."
+            )
+
+        return uploaded_file
+
+class WorkScheduleForm(forms.ModelForm):
+    class Meta:
+        model = WorkSchedule
+        fields = [
+            "name",
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+            "is_default",
+            "is_active",
+        ]
+
+
+class OptionalHolidayRequestForm(forms.ModelForm):
+
+    class Meta:
+        model = OptionalHolidayRequest
+
+        fields = [
+            "holiday",
+            "reason",
+        ]
+
+        widgets = {
+            "holiday": forms.Select(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
+
+            "reason": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "Reason (optional)",
+                }
+            ),
+        }
+
+    def __init__(
+        self,
+        *args,
+        employee=None,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+
+        today = timezone.localdate()
+
+        holidays = Holiday.objects.filter(
+            holiday_type="OPTIONAL",
+            is_active=True,
+            date__gte=today,
+        ).order_by("date")
+
+        # Don't show holidays already requested
+        # by this employee.
+        if employee:
+            requested_holiday_ids = (
+                OptionalHolidayRequest.objects
+                .filter(
+                    employee=employee,
+                )
+                .values_list(
+                    "holiday_id",
+                    flat=True,
+                )
+            )
+
+            holidays = holidays.exclude(
+                id__in=requested_holiday_ids,
+            )
+
+        self.fields["holiday"].queryset = holidays
+
+        self.fields["holiday"].empty_label = (
+            "Select Optional Holiday"
+        )

@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Pending Resignations{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div class="container" style="max-width: 1200px;">
+
+        <div class="sky-header">
+
+            <div>
+                <span class="sky-eyebrow">
+                    HR / Employee Exit
+                </span>
+
+                <h1>Pending Resignations</h1>
+
+                <p class="sky-help-text">
+                    Review resignation requests submitted by employees.
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+                <h6>
+                    Awaiting HR Review
+                </h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                {% if pending_resignations %}
+
+                    <div class="table-responsive">
+
+                        <table class="table align-middle">
+
+                            <thead>
+
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Reporting Manager</th>
+                                    <th>Submitted</th>
+                                    <th>Proposed LWD</th>
+                                    <th>Reason</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                {% for exit_request in pending_resignations %}
+
+                                    <tr>
+
+                                        <td>
+
+                                            <strong>
+                                                {{ exit_request.employee.user.get_full_name|default:exit_request.employee.user.username }}
+                                            </strong>
+
+                                            <div class="sky-help-text">
+                                                {{ exit_request.employee.user.username }}
+                                            </div>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            {% if exit_request.employee.manager %}
+
+                                                {{ exit_request.employee.manager.user.get_full_name|default:exit_request.employee.manager.user.username }}
+
+                                            {% else %}
+
+                                                <span class="text-danger">
+                                                    No Manager Assigned
+                                                </span>
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <td>
+                                            {{ exit_request.created_at|date:"d M Y, h:i A" }}
+                                        </td>
+
+
+                                        <td>
+                                            {{ exit_request.proposed_last_working_date|date:"d M Y" }}
+                                        </td>
+
+
+                                        <td style="max-width: 300px;">
+                                            {{ exit_request.reason }}
+                                        </td>
+
+
+                                        <td>
+                                            <strong>
+                                                {{ exit_request.get_status_display }}
+                                            </strong>
+                                        </td>
+
+
+                                        <td>
+
+                                            <a
+                                                href="{% url 'reviewResignation' exit_request.uuid %}"
+                                                class="sky-header-btn"
+                                            >
+                                                Review
+                                            </a>
+
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                {% else %}
+
+                    <div class="sky-empty">
+
+                        There are no resignation requests waiting for HR review.
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

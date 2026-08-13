@@ -1,91 +1,300 @@
 {% extends "base.html" %}
+
 {% load static %}
 
+
 {% block title %}
-    {% if balance %}Edit Leave Balance{% else %}Assign Leave{% endif %}
+    Assign Leave
 {% endblock %}
+
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/dashboard.css' %}"
+>
+
 {% endblock %}
 
+
 {% block content %}
+
 <div class="sky-dashboard">
-    <div class="container" style="max-width: 800px;">
+
+    <div
+        class="container"
+        style="max-width: 800px;"
+    >
 
         <div class="sky-header">
+
             <div>
-                <span class="sky-eyebrow">Leaves / Balance</span>
+
+                <span class="sky-eyebrow">
+                    Leaves / Administration
+                </span>
 
                 <h1>
-                    {% if balance %}
-                        Edit Leave Balance
-                    {% else %}
-                        Assign Leave Balance
-                    {% endif %}
+                    Assign Leave
                 </h1>
+
             </div>
+
         </div>
 
+
         <div class="sky-panel">
+
             <div class="sky-panel-head">
-                <h6>Balance Details</h6>
+
+                <div>
+
+                    <h6>
+                        Leave Allocation
+                    </h6>
+
+                    <span class="sky-help-text">
+                        Assign yearly leave and define when
+                        the employee can start using leave.
+                    </span>
+
+                </div>
+
             </div>
+
 
             <div class="sky-panel-body">
 
+
                 {% if form.non_field_errors %}
+
                     <div class="sky-auth-error-banner">
-                        {{ form.non_field_errors }}
-                    </div>
-                {% endif %}
 
-                <form method="post">
-                    {% csrf_token %}
-
-                    <div class="row">
-
-                        {% for field in form %}
-                            <div class="{% if field.name == 'remarks' %}col-12{% else %}col-md-6{% endif %} mb-3">
-
-                                <label
-                                    class="sky-form-label"
-                                    for="{{ field.id_for_label }}"
-                                >
-                                    {{ field.label }}
-                                </label>
-
-                                {{ field }}
-
-                                {% if field.help_text %}
-                                    <div class="sky-help-text">
-                                        {{ field.help_text }}
-                                    </div>
-                                {% endif %}
-
-                                {% for error in field.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
+                        {% for error in form.non_field_errors %}
+                            <div>
+                                {{ error }}
                             </div>
                         {% endfor %}
 
                     </div>
 
-                    {% if balance %}
-                        <div class="mb-3">
-                            <span class="sky-help-text">
-                                Used: {{ balance.used }} ·
-                                Current Available: {{ balance.available_balance }}
-                            </span>
-                        </div>
-                    {% endif %}
+                {% endif %}
 
-                    <button type="submit" class="sky-header-btn">
-                        Save Leave Balance
+
+                <form method="post">
+
+                    {% csrf_token %}
+
+
+                    <div class="row">
+
+
+                        <!-- Employee -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label
+                                class="sky-form-label"
+                                for="{{ form.employee.id_for_label }}"
+                            >
+                                Employee
+                            </label>
+
+                            {{ form.employee }}
+
+                            {% for error in form.employee.errors %}
+
+                                <div class="sky-form-error">
+                                    {{ error }}
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+
+                        <!-- Leave Type -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label
+                                class="sky-form-label"
+                                for="{{ form.leave_type.id_for_label }}"
+                            >
+                                Leave Type
+                            </label>
+
+                            {{ form.leave_type }}
+
+                            {% for error in form.leave_type.errors %}
+
+                                <div class="sky-form-error">
+                                    {{ error }}
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+
+                        <!-- Year -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label
+                                class="sky-form-label"
+                                for="{{ form.year.id_for_label }}"
+                            >
+                                Year
+                            </label>
+
+                            {{ form.year }}
+
+                            {% for error in form.year.errors %}
+
+                                <div class="sky-form-error">
+                                    {{ error }}
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+
+                        <!-- Total Allotted -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label
+                                class="sky-form-label"
+                                for="{{ form.total_allotted.id_for_label }}"
+                            >
+                                Total Allotted
+                            </label>
+
+                            {{ form.total_allotted }}
+
+                            {% for error in form.total_allotted.errors %}
+
+                                <div class="sky-form-error">
+                                    {{ error }}
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+
+                        <!-- Leave Start Mode -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label
+                                class="sky-form-label"
+                                for="{{ form.leave_start_mode.id_for_label }}"
+                            >
+                                Leave Facility Starts
+                            </label>
+
+                            {{ form.leave_start_mode }}
+
+                            {% if form.leave_start_mode.help_text %}
+
+                                <div class="sky-help-text">
+                                    {{ form.leave_start_mode.help_text }}
+                                </div>
+
+                            {% endif %}
+
+                            {% for error in form.leave_start_mode.errors %}
+
+                                <div class="sky-form-error">
+                                    {{ error }}
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+
+                        <!-- Selected Date -->
+
+                        <div
+                            class="col-md-6 mb-3"
+                            id="selected-date-wrapper"
+                        >
+
+                            <label
+                                class="sky-form-label"
+                                for="{{ form.selected_leave_start_date.id_for_label }}"
+                            >
+                                Selected Start Date
+                            </label>
+
+                            {{ form.selected_leave_start_date }}
+
+                            <div class="sky-help-text">
+                                Required only when
+                                "From Selected Date" is chosen.
+                            </div>
+
+                            {% for error in form.selected_leave_start_date.errors %}
+
+                                <div class="sky-form-error">
+                                    {{ error }}
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+
+                        <!-- Remarks -->
+
+                        <div class="col-12 mb-3">
+
+                            <label
+                                class="sky-form-label"
+                                for="{{ form.remarks.id_for_label }}"
+                            >
+                                Remarks
+                            </label>
+
+                            {{ form.remarks }}
+
+                            {% for error in form.remarks.errors %}
+
+                                <div class="sky-form-error">
+                                    {{ error }}
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="sky-help-text mb-4">
+
+                        <strong>Leave policy:</strong>
+
+                        By default, employees become eligible
+                        for leave after completing 3 calendar
+                        months from their joining date.
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="sky-header-btn"
+                    >
+                        Assign Leave
                     </button>
+
 
                     <a
                         href="{% url 'leaveBalanceList' %}"
@@ -94,11 +303,70 @@
                         Back
                     </a>
 
+
                 </form>
 
             </div>
+
         </div>
 
     </div>
+
 </div>
+
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const modeField = document.getElementById(
+            "id_leave_start_mode"
+        );
+
+        const dateWrapper = document.getElementById(
+            "selected-date-wrapper"
+        );
+
+        const selectedDate = document.getElementById(
+            "id_selected_leave_start_date"
+        );
+
+
+        function updateSelectedDateVisibility() {
+
+            if (
+                modeField.value === "SELECTED_DATE"
+            ) {
+
+                dateWrapper.style.display = "";
+
+            } else {
+
+                dateWrapper.style.display = "none";
+
+                if (selectedDate) {
+                    selectedDate.value = "";
+                }
+
+            }
+
+        }
+
+
+        updateSelectedDateVisibility();
+
+
+        modeField.addEventListener(
+            "change",
+            updateSelectedDateVisibility
+        );
+
+    }
+);
+
+</script>
+
+
 {% endblock %}

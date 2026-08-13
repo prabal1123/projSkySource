@@ -1,15 +1,31 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+
     <div class="container">
 
+        <!-- ========================================= -->
+        <!-- BRAND -->
+        <!-- ========================================= -->
+
         {% if user.is_authenticated %}
-            <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">
+
+            <a
+                class="navbar-brand fw-bold"
+                href="{% url 'dashboard' %}"
+            >
                 HRMS
             </a>
+
         {% else %}
-            <a class="navbar-brand fw-bold" href="{% url 'login' %}">
+
+            <a
+                class="navbar-brand fw-bold"
+                href="{% url 'login' %}"
+            >
                 HRMS
             </a>
+
         {% endif %}
+
 
         <button
             class="navbar-toggler"
@@ -23,14 +39,45 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div class="collapse navbar-collapse" id="navbar">
+
+        <div
+            class="collapse navbar-collapse"
+            id="navbar"
+        >
+
+            <!-- ========================================= -->
+            <!-- LEFT NAVIGATION -->
+            <!-- ========================================= -->
 
             <ul class="navbar-nav me-auto">
 
                 {% if user.is_authenticated %}
 
-                    {% if is_admin_role %}
+
+                    <!-- ================================= -->
+                    <!-- DASHBOARD -->
+                    <!-- ================================= -->
+
+                    <li class="nav-item">
+
+                        <a
+                            class="nav-link"
+                            href="{% url 'dashboard' %}"
+                        >
+                            Dashboard
+                        </a>
+
+                    </li>
+
+
+                    <!-- ================================= -->
+                    <!-- EMPLOYEES -->
+                    <!-- ================================= -->
+
+                    {% if can_manage_employees %}
+
                         <li class="nav-item dropdown">
+
                             <a
                                 class="nav-link dropdown-toggle"
                                 href="#"
@@ -41,7 +88,16 @@
                                 Employees
                             </a>
 
+
                             <ul class="dropdown-menu">
+
+                                <li>
+                                    <h6 class="dropdown-header">
+                                        Employee Management
+                                    </h6>
+                                </li>
+
+
                                 <li>
                                     <a
                                         class="dropdown-item"
@@ -51,6 +107,7 @@
                                     </a>
                                 </li>
 
+
                                 <li>
                                     <a
                                         class="dropdown-item"
@@ -59,60 +116,596 @@
                                         View Employees
                                     </a>
                                 </li>
+
                             </ul>
+
                         </li>
+
                     {% endif %}
 
+
+                    <!-- ================================= -->
+                    <!-- ATTENDANCE -->
+                    <!-- ================================= -->
+
+                    {% if has_employee_profile or can_review_attendance_exception %}
+
+                        <li class="nav-item dropdown">
+
+                            <a
+                                class="nav-link dropdown-toggle"
+                                href="#"
+                                role="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                            >
+                                Attendance
+                            </a>
+
+
+                            <ul class="dropdown-menu">
+
+
+                                <!-- Employee Attendance -->
+
+                                {% if has_employee_profile %}
+
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            My Attendance
+                                        </h6>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'attendanceCalendarSelf' %}"
+                                        >
+                                            Attendance Calendar
+                                        </a>
+                                    </li>
+
+                                {% endif %}
+
+
+                                <!-- Attendance Review -->
+
+                                {% if can_review_attendance_exception %}
+
+                                    {% if has_employee_profile %}
+
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+
+                                    {% endif %}
+
+
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            Attendance Review
+                                        </h6>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'pendingAttendanceExceptions' %}"
+                                        >
+                                            Attendance Exceptions
+                                        </a>
+                                    </li>
+
+                                {% endif %}
+
+                            </ul>
+
+                        </li>
+
+                    {% endif %}
+
+
+                    <!-- ================================= -->
+                    <!-- LEAVES -->
+                    <!-- ================================= -->
+
+                    {% if has_employee_profile or can_review_leave or can_manage_leave_balance %}
+
+                        <li class="nav-item dropdown">
+
+                            <a
+                                class="nav-link dropdown-toggle"
+                                href="#"
+                                role="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                            >
+                                Leaves
+                            </a>
+
+
+                            <ul class="dropdown-menu">
+
+
+                                <!-- Employee Leave -->
+
+                                {% if has_employee_profile %}
+
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            My Leaves
+                                        </h6>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'applyLeave' %}"
+                                        >
+                                            Apply Leave
+                                        </a>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'myLeaveRequests' %}"
+                                        >
+                                            My Leave Requests
+                                        </a>
+                                    </li>
+
+                                {% endif %}
+
+
+                                <!-- Leave Review -->
+
+                                {% if can_review_leave %}
+
+                                    {% if has_employee_profile %}
+
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+
+                                    {% endif %}
+
+
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            Leave Review
+                                        </h6>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'pendingLeaveRequests' %}"
+                                        >
+                                            Pending Leave Requests
+                                        </a>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'allLeaveRequests' %}"
+                                        >
+                                            All Leave Requests
+                                        </a>
+                                    </li>
+
+                                {% endif %}
+
+
+                                <!-- Leave Balance -->
+
+                                {% if can_manage_leave_balance %}
+
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+
+
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            Leave Administration
+                                        </h6>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'leaveBalanceList' %}"
+                                        >
+                                            Leave Balances
+                                        </a>
+                                    </li>
+
+                                {% endif %}
+
+                            </ul>
+
+                        </li>
+
+                    {% endif %}
+
+
+                    <!-- ================================= -->
+                    <!-- HOLIDAYS -->
+                    <!-- ================================= -->
+
+                    {% if has_employee_profile or can_review_leave or can_manage_attendance %}
+
+                        <li class="nav-item dropdown">
+
+                            <a
+                                class="nav-link dropdown-toggle"
+                                href="#"
+                                role="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                            >
+                                Holidays
+                            </a>
+
+
+                            <ul class="dropdown-menu">
+
+
+                                <!-- Employee Optional Holidays -->
+
+                                {% if has_employee_profile %}
+
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            My Holidays
+                                        </h6>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'optionalHolidayApply' %}"
+                                        >
+                                            Optional Holidays
+                                        </a>
+                                    </li>
+
+                                {% endif %}
+
+
+                                <!-- Optional Holiday Review -->
+
+                                {% if can_review_leave %}
+
+                                    {% if has_employee_profile %}
+
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+
+                                    {% endif %}
+
+
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            Holiday Requests
+                                        </h6>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'pendingOptionalHolidayRequests' %}"
+                                        >
+                                            Pending Optional Requests
+                                        </a>
+                                    </li>
+
+                                {% endif %}
+
+
+                                <!-- HR Holiday Administration -->
+
+                                {% if can_manage_attendance %}
+
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+
+
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            Holiday Management
+                                        </h6>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'holidayList' %}"
+                                        >
+                                            Holiday List
+                                        </a>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'holidayCalendar' %}"
+                                        >
+                                            Monthly Holiday Calendar
+                                        </a>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'holidayYear' %}"
+                                        >
+                                            Year Holiday Calendar
+                                        </a>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'holidayBulkUpload' %}"
+                                        >
+                                            Bulk Holiday Upload
+                                        </a>
+                                    </li>
+
+
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+
+
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            Work Schedule
+                                        </h6>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'workScheduleList' %}"
+                                        >
+                                            Work Schedules
+                                        </a>
+                                    </li>
+
+                                {% endif %}
+
+                            </ul>
+
+                        </li>
+
+                    {% endif %}
+
+
+                    <!-- ================================= -->
+                    <!-- EXIT & CLEARANCE -->
+                    <!-- ================================= -->
+
+                    {% if has_employee_profile or can_review_manager_noc or can_review_finance_noc or can_view_all_clearance_requests or can_initiate_employee_exit or can_finalize_employee_exit %}
+
+                        <li class="nav-item dropdown">
+
+                            <a
+                                class="nav-link dropdown-toggle"
+                                href="#"
+                                role="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                            >
+                                Exit &amp; Clearance
+                            </a>
+
+
+                            <ul class="dropdown-menu">
+
+
+                                <!-- Employee -->
+
+                                {% if has_employee_profile %}
+
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            My Exit
+                                        </h6>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'submitResignation' %}"
+                                        >
+                                            Submit Resignation
+                                        </a>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'myResignations' %}"
+                                        >
+                                            My Resignations
+                                        </a>
+                                    </li>
+
+                                {% endif %}
+
+
+                                <!-- Manager -->
+
+                                {% if can_review_manager_noc %}
+
+                                    {% if has_employee_profile %}
+
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+
+                                    {% endif %}
+
+
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            Manager
+                                        </h6>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'managerClearanceQueue' %}"
+                                        >
+                                            Pending Manager NOCs
+                                        </a>
+                                    </li>
+
+                                {% endif %}
+
+
+                                <!-- Finance -->
+
+                                {% if can_review_finance_noc %}
+
+                                    {% if has_employee_profile or can_review_manager_noc %}
+
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+
+                                    {% endif %}
+
+
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            Finance
+                                        </h6>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="{% url 'financeClearanceQueue' %}"
+                                        >
+                                            Pending Finance NOCs
+                                        </a>
+                                    </li>
+
+                                {% endif %}
+
+
+                                <!-- HR -->
+
+                                {% if can_view_all_clearance_requests or can_initiate_employee_exit or can_finalize_employee_exit %}
+
+                                    {% if has_employee_profile or can_review_manager_noc or can_review_finance_noc %}
+
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+
+                                    {% endif %}
+
+
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            HR
+                                        </h6>
+                                    </li>
+
+
+                                    {% if can_view_all_clearance_requests %}
+
+                                        <li>
+                                            <a
+                                                class="dropdown-item"
+                                                href="{% url 'pendingResignations' %}"
+                                            >
+                                                Pending Resignations
+                                            </a>
+                                        </li>
+
+
+                                        <li>
+                                            <a
+                                                class="dropdown-item"
+                                                href="{% url 'allExitRequests' %}"
+                                            >
+                                                All Exit Requests
+                                            </a>
+                                        </li>
+
+                                    {% endif %}
+
+
+                                    {% if can_initiate_employee_exit %}
+
+                                        <li>
+                                            <a
+                                                class="dropdown-item"
+                                                href="{% url 'initiateTermination' %}"
+                                            >
+                                                Initiate Termination
+                                            </a>
+                                        </li>
+
+                                    {% endif %}
+
+
+                                    {% if can_finalize_employee_exit %}
+
+                                        <li>
+                                            <a
+                                                class="dropdown-item"
+                                                href="{% url 'readyForFinalization' %}"
+                                            >
+                                                Ready for Finalization
+                                            </a>
+                                        </li>
+
+                                    {% endif %}
+
+                                {% endif %}
+
+                            </ul>
+
+                        </li>
+
+                    {% endif %}
+
+
+                    <!-- ================================= -->
+                    <!-- PROFILE -->
+                    <!-- ================================= -->
+
                     <li class="nav-item dropdown">
-                        <a
-                            class="nav-link dropdown-toggle"
-                            href="#"
-                            role="button"
-                            data-bs-toggle="dropdown"
-                            aria-expanded="false"
-                        >
-                            Leaves
-                        </a>
 
-                        <ul class="dropdown-menu">
-
-                            <li>
-                                <a
-                                    class="dropdown-item"
-                                    href="{% url 'applyLeave' %}"
-                                >
-                                    Apply Leave
-                                </a>
-                            </li>
-
-                            <li>
-                                <a
-                                    class="dropdown-item"
-                                    href="{% url 'myLeaveRequests' %}"
-                                >
-                                    My Leave Requests
-                                </a>
-                            </li>
-
-                            {% if is_admin_role %}
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-
-                                <li>
-                                    <a
-                                        class="dropdown-item"
-                                        href="{% url 'pendingLeaveRequests' %}"
-                                    >
-                                        Pending Leave Requests
-                                    </a>
-                                </li>
-                            {% endif %}
-
-                        </ul>
-                    </li>
-
-                    <li class="nav-item dropdown">
                         <a
                             class="nav-link dropdown-toggle"
                             href="#"
@@ -123,25 +716,22 @@
                             Profile
                         </a>
 
+
                         <ul class="dropdown-menu">
 
-                            <li>
-                                <a
-                                    class="dropdown-item"
-                                    href="{% url 'myProfile' %}"
-                                >
-                                    My Profile
-                                </a>
-                            </li>
+                            {% if has_employee_profile %}
 
-                            <li>
-                                <a
-                                    class="dropdown-item"
-                                    href="{% url 'attendanceCalendarSelf' %}"
-                                >
-                                    My Attendance
-                                </a>
-                            </li>
+                                <li>
+                                    <a
+                                        class="dropdown-item"
+                                        href="{% url 'myProfile' %}"
+                                    >
+                                        My Profile
+                                    </a>
+                                </li>
+
+                            {% endif %}
+
 
                             <li>
                                 <a
@@ -153,24 +743,41 @@
                             </li>
 
                         </ul>
+
                     </li>
 
                 {% endif %}
 
             </ul>
 
+
+            <!-- ========================================= -->
+            <!-- RIGHT SIDE -->
+            <!-- ========================================= -->
+
             <ul class="navbar-nav align-items-lg-center">
 
                 {% if user.is_authenticated %}
 
                     <li class="nav-item">
+
                         <span class="navbar-text me-lg-3">
-                            Welcome {{ user.first_name|default:user.username }}
+
+                            Welcome
+                            {{ user.first_name|default:user.username }}
+
                         </span>
+
                     </li>
 
+
                     <li class="nav-item">
-                        <form method="post" action="{% url 'logout' %}">
+
+                        <form
+                            method="post"
+                            action="{% url 'logout' %}"
+                        >
+
                             {% csrf_token %}
 
                             <button
@@ -179,18 +786,22 @@
                             >
                                 Logout
                             </button>
+
                         </form>
+
                     </li>
 
                 {% else %}
 
                     <li class="nav-item">
+
                         <a
                             class="btn btn-outline-light btn-sm"
                             href="{% url 'login' %}"
                         >
                             Login
                         </a>
+
                     </li>
 
                 {% endif %}
@@ -198,5 +809,7 @@
             </ul>
 
         </div>
+
     </div>
+
 </nav>

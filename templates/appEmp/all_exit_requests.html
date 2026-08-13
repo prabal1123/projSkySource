@@ -1,0 +1,469 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}All Exit Requests{% endblock %}
+
+{% block extra_css %}
+<link
+    rel="stylesheet"
+    href="{% static 'css/dashboard.css' %}"
+>
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div
+        class="container"
+        style="max-width: 1400px;"
+    >
+
+        <!-- ============================== -->
+        <!-- HEADER -->
+        <!-- ============================== -->
+
+        <div class="sky-header">
+
+            <div>
+
+                <span class="sky-eyebrow">
+                    HR / Employee Exit
+                </span>
+
+                <h1>All Exit Requests</h1>
+
+                <p class="sky-help-text">
+                    View resignation and termination
+                    requests across all stages of the
+                    employee exit process.
+                </p>
+
+            </div>
+
+
+            <div class="d-flex gap-2">
+
+                <a
+                    href="{% url 'pendingResignations' %}"
+                    class="sky-header-btn"
+                >
+                    Pending Resignations
+                </a>
+
+                <a
+                    href="{% url 'readyForFinalization' %}"
+                    class="sky-header-btn"
+                >
+                    Ready for Finalization
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- ============================== -->
+        <!-- FILTERS -->
+        <!-- ============================== -->
+
+        <div class="sky-panel mb-4">
+
+            <div class="sky-panel-head">
+                <h6>Filters</h6>
+            </div>
+
+
+            <div class="sky-panel-body">
+
+                <form
+                    method="get"
+                    class="row g-3 align-items-end"
+                >
+
+                    <!-- Exit Type -->
+                    <div class="col-md-4">
+
+                        <label class="sky-form-label">
+                            Exit Type
+                        </label>
+
+                        <select
+                            name="type"
+                            class="form-control"
+                        >
+
+                            <option value="">
+                                All Types
+                            </option>
+
+                            {% for value, label in type_choices %}
+
+                                <option
+                                    value="{{ value }}"
+                                    {% if selected_type == value %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ label }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Status -->
+                    <div class="col-md-4">
+
+                        <label class="sky-form-label">
+                            Status
+                        </label>
+
+                        <select
+                            name="status"
+                            class="form-control"
+                        >
+
+                            <option value="">
+                                All Statuses
+                            </option>
+
+                            {% for value, label in status_choices %}
+
+                                <option
+                                    value="{{ value }}"
+                                    {% if selected_status == value %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ label }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Buttons -->
+                    <div class="col-md-4">
+
+                        <button
+                            type="submit"
+                            class="sky-header-btn"
+                        >
+                            Apply Filters
+                        </button>
+
+                        <a
+                            href="{% url 'allExitRequests' %}"
+                            class="btn btn-outline-secondary ms-2"
+                        >
+                            Clear
+                        </a>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+        <!-- ============================== -->
+        <!-- EXIT HISTORY -->
+        <!-- ============================== -->
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+
+                <h6>
+                    Employee Exit History
+                </h6>
+
+            </div>
+
+
+            <div class="sky-panel-body">
+
+                {% if request_rows %}
+
+                    <div class="table-responsive">
+
+                        <table
+                            class="table align-middle"
+                        >
+
+                            <thead>
+
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Exit Type</th>
+                                    <th>Submitted</th>
+                                    <th>Last Working Date</th>
+                                    <th>Manager NOC</th>
+                                    <th>Finance NOC</th>
+                                    <th>Status</th>
+                                    <th>Initiated By</th>
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                {% for row in request_rows %}
+
+                                    <tr>
+
+                                        <!-- Employee -->
+                                        <td>
+
+                                            <strong>
+                                                {{ row.exit_request.employee.user.get_full_name|default:row.exit_request.employee.user.username }}
+                                            </strong>
+
+                                            <div class="sky-help-text">
+                                                {{ row.exit_request.employee.user.username }}
+                                            </div>
+
+                                        </td>
+
+
+                                        <!-- Exit Type -->
+                                        <td>
+
+                                            <strong>
+                                                {{ row.exit_request.get_exit_type_display }}
+                                            </strong>
+
+                                        </td>
+
+
+                                        <!-- Created -->
+                                        <td>
+
+                                            {{ row.exit_request.created_at|date:"d M Y" }}
+
+                                            <div class="sky-help-text">
+                                                {{ row.exit_request.created_at|date:"h:i A" }}
+                                            </div>
+
+                                        </td>
+
+
+                                        <!-- Last Working Date -->
+                                        <td>
+
+                                            {% if row.exit_request.final_last_working_date %}
+
+                                                {{ row.exit_request.final_last_working_date|date:"d M Y" }}
+
+                                            {% elif row.exit_request.proposed_last_working_date %}
+
+                                                {{ row.exit_request.proposed_last_working_date|date:"d M Y" }}
+
+                                                <div class="sky-help-text">
+                                                    Proposed
+                                                </div>
+
+                                            {% else %}
+
+                                                —
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <!-- Manager Approval -->
+                                        <td>
+
+                                            {% if row.manager_approval %}
+
+                                                <strong>
+                                                    {{ row.manager_approval.get_status_display }}
+                                                </strong>
+
+                                                {% if row.manager_approval.decided_by %}
+
+                                                    <div class="sky-help-text">
+
+                                                        By:
+                                                        {{ row.manager_approval.decided_by.get_full_name|default:row.manager_approval.decided_by.username }}
+
+                                                    </div>
+
+                                                {% endif %}
+
+                                            {% else %}
+
+                                                Not Started
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <!-- Finance Approval -->
+                                        <td>
+
+                                            {% if row.finance_approval %}
+
+                                                <strong>
+                                                    {{ row.finance_approval.get_status_display }}
+                                                </strong>
+
+                                                {% if row.finance_approval.decided_by %}
+
+                                                    <div class="sky-help-text">
+
+                                                        By:
+                                                        {{ row.finance_approval.decided_by.get_full_name|default:row.finance_approval.decided_by.username }}
+
+                                                    </div>
+
+                                                {% endif %}
+
+                                            {% else %}
+
+                                                Not Started
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <!-- Overall Exit Status -->
+                                        <td>
+
+                                            <strong>
+                                                {{ row.exit_request.get_status_display }}
+                                            </strong>
+
+                                        </td>
+
+
+                                        <!-- Initiated By -->
+                                        <td>
+
+                                            {% if row.exit_request.initiated_by %}
+
+                                                {{ row.exit_request.initiated_by.get_full_name|default:row.exit_request.initiated_by.username }}
+
+                                            {% else %}
+
+                                                —
+
+                                            {% endif %}
+
+                                        </td>
+
+                                    </tr>
+
+
+                                    <!-- DETAILS -->
+                                    <tr>
+
+                                        <td colspan="8">
+
+                                            <div class="sky-help-text">
+
+                                                <strong>
+                                                    Reason:
+                                                </strong>
+
+                                                {{ row.exit_request.reason }}
+
+
+                                                {% if row.exit_request.hr_reviewed_by %}
+
+                                                    <br>
+
+                                                    <strong>
+                                                        HR Reviewed By:
+                                                    </strong>
+
+                                                    {{ row.exit_request.hr_reviewed_by.get_full_name|default:row.exit_request.hr_reviewed_by.username }}
+
+                                                {% endif %}
+
+
+                                                {% if row.exit_request.hr_remarks %}
+
+                                                    <br>
+
+                                                    <strong>
+                                                        HR Remarks:
+                                                    </strong>
+
+                                                    {{ row.exit_request.hr_remarks }}
+
+                                                {% endif %}
+
+
+                                                {% if row.exit_request.finalized_by %}
+
+                                                    <br>
+
+                                                    <strong>
+                                                        Finalized By:
+                                                    </strong>
+
+                                                    {{ row.exit_request.finalized_by.get_full_name|default:row.exit_request.finalized_by.username }}
+
+                                                {% endif %}
+
+
+                                                {% if row.exit_request.finalized_at %}
+
+                                                    <br>
+
+                                                    <strong>
+                                                        Finalized At:
+                                                    </strong>
+
+                                                    {{ row.exit_request.finalized_at|date:"d M Y, h:i A" }}
+
+                                                {% endif %}
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                {% else %}
+
+                    <div class="sky-empty">
+
+                        No employee exit requests match
+                        the selected filters.
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,1242 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+
+{% block title %}Dashboard{% endblock %}
+
+
+{% block extra_css %}
+
+<link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+>
+
+<link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap"
+    rel="stylesheet"
+>
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/dashboard.css' %}"
+>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div class="container">
+
+
+        {% if is_admin_view %}
+
+            <!-- ====================================== -->
+            <!-- HR / ADMIN DASHBOARD -->
+            <!-- ====================================== -->
+
+
+            <!-- Header -->
+
+            <div class="sky-header">
+
+                <div>
+
+                    <span class="sky-eyebrow">
+                        Organization / Live
+                    </span>
+
+                    <h1>
+                        Dashboard
+                    </h1>
+
+                </div>
+
+
+                <span class="sky-date sky-mono">
+                    {% now "D, M j Y" %}
+                </span>
+
+            </div>
+
+
+            <!-- ====================================== -->
+            <!-- MAIN STATS -->
+            <!-- ====================================== -->
+
+            <div class="sky-stat-row">
+
+
+                <div class="sky-stat is-teal">
+
+                    <div class="sky-stat-value sky-mono">
+                        {{ total_employees }}
+                    </div>
+
+                    <div class="sky-stat-label">
+                        Total Employees
+                    </div>
+
+                </div>
+
+
+                <div class="sky-stat is-teal">
+
+                    <div class="sky-stat-value sky-mono">
+                        {{ attendance_summary.present }}
+                    </div>
+
+                    <div class="sky-stat-label">
+                        Present Today
+                    </div>
+
+                </div>
+
+
+                <div class="sky-stat is-rose">
+
+                    <div class="sky-stat-value sky-mono">
+                        {{ attendance_summary.absent }}
+                    </div>
+
+                    <div class="sky-stat-label">
+                        Absent Today
+                    </div>
+
+                </div>
+
+
+                <div class="sky-stat is-amber">
+
+                    <div class="sky-stat-value sky-mono">
+                        {{ attendance_summary.not_marked }}
+                    </div>
+
+                    <div class="sky-stat-label">
+                        Not Marked
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- ====================================== -->
+            <!-- ACTION REQUIRED -->
+            <!-- ====================================== -->
+
+            {% if can_review_leave or can_review_attendance_exception or can_manage_leave_balance or can_manage_employees or can_review_manager_noc or can_review_finance_noc or can_view_all_clearance_requests or can_finalize_employee_exit %}
+
+                <div class="sky-panel mb-4">
+
+                    <div class="sky-panel-head">
+
+                        <div>
+
+                            <span class="sky-eyebrow">
+                                HR Operations
+                            </span>
+
+                            <h6>
+                                Action Required
+                            </h6>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="sky-panel-body">
+
+                        <div class="row g-3">
+
+
+                            <!-- ================================= -->
+                            <!-- PENDING LEAVE REQUESTS -->
+                            <!-- ================================= -->
+
+                            {% if can_review_leave %}
+
+                                <div class="col-md-6 col-xl-4">
+
+                                    <a
+                                        href="{% url 'pendingLeaveRequests' %}"
+                                        class="sky-action-card"
+                                    >
+
+                                        <div class="sky-action-card-top">
+
+                                            <div class="sky-action-icon">
+                                                L
+                                            </div>
+
+
+                                            {% if pending_leave_requests_count %}
+
+                                                <span class="sky-action-count">
+                                                    {{ pending_leave_requests_count }}
+                                                </span>
+
+                                            {% endif %}
+
+                                        </div>
+
+
+                                        <strong>
+                                            Pending Leave Requests
+                                        </strong>
+
+
+                                        <span>
+                                            Review and approve or reject
+                                            employee leave applications.
+                                        </span>
+
+                                    </a>
+
+                                </div>
+
+                            {% endif %}
+
+
+                            <!-- ================================= -->
+                            <!-- ATTENDANCE EXCEPTIONS -->
+                            <!-- ================================= -->
+
+                            {% if can_review_attendance_exception %}
+
+                                <div class="col-md-6 col-xl-4">
+
+                                    <a
+                                        href="{% url 'pendingAttendanceExceptions' %}"
+                                        class="sky-action-card"
+                                    >
+
+                                        <div class="sky-action-card-top">
+
+                                            <div class="sky-action-icon">
+                                                A
+                                            </div>
+
+
+                                            {% if pending_attendance_exceptions_count %}
+
+                                                <span class="sky-action-count">
+                                                    {{ pending_attendance_exceptions_count }}
+                                                </span>
+
+                                            {% endif %}
+
+                                        </div>
+
+
+                                        <strong>
+                                            Attendance Exceptions
+                                        </strong>
+
+
+                                        <span>
+                                            {{ pending_attendance_exceptions_count }}
+                                            attendance correction request(s)
+                                            are pending.
+                                        </span>
+
+                                    </a>
+
+                                </div>
+
+                            {% endif %}
+
+
+                            <!-- ================================= -->
+                            <!-- EXIT & CLEARANCE DROPDOWN -->
+                            <!-- ================================= -->
+
+                            {% if can_review_manager_noc or can_review_finance_noc or can_view_all_clearance_requests or can_finalize_employee_exit %}
+
+                                <div class="col-md-6 col-xl-4">
+
+                                    <div class="dropdown h-100">
+
+                                        <button
+                                            class="sky-action-card w-100 text-start border-0"
+                                            type="button"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false"
+                                        >
+
+                                            <div class="sky-action-card-top">
+
+                                                <div class="sky-action-icon">
+                                                    X
+                                                </div>
+
+
+                                                {% if pending_resignations_count or pending_manager_noc_count or pending_finance_noc_count or ready_for_finalization_count %}
+
+                                                    <span class="sky-action-count">
+                                                        !
+                                                    </span>
+
+                                                {% endif %}
+
+                                            </div>
+
+
+                                            <strong>
+                                                Exit & Clearance
+                                            </strong>
+
+
+                                            <span>
+                                                Review pending resignation,
+                                                manager, finance and finalization actions.
+                                            </span>
+
+                                        </button>
+
+
+                                        <ul class="dropdown-menu w-100 shadow">
+
+
+                                            <!-- HR Pending Resignations -->
+
+                                            {% if can_view_all_clearance_requests %}
+
+                                                <li>
+
+                                                    <a
+                                                        class="dropdown-item d-flex justify-content-between align-items-center"
+                                                        href="{% url 'pendingResignations' %}"
+                                                    >
+
+                                                        <span>
+                                                            Pending Resignations
+                                                        </span>
+
+                                                        <strong>
+                                                            {{ pending_resignations_count }}
+                                                        </strong>
+
+                                                    </a>
+
+                                                </li>
+
+                                            {% endif %}
+
+
+                                            <!-- Manager NOCs -->
+
+                                            {% if can_review_manager_noc %}
+
+                                                <li>
+
+                                                    <a
+                                                        class="dropdown-item d-flex justify-content-between align-items-center"
+                                                        href="{% url 'managerClearanceQueue' %}"
+                                                    >
+
+                                                        <span>
+                                                            Manager NOCs
+                                                        </span>
+
+                                                        <strong>
+                                                            {{ pending_manager_noc_count }}
+                                                        </strong>
+
+                                                    </a>
+
+                                                </li>
+
+                                            {% endif %}
+
+
+                                            <!-- Finance NOCs -->
+
+                                            {% if can_review_finance_noc %}
+
+                                                <li>
+
+                                                    <a
+                                                        class="dropdown-item d-flex justify-content-between align-items-center"
+                                                        href="{% url 'financeClearanceQueue' %}"
+                                                    >
+
+                                                        <span>
+                                                            Finance NOCs
+                                                        </span>
+
+                                                        <strong>
+                                                            {{ pending_finance_noc_count }}
+                                                        </strong>
+
+                                                    </a>
+
+                                                </li>
+
+                                            {% endif %}
+
+
+                                            <!-- Ready for Finalization -->
+
+                                            {% if can_finalize_employee_exit %}
+
+                                                <li>
+
+                                                    <a
+                                                        class="dropdown-item d-flex justify-content-between align-items-center"
+                                                        href="{% url 'readyForFinalization' %}"
+                                                    >
+
+                                                        <span>
+                                                            Ready for Finalization
+                                                        </span>
+
+                                                        <strong>
+                                                            {{ ready_for_finalization_count }}
+                                                        </strong>
+
+                                                    </a>
+
+                                                </li>
+
+                                            {% endif %}
+
+
+                                            <!-- All Exit Requests -->
+
+                                            {% if can_view_all_clearance_requests %}
+
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+
+                                                <li>
+
+                                                    <a
+                                                        class="dropdown-item d-flex justify-content-between align-items-center"
+                                                        href="{% url 'allExitRequests' %}"
+                                                    >
+
+                                                        <span>
+                                                            All Exit Requests
+                                                        </span>
+
+                                                        <strong>
+                                                            {{ total_exit_requests_count }}
+                                                        </strong>
+
+                                                    </a>
+
+                                                </li>
+
+                                            {% endif %}
+
+                                        </ul>
+
+                                    </div>
+
+                                </div>
+
+                            {% endif %}
+
+
+                            <!-- ================================= -->
+                            <!-- LEAVE BALANCES -->
+                            <!-- ================================= -->
+
+                            {% if can_manage_leave_balance %}
+
+                                <div class="col-md-6 col-xl-4">
+
+                                    <a
+                                        href="{% url 'leaveBalanceList' %}"
+                                        class="sky-action-card"
+                                    >
+
+                                        <div class="sky-action-card-top">
+
+                                            <div class="sky-action-icon">
+                                                B
+                                            </div>
+
+
+                                            {% if employees_without_leave_balance %}
+
+                                                <span class="sky-action-count">
+                                                    {{ employees_without_leave_balance }}
+                                                </span>
+
+                                            {% endif %}
+
+                                        </div>
+
+
+                                        <strong>
+                                            Leave Balances
+                                        </strong>
+
+
+                                        <span>
+                                            Assign or adjust employee
+                                            leave balances.
+                                        </span>
+
+                                    </a>
+
+                                </div>
+
+                            {% endif %}
+
+
+                            <!-- ================================= -->
+                            <!-- ALL LEAVE REQUESTS -->
+                            <!-- ================================= -->
+
+                            {% if can_review_leave %}
+
+                                <div class="col-md-6 col-xl-4">
+
+                                    <a
+                                        href="{% url 'allLeaveRequests' %}"
+                                        class="sky-action-card"
+                                    >
+
+                                        <div class="sky-action-card-top">
+
+                                            <div class="sky-action-icon">
+                                                R
+                                            </div>
+
+                                        </div>
+
+
+                                        <strong>
+                                            All Leave Requests
+                                        </strong>
+
+
+                                        <span>
+                                            View pending, approved,
+                                            rejected and cancelled requests.
+                                        </span>
+
+                                    </a>
+
+                                </div>
+
+                            {% endif %}
+
+
+                            <!-- ================================= -->
+                            <!-- EMPLOYEE MANAGEMENT -->
+                            <!-- ================================= -->
+
+                            {% if can_manage_employees %}
+
+                                <div class="col-md-6 col-xl-4">
+
+                                    <a
+                                        href="{% url 'employeeList' %}"
+                                        class="sky-action-card"
+                                    >
+
+                                        <div class="sky-action-card-top">
+
+                                            <div class="sky-action-icon">
+                                                E
+                                            </div>
+
+                                        </div>
+
+
+                                        <strong>
+                                            Employee Management
+                                        </strong>
+
+
+                                        <span>
+                                            Manage employee profiles,
+                                            reporting managers and
+                                            employment details.
+                                        </span>
+
+                                    </a>
+
+                                </div>
+
+                            {% endif %}
+
+
+                            <!-- ================================= -->
+                            <!-- ADD EMPLOYEE -->
+                            <!-- ================================= -->
+
+                            {% if can_manage_employees %}
+
+                                <div class="col-md-6 col-xl-4">
+
+                                    <a
+                                        href="{% url 'register' %}"
+                                        class="sky-action-card"
+                                    >
+
+                                        <div class="sky-action-card-top">
+
+                                            <div class="sky-action-icon">
+                                                +
+                                            </div>
+
+                                        </div>
+
+
+                                        <strong>
+                                            Add Employee
+                                        </strong>
+
+
+                                        <span>
+                                            Create and onboard a
+                                            new employee.
+                                        </span>
+
+                                    </a>
+
+                                </div>
+
+                            {% endif %}
+
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            {% endif %}
+
+
+            <!-- ====================================== -->
+            <!-- VERIFICATION + TODAY ATTENDANCE -->
+            <!-- ====================================== -->
+
+            <div class="row g-3">
+
+
+                <!-- Verification -->
+
+                <div class="col-lg-5">
+
+                    <div class="sky-panel">
+
+                        <div class="sky-panel-head">
+
+                            <h6>
+                                Verification Status
+                            </h6>
+
+                        </div>
+
+
+                        <div class="sky-panel-body">
+
+                            {% for label, count in verification_stats.items %}
+
+                                <div class="sky-meter-row">
+
+                                    <div class="sky-meter-top">
+
+                                        <span class="sky-meter-name">
+                                            {{ label|cut:"_"|title }}
+                                        </span>
+
+
+                                        <span class="sky-meter-count sky-mono">
+                                            {{ count }}/{{ total_employees }}
+                                        </span>
+
+                                    </div>
+
+
+                                    <div class="sky-meter-track">
+
+                                        <div
+                                            class="sky-meter-fill"
+                                            style="width: {% widthratio count total_employees 100 %}%"
+                                        ></div>
+
+                                    </div>
+
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Today's Attendance -->
+
+                <div class="col-lg-7">
+
+                    <div class="sky-panel">
+
+                        <div class="sky-panel-head">
+
+                            <h6>
+                                Today's Attendance
+                            </h6>
+
+
+                            <span class="sky-count">
+                                {{ today_attendance|length }} record(s)
+                            </span>
+
+                        </div>
+
+
+                        <div class="table-responsive">
+
+                            <table class="sky-table">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>
+                                            Employee
+                                        </th>
+
+                                        <th>
+                                            Status
+                                        </th>
+
+                                        <th>
+                                            In
+                                        </th>
+
+                                        <th>
+                                            Out
+                                        </th>
+
+
+                                        {% if can_manage_attendance %}
+
+                                            <th></th>
+
+                                        {% endif %}
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody>
+
+                                    {% for record in today_attendance %}
+
+                                        <tr>
+
+                                            <td>
+
+                                                {{ record.employee.user.first_name }}
+                                                {{ record.employee.user.last_name }}
+
+                                            </td>
+
+
+                                            <td>
+
+                                                <span class="sky-pill {{ record.status|lower }}">
+
+                                                    {{ record.get_status_display }}
+
+                                                </span>
+
+                                            </td>
+
+
+                                            <td class="sky-time">
+
+                                                {{ record.check_in|time:"H:i"|default:"—" }}
+
+                                            </td>
+
+
+                                            <td class="sky-time">
+
+                                                {{ record.check_out|time:"H:i"|default:"—" }}
+
+                                            </td>
+
+
+                                            {% if can_manage_attendance %}
+
+                                                <td>
+
+                                                    <a
+                                                        href="{% url 'editAttendance' record.uuid %}"
+                                                        class="sky-edit-link"
+                                                    >
+                                                        Edit
+                                                    </a>
+
+                                                </td>
+
+                                            {% endif %}
+
+                                        </tr>
+
+
+                                    {% empty %}
+
+                                        <tr>
+
+                                            <td
+                                                {% if can_manage_attendance %}
+                                                    colspan="5"
+                                                {% else %}
+                                                    colspan="4"
+                                                {% endif %}
+                                                class="sky-empty"
+                                            >
+
+                                                No attendance marked yet today.
+
+                                            </td>
+
+                                        </tr>
+
+                                    {% endfor %}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+        {% else %}
+
+
+            <!-- ====================================== -->
+            <!-- NORMAL EMPLOYEE / FINANCE DASHBOARD -->
+            <!-- ====================================== -->
+
+
+            <!-- Header -->
+
+            <div class="sky-header">
+
+                <div>
+
+                    <span class="sky-eyebrow">
+                        Your Day
+                    </span>
+
+
+                    <h1>
+
+                        Welcome,
+                        {{ profile.user.first_name|default:profile.user.username }}
+
+                    </h1>
+
+                </div>
+
+
+                <span class="sky-date sky-mono">
+                    {% now "D, M j Y" %}
+                </span>
+
+            </div>
+
+
+            <!-- ====================================== -->
+            <!-- ROLE ACTIONS -->
+            <!-- Only shown to manager/finance users -->
+            <!-- ====================================== -->
+
+            {% if can_review_manager_noc or can_review_finance_noc %}
+
+                <div class="sky-panel mb-4">
+
+                    <div class="sky-panel-head">
+
+                        <div>
+
+                            <span class="sky-eyebrow">
+                                Workflow
+                            </span>
+
+                            <h6>
+                                Action Required
+                            </h6>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="sky-panel-body">
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6 col-xl-4">
+
+                                <div class="dropdown h-100">
+
+                                    <button
+                                        class="sky-action-card w-100 text-start border-0"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false"
+                                    >
+
+                                        <div class="sky-action-card-top">
+
+                                            <div class="sky-action-icon">
+                                                X
+                                            </div>
+
+
+                                            {% if pending_manager_noc_count or pending_finance_noc_count %}
+
+                                                <span class="sky-action-count">
+                                                    !
+                                                </span>
+
+                                            {% endif %}
+
+                                        </div>
+
+
+                                        <strong>
+                                            Exit & Clearance
+                                        </strong>
+
+
+                                        <span>
+                                            Review clearance requests
+                                            assigned to your role.
+                                        </span>
+
+                                    </button>
+
+
+                                    <ul class="dropdown-menu w-100 shadow">
+
+
+                                        {% if can_review_manager_noc %}
+
+                                            <li>
+
+                                                <a
+                                                    class="dropdown-item d-flex justify-content-between align-items-center"
+                                                    href="{% url 'managerClearanceQueue' %}"
+                                                >
+
+                                                    <span>
+                                                        Manager NOCs
+                                                    </span>
+
+                                                    <strong>
+                                                        {{ pending_manager_noc_count }}
+                                                    </strong>
+
+                                                </a>
+
+                                            </li>
+
+                                        {% endif %}
+
+
+                                        {% if can_review_finance_noc %}
+
+                                            <li>
+
+                                                <a
+                                                    class="dropdown-item d-flex justify-content-between align-items-center"
+                                                    href="{% url 'financeClearanceQueue' %}"
+                                                >
+
+                                                    <span>
+                                                        Finance NOCs
+                                                    </span>
+
+                                                    <strong>
+                                                        {{ pending_finance_noc_count }}
+                                                    </strong>
+
+                                                </a>
+
+                                            </li>
+
+                                        {% endif %}
+
+
+                                    </ul>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            {% endif %}
+
+
+            <!-- ====================================== -->
+            <!-- EMPLOYEE ATTENDANCE -->
+            <!-- ====================================== -->
+
+            <div class="row g-3">
+
+
+                <!-- Punch Card -->
+
+                <div class="col-md-5">
+
+                    <div class="sky-punch-card">
+
+
+                        {% if my_attendance_today.check_out %}
+
+                            <div class="sky-punch-status">
+
+                                You're checked out for today.
+
+                            </div>
+
+
+                            <span class="sky-pill {{ my_attendance_today.status|lower }}">
+
+                                {{ my_attendance_today.get_status_display }}
+
+                            </span>
+
+
+                            <div class="sky-punch-times">
+
+                                In
+                                {{ my_attendance_today.check_in|time:"H:i" }}
+
+                                &middot;
+
+                                Out
+                                {{ my_attendance_today.check_out|time:"H:i" }}
+
+                            </div>
+
+
+                        {% elif my_attendance_today.check_in %}
+
+                            <div class="sky-punch-status">
+
+                                Checked in at
+                                {{ my_attendance_today.check_in|time:"H:i" }}
+
+                            </div>
+
+
+                            <form
+                                method="post"
+                                action="{% url 'checkinCheckout' %}"
+                            >
+
+                                {% csrf_token %}
+
+
+                                <button
+                                    type="submit"
+                                    class="sky-punch-btn out"
+                                >
+
+                                    Check Out
+
+                                </button>
+
+                            </form>
+
+
+                        {% else %}
+
+                            <div class="sky-punch-status">
+
+                                You haven't checked in yet.
+
+                            </div>
+
+
+                            <form
+                                method="post"
+                                action="{% url 'checkinCheckout' %}"
+                            >
+
+                                {% csrf_token %}
+
+
+                                <button
+                                    type="submit"
+                                    class="sky-punch-btn in"
+                                >
+
+                                    Check In
+
+                                </button>
+
+                            </form>
+
+
+                        {% endif %}
+
+
+                    </div>
+
+                </div>
+
+
+                <!-- ================================= -->
+                <!-- RECENT ATTENDANCE -->
+                <!-- ================================= -->
+
+                <div class="col-md-7">
+
+                    <div class="sky-panel">
+
+                        <div class="sky-panel-head">
+
+                            <h6>
+                                Recent Attendance
+                            </h6>
+
+                        </div>
+
+
+                        <div class="table-responsive">
+
+                            <table class="sky-table">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>
+                                            Date
+                                        </th>
+
+                                        <th>
+                                            Status
+                                        </th>
+
+                                        <th>
+                                            In
+                                        </th>
+
+                                        <th>
+                                            Out
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody>
+
+                                    {% for record in recent_attendance %}
+
+                                        <tr>
+
+                                            <td>
+
+                                                {{ record.date|date:"M d" }}
+
+                                            </td>
+
+
+                                            <td>
+
+                                                <span class="sky-pill {{ record.status|lower }}">
+
+                                                    {{ record.get_status_display }}
+
+                                                </span>
+
+                                            </td>
+
+
+                                            <td class="sky-time">
+
+                                                {{ record.check_in|time:"H:i"|default:"—" }}
+
+                                            </td>
+
+
+                                            <td class="sky-time">
+
+                                                {{ record.check_out|time:"H:i"|default:"—" }}
+
+                                            </td>
+
+                                        </tr>
+
+
+                                    {% empty %}
+
+                                        <tr>
+
+                                            <td
+                                                colspan="4"
+                                                class="sky-empty"
+                                            >
+
+                                                No records yet.
+
+                                            </td>
+
+                                        </tr>
+
+                                    {% endfor %}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+        {% endif %}
+
+
+    </div>
+
+</div>
+
+{% endblock %}

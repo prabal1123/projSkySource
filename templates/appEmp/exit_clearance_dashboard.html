@@ -1,0 +1,360 @@
+{% if has_employee_profile or can_review_manager_noc or can_review_finance_noc or can_view_all_clearance_requests or can_finalize_employee_exit %}
+
+    <div class="sky-panel mb-4">
+
+        <div class="sky-panel-head">
+
+            <div>
+
+                <span class="sky-eyebrow">
+                    Employee Exit
+                </span>
+
+                <h6>
+                    Exit & Clearance
+                </h6>
+
+            </div>
+
+        </div>
+
+
+        <div class="sky-panel-body">
+
+            <div class="row g-3">
+
+
+                <!-- ================================= -->
+                <!-- EMPLOYEE -->
+                <!-- ================================= -->
+
+                {% if has_employee_profile %}
+
+                    <div class="col-md-6 col-xl-4">
+
+                        <a
+                            href="{% url 'myResignations' %}"
+                            class="sky-action-card"
+                        >
+
+                            <div class="sky-action-card-top">
+
+                                <div class="sky-action-icon">
+                                    R
+                                </div>
+
+                                {% if active_resignation_count %}
+
+                                    <span class="sky-action-count">
+                                        {{ active_resignation_count }}
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <strong>
+                                My Resignation
+                            </strong>
+
+
+                            <span>
+
+                                {% if active_resignation_count %}
+
+                                    {{ active_resignation_count }}
+                                    active resignation request(s).
+
+                                {% else %}
+
+                                    View resignation history or
+                                    submit a new resignation.
+
+                                {% endif %}
+
+                            </span>
+
+                        </a>
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- ================================= -->
+                <!-- MANAGER -->
+                <!-- ================================= -->
+
+                {% if can_review_manager_noc %}
+
+                    <div class="col-md-6 col-xl-4">
+
+                        <a
+                            href="{% url 'managerClearanceQueue' %}"
+                            class="sky-action-card"
+                        >
+
+                            <div class="sky-action-card-top">
+
+                                <div class="sky-action-icon">
+                                    M
+                                </div>
+
+                                {% if pending_manager_noc_count %}
+
+                                    <span class="sky-action-count">
+                                        {{ pending_manager_noc_count }}
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <strong>
+                                Pending Manager NOCs
+                            </strong>
+
+
+                            <span>
+                                {{ pending_manager_noc_count }}
+                                employee clearance request(s)
+                                awaiting your review.
+                            </span>
+
+                        </a>
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- ================================= -->
+                <!-- FINANCE -->
+                <!-- ================================= -->
+
+                {% if can_review_finance_noc %}
+
+                    <div class="col-md-6 col-xl-4">
+
+                        <a
+                            href="{% url 'financeClearanceQueue' %}"
+                            class="sky-action-card"
+                        >
+
+                            <div class="sky-action-card-top">
+
+                                <div class="sky-action-icon">
+                                    F
+                                </div>
+
+                                {% if pending_finance_noc_count %}
+
+                                    <span class="sky-action-count">
+                                        {{ pending_finance_noc_count }}
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <strong>
+                                Pending Finance NOCs
+                            </strong>
+
+
+                            <span>
+                                {{ pending_finance_noc_count }}
+                                financial clearance request(s)
+                                awaiting review.
+                            </span>
+
+                        </a>
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- ================================= -->
+                <!-- HR - PENDING RESIGNATIONS -->
+                <!-- ================================= -->
+
+                {% if can_view_all_clearance_requests %}
+
+                    <div class="col-md-6 col-xl-4">
+
+                        <a
+                            href="{% url 'pendingResignations' %}"
+                            class="sky-action-card"
+                        >
+
+                            <div class="sky-action-card-top">
+
+                                <div class="sky-action-icon">
+                                    H
+                                </div>
+
+                                {% if pending_resignations_count %}
+
+                                    <span class="sky-action-count">
+                                        {{ pending_resignations_count }}
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <strong>
+                                Pending Resignations
+                            </strong>
+
+
+                            <span>
+                                {{ pending_resignations_count }}
+                                resignation request(s)
+                                awaiting HR review.
+                            </span>
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Rejected exits -->
+
+                    <div class="col-md-6 col-xl-4">
+
+                        <a
+                            href="{% url 'allExitRequests' %}?status=CLEARANCE_REJECTED"
+                            class="sky-action-card"
+                        >
+
+                            <div class="sky-action-card-top">
+
+                                <div class="sky-action-icon">
+                                    X
+                                </div>
+
+                                {% if rejected_exit_requests_count %}
+
+                                    <span class="sky-action-count">
+                                        {{ rejected_exit_requests_count }}
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <strong>
+                                Rejected Exit Requests
+                            </strong>
+
+
+                            <span>
+                                {{ rejected_exit_requests_count }}
+                                exit request(s) have been rejected.
+                            </span>
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- All exits -->
+
+                    <div class="col-md-6 col-xl-4">
+
+                        <a
+                            href="{% url 'allExitRequests' %}"
+                            class="sky-action-card"
+                        >
+
+                            <div class="sky-action-card-top">
+
+                                <div class="sky-action-icon">
+                                    E
+                                </div>
+
+                                <span class="sky-action-count">
+                                    {{ total_exit_requests_count }}
+                                </span>
+
+                            </div>
+
+
+                            <strong>
+                                All Exit Requests
+                            </strong>
+
+
+                            <span>
+                                View resignation, termination,
+                                completed and rejected exit history.
+                            </span>
+
+                        </a>
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- ================================= -->
+                <!-- HR - FINALIZATION -->
+                <!-- ================================= -->
+
+                {% if can_finalize_employee_exit %}
+
+                    <div class="col-md-6 col-xl-4">
+
+                        <a
+                            href="{% url 'readyForFinalization' %}"
+                            class="sky-action-card"
+                        >
+
+                            <div class="sky-action-card-top">
+
+                                <div class="sky-action-icon">
+                                    ✓
+                                </div>
+
+                                {% if ready_for_finalization_count %}
+
+                                    <span class="sky-action-count">
+                                        {{ ready_for_finalization_count }}
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <strong>
+                                Ready for Finalization
+                            </strong>
+
+
+                            <span>
+                                {{ ready_for_finalization_count }}
+                                employee exit(s) have completed
+                                required clearances.
+                            </span>
+
+                        </a>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+{% endif %}

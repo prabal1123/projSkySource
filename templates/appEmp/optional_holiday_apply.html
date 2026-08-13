@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Optional Holidays{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/holiday.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div
+        class="container"
+        style="max-width: 1000px;"
+    >
+
+        <!-- Header -->
+        <div class="sky-header">
+
+            <div>
+
+                <span class="sky-eyebrow">
+                    Leave / Optional Holidays
+                </span>
+
+                <h1>
+                    Optional Holidays
+                </h1>
+
+                <p class="sky-help-text">
+                    Select an available optional holiday
+                    and submit it for approval.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- Messages -->
+        {% if messages %}
+
+            {% for message in messages %}
+
+                <div class="sky-calendar-message">
+                    {{ message }}
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+
+        <!-- Apply -->
+        <div class="sky-panel">
+
+            <div class="sky-panel-body">
+
+                <div class="holiday-form-card">
+
+                    <form method="post">
+
+                        {% csrf_token %}
+
+
+                        {% if form.non_field_errors %}
+
+                            <div class="sky-calendar-message">
+                                {{ form.non_field_errors }}
+                            </div>
+
+                        {% endif %}
+
+
+                        <div class="holiday-form-grid">
+
+
+                            <!-- Holiday -->
+                            <div class="
+                                holiday-form-group
+                                full-width
+                            ">
+
+                                <label for="{{ form.holiday.id_for_label }}">
+                                    Optional Holiday
+                                </label>
+
+                                {{ form.holiday }}
+
+                                <small style="
+                                    color:#8a94a6;
+                                ">
+                                    Only available upcoming optional
+                                    holidays are shown.
+                                </small>
+
+                                {% if form.holiday.errors %}
+
+                                    <div style="
+                                        color:#dc2626;
+                                        font-size:12px;
+                                    ">
+                                        {{ form.holiday.errors }}
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <!-- Reason -->
+                            <div class="
+                                holiday-form-group
+                                full-width
+                            ">
+
+                                <label for="{{ form.reason.id_for_label }}">
+                                    Reason
+                                </label>
+
+                                {{ form.reason }}
+
+                                <small style="
+                                    color:#8a94a6;
+                                ">
+                                    Optional.
+                                </small>
+
+                                {% if form.reason.errors %}
+
+                                    <div style="
+                                        color:#dc2626;
+                                        font-size:12px;
+                                    ">
+                                        {{ form.reason.errors }}
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="holiday-form-actions">
+
+                            <button
+                                type="submit"
+                                class="holiday-save-btn"
+                            >
+                                Apply Optional Holiday
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Previous Requests -->
+        <div
+            class="sky-panel"
+            style="margin-top:24px;"
+        >
+
+            <div class="sky-panel-body">
+
+                <div style="margin-bottom:18px;">
+
+                    <span class="sky-eyebrow">
+                        Request History
+                    </span>
+
+                    <h5 style="
+                        margin:4px 0 0;
+                        font-weight:700;
+                    ">
+                        My Optional Holiday Requests
+                    </h5>
+
+                </div>
+
+
+                <div class="holiday-table-wrapper">
+
+                    <table class="holiday-table">
+
+                        <thead>
+
+                            <tr>
+                                <th>Date</th>
+                                <th>Holiday</th>
+                                <th>Status</th>
+                                <th>Reviewed By</th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for item in optional_requests %}
+
+                                <tr>
+
+                                    <td>
+                                        {{ item.holiday.date|date:"d M Y" }}
+                                    </td>
+
+
+                                    <td>
+
+                                        <div class="holiday-name">
+                                            {{ item.holiday.name }}
+                                        </div>
+
+                                        {% if item.reason %}
+
+                                            <div class="holiday-description">
+                                                {{ item.reason }}
+                                            </div>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        {% if item.status == "APPROVED" %}
+
+                                            <span class="holiday-status-active">
+                                                ● Approved
+                                            </span>
+
+                                        {% elif item.status == "PENDING" %}
+
+                                            <span style="
+                                                color:#b45309;
+                                                font-weight:650;
+                                            ">
+                                                ● Pending
+                                            </span>
+
+                                        {% elif item.status == "REJECTED" %}
+
+                                            <span style="
+                                                color:#dc2626;
+                                                font-weight:650;
+                                            ">
+                                                ● Rejected
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="holiday-status-inactive">
+                                                ● Cancelled
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        {% if item.reviewed_by %}
+                                            {{ item.reviewed_by.get_full_name|default:item.reviewed_by.username }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+
+                                    </td>
+
+                                </tr>
+
+
+                            {% empty %}
+
+                                <tr>
+
+                                    <td colspan="4">
+
+                                        <div style="
+                                            padding:30px;
+                                            text-align:center;
+                                            color:#8a94a6;
+                                        ">
+                                            No optional holiday requests yet.
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

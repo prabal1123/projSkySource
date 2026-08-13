@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Work Schedules{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/holiday.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 1100px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">
+                    HR / Work Schedule
+                </span>
+
+                <h1>Work Schedules</h1>
+
+                <p class="sky-help-text">
+                    Configure working days and weekly offs for employees.
+                </p>
+            </div>
+
+            <a
+                href="{% url 'addWorkSchedule' %}"
+                class="sky-header-btn"
+            >
+                + Add Schedule
+            </a>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="sky-calendar-message">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="sky-panel">
+            <div class="sky-panel-body">
+
+                <div class="holiday-table-wrapper">
+
+                    <table class="holiday-table">
+
+                        <thead>
+                            <tr>
+                                <th>Schedule</th>
+                                <th>Working Days</th>
+                                <th>Weekly Off</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for schedule in schedules %}
+
+                                <tr>
+
+                                    <td>
+                                        <div class="holiday-name">
+                                            {{ schedule.name }}
+                                        </div>
+
+                                        {% if schedule.is_default %}
+                                            <div class="holiday-description">
+                                                Default Schedule
+                                            </div>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        <div style="
+                                            display:flex;
+                                            gap:5px;
+                                            flex-wrap:wrap;
+                                        ">
+
+                                            {% if schedule.monday %}
+                                                <span class="holiday-badge holiday-badge-mandatory">Mon</span>
+                                            {% endif %}
+
+                                            {% if schedule.tuesday %}
+                                                <span class="holiday-badge holiday-badge-mandatory">Tue</span>
+                                            {% endif %}
+
+                                            {% if schedule.wednesday %}
+                                                <span class="holiday-badge holiday-badge-mandatory">Wed</span>
+                                            {% endif %}
+
+                                            {% if schedule.thursday %}
+                                                <span class="holiday-badge holiday-badge-mandatory">Thu</span>
+                                            {% endif %}
+
+                                            {% if schedule.friday %}
+                                                <span class="holiday-badge holiday-badge-mandatory">Fri</span>
+                                            {% endif %}
+
+                                            {% if schedule.saturday %}
+                                                <span class="holiday-badge holiday-badge-mandatory">Sat</span>
+                                            {% endif %}
+
+                                            {% if schedule.sunday %}
+                                                <span class="holiday-badge holiday-badge-mandatory">Sun</span>
+                                            {% endif %}
+
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div style="
+                                            display:flex;
+                                            gap:5px;
+                                            flex-wrap:wrap;
+                                        ">
+
+                                            {% if not schedule.monday %}
+                                                <span class="holiday-badge holiday-badge-optional">Mon</span>
+                                            {% endif %}
+
+                                            {% if not schedule.tuesday %}
+                                                <span class="holiday-badge holiday-badge-optional">Tue</span>
+                                            {% endif %}
+
+                                            {% if not schedule.wednesday %}
+                                                <span class="holiday-badge holiday-badge-optional">Wed</span>
+                                            {% endif %}
+
+                                            {% if not schedule.thursday %}
+                                                <span class="holiday-badge holiday-badge-optional">Thu</span>
+                                            {% endif %}
+
+                                            {% if not schedule.friday %}
+                                                <span class="holiday-badge holiday-badge-optional">Fri</span>
+                                            {% endif %}
+
+                                            {% if not schedule.saturday %}
+                                                <span class="holiday-badge holiday-badge-optional">Sat</span>
+                                            {% endif %}
+
+                                            {% if not schedule.sunday %}
+                                                <span class="holiday-badge holiday-badge-optional">Sun</span>
+                                            {% endif %}
+
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        {% if schedule.is_active %}
+                                            <span class="holiday-status-active">
+                                                ● Active
+                                            </span>
+                                        {% else %}
+                                            <span class="holiday-status-inactive">
+                                                ● Inactive
+                                            </span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        <a
+                                            href="{% url 'editWorkSchedule' schedule.uuid %}"
+                                            class="holiday-edit-link"
+                                        >
+                                            Edit
+                                        </a>
+                                    </td>
+
+                                </tr>
+
+                            {% empty %}
+
+                                <tr>
+                                    <td colspan="5">
+                                        <div style="
+                                            padding:30px;
+                                            text-align:center;
+                                            color:#8a94a6;
+                                        ">
+                                            No work schedules configured.
+                                        </div>
+                                    </td>
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

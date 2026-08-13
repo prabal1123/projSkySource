@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Holiday Management{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/holiday.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 1100px;">
+
+        <!-- Header -->
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">
+                    HR / Holiday Management
+                </span>
+
+                <h1>Holiday Calendar</h1>
+
+                <p class="sky-help-text">
+                    Manage mandatory and optional company holidays.
+                </p>
+            </div>
+
+            <a
+                href="{% url 'addHoliday' %}"
+                class="sky-header-btn"
+            >
+                + Add Holiday
+            </a>
+        </div>
+
+
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="sky-calendar-message">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+
+        <!-- Main Panel -->
+        <div class="sky-panel">
+
+            <div class="sky-panel-body holiday-page">
+
+                <!-- Filters -->
+                <div class="holiday-toolbar">
+
+                    <form
+                        method="get"
+                        class="holiday-filter-form"
+                    >
+
+                        <input
+                            type="number"
+                            name="year"
+                            value="{{ year }}"
+                            min="2020"
+                            max="2100"
+                            aria-label="Year"
+                        >
+
+                        <select
+                            name="type"
+                            aria-label="Holiday Type"
+                        >
+
+                            <option value="">
+                                All Holiday Types
+                            </option>
+
+                            <option
+                                value="MANDATORY"
+                                {% if holiday_type == "MANDATORY" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Mandatory
+                            </option>
+
+                            <option
+                                value="OPTIONAL"
+                                {% if holiday_type == "OPTIONAL" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Optional
+                            </option>
+
+                        </select>
+
+                        <button
+                            type="submit"
+                            class="holiday-filter-btn"
+                        >
+                            Apply Filters
+                        </button>
+                        <a
+    href="{% url 'holidayBulkUpload' %}"
+    class="sky-header-btn"
+>
+    Bulk Upload
+</a>
+
+                    </form>
+
+                </div>
+
+
+                <!-- Holiday Table -->
+                <div class="holiday-table-wrapper">
+
+                    <table class="holiday-table">
+
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Holiday</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for holiday in holidays %}
+
+                                <tr>
+
+                                    <!-- Date -->
+                                    <td>
+                                        {{ holiday.date|date:"d M Y" }}
+                                    </td>
+
+
+                                    <!-- Holiday -->
+                                    <td>
+
+                                        <div class="holiday-name">
+                                            {{ holiday.name }}
+                                        </div>
+
+                                        {% if holiday.description %}
+                                            <div class="holiday-description">
+                                                {{ holiday.description }}
+                                            </div>
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- Type -->
+                                    <td>
+
+                                        {% if holiday.holiday_type == "MANDATORY" %}
+
+                                            <span class="
+                                                holiday-badge
+                                                holiday-badge-mandatory
+                                            ">
+                                                Mandatory
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="
+                                                holiday-badge
+                                                holiday-badge-optional
+                                            ">
+                                                Optional
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- Status -->
+                                    <td>
+
+                                        {% if holiday.is_active %}
+
+                                            <span class="holiday-status-active">
+                                                ● Active
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="holiday-status-inactive">
+                                                ● Inactive
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- Action -->
+                                    <td>
+
+                                        <a
+                                            href="{% url 'editHoliday' holiday.uuid %}"
+                                            class="holiday-edit-link"
+                                        >
+                                            Edit
+                                        </a>
+
+                                    </td>
+
+                                </tr>
+
+                            {% empty %}
+
+                                <tr>
+                                    <td colspan="5">
+                                        <div style="
+                                            padding: 30px;
+                                            text-align: center;
+                                            color: #8a94a6;
+                                        ">
+                                            No holidays configured for {{ year }}.
+                                        </div>
+                                    </td>
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

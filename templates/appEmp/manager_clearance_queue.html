@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Manager Clearances{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div class="container" style="max-width: 1200px;">
+
+        <div class="sky-header">
+
+            <div>
+                <span class="sky-eyebrow">
+                    Manager / Exit Clearance
+                </span>
+
+                <h1>Pending Manager NOCs</h1>
+
+                <p class="sky-help-text">
+                    Review employee exit clearances assigned to you.
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+                <h6>Awaiting Your Review</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                {% if pending_approvals %}
+
+                    <div class="table-responsive">
+
+                        <table class="table align-middle">
+
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Exit Type</th>
+                                    <th>Last Working Date</th>
+                                    <th>Reason</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {% for approval in pending_approvals %}
+
+                                    <tr>
+
+                                        <td>
+                                            <strong>
+                                                {{ approval.clearance_request.employee.user.get_full_name|default:approval.clearance_request.employee.user.username }}
+                                            </strong>
+
+                                            <div class="sky-help-text">
+                                                {{ approval.clearance_request.employee.user.username }}
+                                            </div>
+                                        </td>
+
+
+                                        <td>
+
+                                            {% if approval.clearance_request.employee_exit_request %}
+
+                                                {{ approval.clearance_request.employee_exit_request.get_exit_type_display }}
+
+                                            {% else %}
+
+                                                Clearance
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <td>
+
+                                            {% if approval.clearance_request.employee_exit_request.final_last_working_date %}
+
+                                                {{ approval.clearance_request.employee_exit_request.final_last_working_date|date:"d M Y" }}
+
+                                            {% elif approval.clearance_request.employee_exit_request.proposed_last_working_date %}
+
+                                                {{ approval.clearance_request.employee_exit_request.proposed_last_working_date|date:"d M Y" }}
+
+                                            {% else %}
+
+                                                —
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <td style="max-width: 350px;">
+
+                                            {% if approval.clearance_request.employee_exit_request %}
+
+                                                {{ approval.clearance_request.employee_exit_request.reason }}
+
+                                            {% else %}
+
+                                                {{ approval.clearance_request.reason }}
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <td>
+                                            <strong>
+                                                {{ approval.get_status_display }}
+                                            </strong>
+                                        </td>
+
+
+                                        <td>
+
+                                            <a
+                                                href="{% url 'managerClearanceReview' approval.uuid %}"
+                                                class="sky-header-btn"
+                                            >
+                                                Review
+                                            </a>
+
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                {% else %}
+
+                    <div class="sky-empty">
+                        You have no pending Manager NOC requests.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

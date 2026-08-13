@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Holiday Year View{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/holiday.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div
+        class="container"
+        style="max-width: 1250px;"
+    >
+
+        <!-- Header -->
+        <div class="sky-header">
+
+            <div>
+                <span class="sky-eyebrow">
+                    HR / Holiday Management
+                </span>
+
+                <h1>Holiday Calendar</h1>
+
+                <p class="sky-help-text">
+                    Year overview · {{ year }}
+                </p>
+            </div>
+
+
+            <div class="holiday-header-actions">
+
+                <a
+                    href="{% url 'holidayList' %}?year={{ year }}"
+                    class="sky-header-btn"
+                >
+                    List View
+                </a>
+
+                <a
+                    href="{% url 'holidayCalendar' %}?year={{ year }}&month={{ default_month }}"
+                    class="sky-header-btn"
+                >
+                    Month View
+                </a>
+
+                <a
+                    href="{% url 'addHoliday' %}"
+                    class="sky-header-btn"
+                >
+                    + Add Holiday
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- Year Navigation -->
+        <div class="sky-panel">
+
+            <div class="holiday-year-navigation">
+
+                <a
+                    href="{% url 'holidayYear' %}?year={{ previous_year }}"
+                    class="sky-header-btn"
+                >
+                    ← {{ previous_year }}
+                </a>
+
+                <h5>{{ year }}</h5>
+
+                <a
+                    href="{% url 'holidayYear' %}?year={{ next_year }}"
+                    class="sky-header-btn"
+                >
+                    {{ next_year }} →
+                </a>
+
+            </div>
+
+
+            <div class="sky-panel-body">
+
+                <div class="holiday-year-grid">
+
+                    {% for month in months %}
+
+                        <div class="holiday-mini-calendar">
+
+                            <!-- Month Name -->
+                            <a
+                                href="{% url 'holidayCalendar' %}?year={{ year }}&month={{ month.number }}"
+                                class="holiday-mini-month"
+                            >
+                                {{ month.name }}
+                            </a>
+
+
+                            <!-- Weekdays -->
+                            <div class="holiday-mini-grid holiday-mini-weekdays">
+
+                                <div>M</div>
+                                <div>T</div>
+                                <div>W</div>
+                                <div>T</div>
+                                <div>F</div>
+                                <div>S</div>
+                                <div>S</div>
+
+                            </div>
+
+
+                            <!-- Dates -->
+                            <div class="holiday-mini-grid">
+
+                                {% for week in month.weeks %}
+
+                                    {% for day in week %}
+
+                                        <div
+                                            class="
+                                                holiday-mini-day
+
+                                                {% if not day.is_current_month %}
+                                                    holiday-mini-outside
+                                                {% endif %}
+
+                                                {% if day.is_today %}
+                                                    holiday-mini-today
+                                                {% endif %}
+
+                                                {% if day.holidays %}
+                                                    holiday-mini-has-holiday
+                                                {% endif %}
+                                            "
+                                        >
+
+                                            {% if day.is_current_month %}
+
+                                                <span class="holiday-mini-number">
+                                                    {{ day.day_number }}
+                                                </span>
+
+
+                                                {% for holiday in day.holidays %}
+
+                                                    <a
+                                                        href="{% url 'editHoliday' holiday.uuid %}"
+                                                        class="
+                                                            holiday-mini-dot
+
+                                                            {% if holiday.holiday_type == 'OPTIONAL' %}
+                                                                holiday-mini-dot-optional
+                                                            {% else %}
+                                                                holiday-mini-dot-mandatory
+                                                            {% endif %}
+                                                        "
+                                                        title="{{ holiday.name }} — {{ holiday.get_holiday_type_display }}"
+                                                    >
+                                                    </a>
+
+                                                {% endfor %}
+
+                                            {% endif %}
+
+                                        </div>
+
+                                    {% endfor %}
+
+                                {% endfor %}
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

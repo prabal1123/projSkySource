@@ -1,0 +1,602 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Bulk Holiday Upload{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/holiday.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="sky-dashboard">
+
+    <div
+        class="container"
+        style="max-width: 1050px;"
+    >
+
+        <!-- Header -->
+        <div class="sky-header">
+
+            <div>
+                <span class="sky-eyebrow">
+                    HR / Holiday Management
+                </span>
+
+                <h1>Bulk Holiday Upload</h1>
+
+                <p class="sky-help-text">
+                    Upload yearly mandatory and optional holidays using Excel or CSV.
+                </p>
+            </div>
+
+            <a
+                href="{% url 'holidayList' %}"
+                class="sky-header-btn"
+            >
+                ← Holiday List
+            </a>
+
+        </div>
+
+
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="sky-calendar-message">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+
+        <!-- Upload Panel -->
+        <div class="sky-panel">
+
+            <div class="sky-panel-body">
+
+                <div class="holiday-form-card">
+
+                    <form
+                        method="post"
+                        enctype="multipart/form-data"
+                    >
+
+                        {% csrf_token %}
+
+                        <!-- Upload Field -->
+                        <div class="holiday-form-group">
+
+                            <label for="{{ form.file.id_for_label }}">
+                                Holiday File
+                            </label>
+
+                            {{ form.file }}
+
+                            <small style="
+                                color: #8a94a6;
+                                margin-top: 5px;
+                            ">
+                                Supported formats: .xlsx and .csv
+                            </small>
+
+                            {% if form.file.errors %}
+                                <div style="
+                                    color: #dc2626;
+                                    font-size: 12px;
+                                    margin-top: 6px;
+                                ">
+                                    {% for error in form.file.errors %}
+                                        <div>
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- Required Format -->
+                        <div style="
+                            margin-top: 24px;
+                            padding: 18px;
+                            border: 1px solid #e8ebf0;
+                            border-radius: 12px;
+                            background: #f8fafc;
+                        ">
+
+                            <div style="
+                                font-weight: 700;
+                                color: #1f2937;
+                                margin-bottom: 10px;
+                            ">
+                                Required Excel / CSV Format
+                            </div>
+
+                            <div style="
+                                font-size: 13px;
+                                color: #6b7280;
+                                line-height: 1.8;
+                            ">
+
+                                <strong>Holiday Name</strong>
+                                — required
+                                <br>
+
+                                <strong>Date</strong>
+                                — required
+                                <br>
+
+                                <strong>Type</strong>
+                                — MANDATORY or OPTIONAL
+                                <br>
+
+                                <strong>Description</strong>
+                                — optional
+
+                            </div>
+
+                            <div style="
+                                margin-top: 14px;
+                                font-size: 12px;
+                                color: #8a94a6;
+                            ">
+                                Example:
+                                Republic Day | 2026-01-26 |
+                                MANDATORY | National Holiday
+                            </div>
+
+                        </div>
+
+
+                        <!-- Upload Actions -->
+                        <div class="holiday-form-actions">
+
+                            <button
+                                type="submit"
+                                name="action"
+                                value="validate"
+                                class="holiday-save-btn"
+                            >
+                                Upload & Validate
+                            </button>
+
+                            <a
+                                href="{% url 'holidayList' %}"
+                                class="holiday-cancel-btn"
+                            >
+                                Cancel
+                            </a>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Preview -->
+        {% if preview_rows %}
+
+            <div
+                class="sky-panel"
+                style="margin-top: 24px;"
+            >
+
+                <div class="sky-panel-body">
+
+                    <!-- Preview Header -->
+                    <div style="
+                        display: flex;
+                        align-items: flex-start;
+                        justify-content: space-between;
+                        gap: 20px;
+                        margin-bottom: 20px;
+                        flex-wrap: wrap;
+                    ">
+
+                        <div>
+
+                            <span class="sky-eyebrow">
+                                Validation Result
+                            </span>
+
+                            <h5 style="
+                                margin: 4px 0 4px;
+                                font-weight: 700;
+                            ">
+                                Upload Preview
+                            </h5>
+
+                            <p class="sky-help-text">
+                                Review the holidays before importing them.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Summary Cards -->
+                    <div style="
+                        display: grid;
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 12px;
+                        margin-bottom: 20px;
+                    ">
+
+                        <div style="
+                            border: 1px solid #bbf7d0;
+                            background: #f0fdf4;
+                            border-radius: 10px;
+                            padding: 14px 16px;
+                        ">
+                            <div style="
+                                font-size: 11px;
+                                color: #15803d;
+                                text-transform: uppercase;
+                                font-weight: 700;
+                                letter-spacing: .04em;
+                            ">
+                                Ready
+                            </div>
+
+                            <div style="
+                                margin-top: 4px;
+                                font-size: 22px;
+                                font-weight: 700;
+                                color: #166534;
+                            ">
+                                {{ ready_count }}
+                            </div>
+                        </div>
+
+
+                        <div style="
+                            border: 1px solid #fde68a;
+                            background: #fffbeb;
+                            border-radius: 10px;
+                            padding: 14px 16px;
+                        ">
+                            <div style="
+                                font-size: 11px;
+                                color: #b45309;
+                                text-transform: uppercase;
+                                font-weight: 700;
+                                letter-spacing: .04em;
+                            ">
+                                Duplicates
+                            </div>
+
+                            <div style="
+                                margin-top: 4px;
+                                font-size: 22px;
+                                font-weight: 700;
+                                color: #92400e;
+                            ">
+                                {{ skip_count }}
+                            </div>
+                        </div>
+
+
+                        <div style="
+                            border: 1px solid
+                            {% if has_errors %}#fecaca{% else %}#e5e7eb{% endif %};
+                            background:
+                            {% if has_errors %}#fef2f2{% else %}#f8fafc{% endif %};
+                            border-radius: 10px;
+                            padding: 14px 16px;
+                        ">
+                            <div style="
+                                font-size: 11px;
+                                color:
+                                {% if has_errors %}#b91c1c{% else %}#6b7280{% endif %};
+                                text-transform: uppercase;
+                                font-weight: 700;
+                                letter-spacing: .04em;
+                            ">
+                                Errors
+                            </div>
+
+                            <div style="
+                                margin-top: 4px;
+                                font-size: 22px;
+                                font-weight: 700;
+                                color:
+                                {% if has_errors %}#991b1b{% else %}#374151{% endif %};
+                            ">
+                                {% if has_errors %}
+                                    Found
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <!-- Preview Table -->
+                    <div class="holiday-table-wrapper">
+
+                        <table class="holiday-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Row</th>
+                                    <th>Date</th>
+                                    <th>Holiday</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {% for row in preview_rows %}
+
+                                    <tr>
+
+                                        <!-- Row Number -->
+                                        <td>
+                                            {{ row.row_number }}
+                                        </td>
+
+
+                                        <!-- Date -->
+                                        <td>
+
+                                            {% if row.date %}
+                                                {{ row.date|date:"d M Y" }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <!-- Holiday -->
+                                        <td>
+
+                                            <div class="holiday-name">
+
+                                                {% if row.name %}
+                                                    {{ row.name }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+
+                                            </div>
+
+                                            {% if row.description %}
+                                                <div class="holiday-description">
+                                                    {{ row.description }}
+                                                </div>
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <!-- Holiday Type -->
+                                        <td>
+
+                                            {% if row.holiday_type == "MANDATORY" %}
+
+                                                <span class="
+                                                    holiday-badge
+                                                    holiday-badge-mandatory
+                                                ">
+                                                    Mandatory
+                                                </span>
+
+                                            {% elif row.holiday_type == "OPTIONAL" %}
+
+                                                <span class="
+                                                    holiday-badge
+                                                    holiday-badge-optional
+                                                ">
+                                                    Optional
+                                                </span>
+
+                                            {% else %}
+
+                                                <span style="color:#9ca3af;">
+                                                    —
+                                                </span>
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <!-- Validation Status -->
+                                        <td>
+
+                                            {% if row.status == "READY" %}
+
+                                                <span class="holiday-status-active">
+                                                    ● Ready
+                                                </span>
+
+                                            {% elif row.status == "SKIP" %}
+
+                                                <div style="
+                                                    color: #b45309;
+                                                    font-weight: 650;
+                                                ">
+                                                    ● Skip
+                                                </div>
+
+                                                {% for warning in row.warnings %}
+
+                                                    <div style="
+                                                        color: #b45309;
+                                                        font-size: 11px;
+                                                        line-height: 1.4;
+                                                        margin-top: 4px;
+                                                    ">
+                                                        {{ warning }}
+                                                    </div>
+
+                                                {% endfor %}
+
+                                            {% else %}
+
+                                                <div style="
+                                                    color: #dc2626;
+                                                    font-weight: 650;
+                                                ">
+                                                    ● Error
+                                                </div>
+
+                                                {% for error in row.errors %}
+
+                                                    <div style="
+                                                        color: #dc2626;
+                                                        font-size: 11px;
+                                                        line-height: 1.4;
+                                                        margin-top: 4px;
+                                                    ">
+                                                        {{ error }}
+                                                    </div>
+
+                                                {% endfor %}
+
+                                            {% endif %}
+
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <!-- Error Summary -->
+                    {% if has_errors %}
+
+                        <div style="
+                            margin-top: 20px;
+                            padding: 15px 17px;
+                            background: #fef2f2;
+                            border: 1px solid #fecaca;
+                            border-radius: 10px;
+                            color: #b91c1c;
+                            font-size: 13px;
+                            line-height: 1.5;
+                        ">
+
+                            <strong>
+                                Import cannot continue yet.
+                            </strong>
+
+                            <div style="margin-top: 4px;">
+                                Correct rows marked as Error and
+                                upload the file again.
+                                Duplicate holidays do not need to be removed.
+                            </div>
+
+                        </div>
+
+
+                    {% else %}
+
+                        <!-- Valid Summary -->
+                        <div style="
+                            margin-top: 20px;
+                            padding: 15px 17px;
+                            background: #f0fdf4;
+                            border: 1px solid #bbf7d0;
+                            border-radius: 10px;
+                            color: #15803d;
+                            font-size: 13px;
+                            line-height: 1.5;
+                        ">
+
+                            <strong>
+                                ✓ Validation complete
+                            </strong>
+
+                            <div style="margin-top: 4px;">
+                                {{ ready_count }} holiday(s) ready to import.
+                                {{ skip_count }} duplicate(s) will be skipped.
+                            </div>
+
+                        </div>
+
+
+                        <!-- Confirm Import -->
+                        {% if ready_count > 0 %}
+
+                            <div style="
+                                display: flex;
+                                justify-content: flex-end;
+                                align-items: center;
+                                gap: 12px;
+                                margin-top: 18px;
+                            ">
+
+                                <span style="
+                                    font-size: 12px;
+                                    color: #8a94a6;
+                                ">
+                                    Only rows marked Ready will be imported.
+                                </span>
+
+                                <form method="post">
+                                    {% csrf_token %}
+
+                                    <input
+                                        type="hidden"
+                                        name="action"
+                                        value="confirm_import"
+                                    >
+
+                                    <button
+                                        type="submit"
+                                        class="holiday-save-btn"
+                                    >
+                                        Confirm Import
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        {% else %}
+
+                            <div style="
+                                margin-top: 18px;
+                                color: #8a94a6;
+                                font-size: 13px;
+                            ">
+                                No new holidays are available to import.
+                            </div>
+
+                        {% endif %}
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}
