@@ -1,131 +1,2231 @@
-/* ============================================
-   Global design tokens
-   Shared by navbar, footer, and every page.
-   Dashboard-specific styling lives in dashboard.css.
-   ============================================ */
+/* ==========================================================
+   SKYSOURCE HRMS
+   GLOBAL LIGHT FOREST-GREEN THEME
+   ========================================================== */
+
+
+/* ==========================================================
+   DESIGN TOKENS
+   ========================================================== */
 
 :root {
-    --ink: #101828;
-    --ink-soft: #667085;
-    --navy: #16233D;
-    --teal: #0F9E96;
-    --teal-soft: #E3F5F3;
-    --amber: #B76E1D;
-    --amber-soft: #FBEEDD;
-    --rose: #B5433A;
-    --rose-soft: #FBEAE8;
-    --slate: #5B6B85;
-    --slate-soft: #EEF1F5;
-    --bg: #F5F6F8;
-    --card: #FFFFFF;
-    --border: #E6E8EC;
 
+    /* Primary text */
+    --ink: #1C2B24;
+    --ink-soft: #69756E;
+
+    /* SkySource Forest Green */
+    --navy: #183D2F;
+    --green: #2F6B4F;
+    --green-dark: #214F3B;
+    --green-deep: #163B2D;
+
+    /* Keep old variable names compatible */
+    --teal: #2F6B4F;
+    --teal-dark: #214F3B;
+
+    /* Light Green */
+    --green-soft: #F4F8F5;
+    --green-soft-2: #EEF6F1;
+    --green-soft-3: #E4F0E8;
+
+    --teal-soft: #EEF6F1;
+
+    /* Coral accent */
+    --rose: #C96F5D;
+    --rose-dark: #A95345;
+    --rose-soft: #FAEEEB;
+
+    /* Amber */
+    --amber: #B47A37;
+    --amber-soft: #FBF3E8;
+
+    /* Neutral */
+    --slate: #65736B;
+    --slate-soft: #F1F4F2;
+
+    /* Surfaces */
+    --bg: #F6F8F6;
+    --card: #FFFFFF;
+    --white: #FFFFFF;
+
+    /* Borders */
+    --border: #E1E7E3;
+    --border-green: #D4E3D9;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(24, 61, 47, 0.05);
+    --shadow-md: 0 8px 24px rgba(24, 61, 47, 0.08);
+
+    /* Fonts */
     --font-display: 'Space Grotesk', 'Inter', sans-serif;
-    --font-body: 'Inter', -apple-system, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
+
+/* ==========================================================
+   GLOBAL
+   ========================================================== */
+
+html {
+    scroll-behavior: smooth;
+}
+
 body {
+    margin: 0;
+
     font-family: var(--font-body);
+
+    background: var(--bg);
+
     color: var(--ink);
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: var(--font-display);
-    letter-spacing: -0.01em;
+
+    color: var(--navy);
+
+    letter-spacing: -0.015em;
 }
 
-/* ============================================
-   Navbar
-   ============================================ */
+a {
+    color: var(--green);
+
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--green-dark);
+}
+
+
+/* ==========================================================
+   PUBLIC NAVBAR
+   Used for logged-out pages
+   ========================================================== */
 
 .navbar {
-    background: var(--navy) !important;
-    border-bottom: 2px solid var(--teal);
-    padding-top: 0.85rem;
-    padding-bottom: 0.85rem;
+    background: #FFFFFF !important;
+
+    border-bottom: 1px solid var(--border-green);
+
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+
+    box-shadow: none !important;
 }
+
+
+/* Brand */
 
 .navbar-brand {
     font-family: var(--font-display);
-    font-weight: 600 !important;
-    letter-spacing: -0.01em;
-    color: #fff !important;
+
+    font-weight: 700 !important;
+
+    letter-spacing: -0.02em;
+
+    color: var(--navy) !important;
 }
 
+
+/* Navbar links */
+
 .navbar .nav-link {
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.78) !important;
     padding-left: 0.9rem !important;
     padding-right: 0.9rem !important;
-    transition: color 0.15s ease;
+
+    font-size: 0.88rem;
+    font-weight: 500;
+
+    color: var(--ink-soft) !important;
+
+    transition:
+        color 0.15s ease,
+        background 0.15s ease;
 }
 
 .navbar .nav-link:hover,
 .navbar .nav-link:focus {
-    color: #fff !important;
+    color: var(--green-dark) !important;
 }
 
+
+/* Navbar dropdown */
+
 .navbar .dropdown-menu {
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    box-shadow: 0 8px 24px rgba(16, 24, 40, 0.12);
     padding: 0.4rem;
+
+    background: #FFFFFF;
+
+    border: 1px solid var(--border);
+
+    border-radius: 7px;
+
+    box-shadow: var(--shadow-md);
+}
+
+.navbar .dropdown-header {
+    font-family: var(--font-mono);
+
+    font-size: 0.65rem;
+
+    color: #98A2B3;
+
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.navbar .dropdown-divider {
+    border-color: var(--border);
 }
 
 .navbar .dropdown-item {
-    font-size: 0.88rem;
-    border-radius: 4px;
     padding: 0.5rem 0.75rem;
+
+    border-radius: 5px;
+
+    font-size: 0.85rem;
+
+    color: var(--ink-soft);
 }
 
 .navbar .dropdown-item:hover,
 .navbar .dropdown-item:focus {
-    background: var(--teal-soft);
-    color: var(--teal);
+    background: var(--green-soft-2);
+
+    color: var(--green-dark);
 }
+
+
+/* Navbar welcome text */
 
 .navbar-text {
     font-family: var(--font-mono);
-    font-size: 0.78rem;
-    color: rgba(255, 255, 255, 0.65) !important;
+
+    font-size: 0.72rem;
+
+    color: var(--ink-soft) !important;
 }
 
+
+/* Navbar buttons */
+
 .navbar .btn-outline-light {
-    font-size: 0.82rem;
-    font-weight: 500;
-    border-color: rgba(255, 255, 255, 0.35);
-    padding: 0.35rem 0.9rem;
-    border-radius: 5px;
+    padding: 0.38rem 0.9rem;
+
+    background: #FFFFFF;
+
+    border: 1px solid var(--border-green);
+
+    border-radius: 6px;
+
+    color: var(--green-dark);
+
+    font-size: 0.8rem;
+    font-weight: 600;
 }
 
 .navbar .btn-outline-light:hover {
-    background: var(--teal);
-    border-color: var(--teal);
+    background: var(--green-soft-2);
+
+    border-color: #BCD5C5;
+
+    color: var(--green-dark);
 }
 
-/* ============================================
-   Footer
-   ============================================ */
 
-footer.bg-dark {
-    background: var(--navy) !important;
-    border-top: 2px solid var(--teal);
+/* Mobile navbar */
+
+.navbar-toggler {
+    border: 1px solid var(--border-green) !important;
+
+    box-shadow: none !important;
 }
 
-footer h5 {
+.navbar-toggler:focus {
+    box-shadow: none !important;
+}
+
+
+/* Bootstrap's dark toggler icon does not work
+   properly when navbar-dark remains in HTML */
+
+.navbar-dark .navbar-toggler-icon {
+    filter: invert(20%) sepia(20%) saturate(900%);
+}
+
+
+/* ==========================================================
+   AUTHENTICATED APPLICATION
+   ========================================================== */
+
+.hr-authenticated {
+    margin: 0;
+
+    background: var(--bg);
+
+    color: var(--ink);
+
+    overflow-x: hidden;
+}
+
+.hr-app-shell {
+    min-height: 100vh;
+}
+
+
+/* ==========================================================
+   SIDEBAR
+   ========================================================== */
+
+.hr-sidebar {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+    bottom: 0;
+
+    width: 270px;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+
+    background: #FFFFFF;
+
+    border-right: 1px solid var(--border-green);
+
+    z-index: 1040;
+
+    transition: transform 0.25s ease;
+}
+
+
+/* ==========================================================
+   SIDEBAR BRAND
+   ========================================================== */
+
+.hr-sidebar-brand {
+    flex-shrink: 0;
+
+    padding: 20px 18px;
+
+    background: #FFFFFF;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.hr-sidebar-brand a {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    text-decoration: none;
+}
+
+
+/* Logo square */
+
+.hr-brand-mark {
+    width: 38px;
+    height: 38px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--green-soft-2);
+
+    border: 1px solid #CFE2D6;
+
+    border-radius: 7px;
+
+    color: var(--green-dark);
+
     font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 1.05rem;
+
+    font-size: 1rem;
+    font-weight: 700;
 }
 
-footer p.small {
-    color: rgba(255, 255, 255, 0.6);
+
+/* Brand text */
+
+.hr-brand-text {
+    display: flex;
+    flex-direction: column;
 }
 
-footer small {
+.hr-brand-text strong {
+    color: var(--navy);
+
+    font-family: var(--font-display);
+
+    font-size: 1rem;
+    font-weight: 700;
+
+    line-height: 1.2;
+}
+
+.hr-brand-text span {
+    margin-top: 2px;
+
+    color: #89958E;
+
     font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.55);
-    letter-spacing: 0.02em;
+
+    font-size: 0.64rem;
+
+    letter-spacing: 0.08em;
+
+    text-transform: uppercase;
+}
+
+
+/* ==========================================================
+   SIDEBAR NAVIGATION
+   ========================================================== */
+
+.hr-sidebar-nav {
+    flex: 1;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding: 18px 12px;
+}
+
+
+/* Scrollbar */
+
+.hr-sidebar-nav::-webkit-scrollbar {
+    width: 5px;
+}
+
+.hr-sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.hr-sidebar-nav::-webkit-scrollbar-thumb {
+    background: #D7DFDA;
+
+    border-radius: 10px;
+}
+
+
+/* ==========================================================
+   SIDEBAR SECTIONS
+   ========================================================== */
+
+.hr-sidebar-section {
+    margin-bottom: 17px;
+}
+
+.hr-sidebar-section-title {
+    padding: 0 11px;
+
+    margin-bottom: 6px;
+
+    color: #98A29C;
+
+    font-family: var(--font-mono);
+
+    font-size: 0.61rem;
+    font-weight: 600;
+
+    letter-spacing: 0.09em;
+
+    text-transform: uppercase;
+}
+
+
+/* ==========================================================
+   SIDEBAR LINKS
+   ========================================================== */
+
+.hr-sidebar-link {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    margin-bottom: 3px;
+
+    padding: 9px 11px;
+
+    background: transparent;
+
+    border: 1px solid transparent;
+
+    border-radius: 6px;
+
+    color: #526158;
+
+    text-align: left;
+
+    text-decoration: none;
+
+    font-family: var(--font-body);
+
+    font-size: 0.85rem;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+
+/* Sidebar icons */
+
+.hr-sidebar-link > i,
+.hr-sidebar-link-main > i {
+    width: 18px;
+
+    flex-shrink: 0;
+
+    color: #748078;
+
+    font-size: 0.98rem;
+
+    text-align: center;
+
+    transition: color 0.15s ease;
+}
+
+
+/* Hover */
+
+.hr-sidebar-link:hover,
+.hr-sidebar-link:focus {
+    background: var(--green-soft);
+
+    border-color: #E1EBE4;
+
+    color: var(--green-dark);
+}
+
+.hr-sidebar-link:hover > i,
+.hr-sidebar-link:hover .hr-sidebar-link-main > i {
+    color: var(--green);
+}
+
+
+/* Active */
+
+.hr-sidebar-link.active {
+    background: var(--green-soft-2);
+
+    border-color: #D4E7DB;
+
+    color: var(--green-dark);
+
+    font-weight: 600;
+}
+
+.hr-sidebar-link.active > i {
+    color: var(--green);
+}
+
+
+/* Parent menu containing active item */
+
+.hr-sidebar-link.active-parent {
+    background: var(--green-soft);
+
+    border-color: #E0EBE3;
+
+    color: var(--green-dark);
+}
+
+.hr-sidebar-link.active-parent .hr-sidebar-link-main > i {
+    color: var(--green);
+}
+
+
+/* ==========================================================
+   SIDEBAR COLLAPSIBLE MENU
+   ========================================================== */
+
+.hr-sidebar-toggle {
+    justify-content: space-between;
+}
+
+.hr-sidebar-link-main {
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+}
+
+
+/* Arrow */
+
+.hr-sidebar-chevron {
+    width: auto !important;
+
+    color: #98A29C !important;
+
+    font-size: 0.65rem !important;
+
+    transition:
+        transform 0.2s ease,
+        color 0.2s ease;
+}
+
+.hr-sidebar-toggle[aria-expanded="true"] .hr-sidebar-chevron {
+    transform: rotate(180deg);
+
+    color: var(--green) !important;
+}
+
+
+/* ==========================================================
+   SIDEBAR SUBMENU
+   ========================================================== */
+
+.hr-sidebar-submenu {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-left: 29px;
+}
+
+
+/* Subsection title */
+
+.hr-sidebar-subheading {
+    margin-top: 10px;
+    margin-bottom: 4px;
+
+    padding-left: 11px;
+
+    color: #9AA49E;
+
+    font-family: var(--font-mono);
+
+    font-size: 0.58rem;
+    font-weight: 600;
+
+    letter-spacing: 0.06em;
+
+    text-transform: uppercase;
+}
+
+
+/* Submenu links */
+
+.hr-sidebar-sub-link {
+    position: relative;
+
+    display: block;
+
+    margin-bottom: 2px;
+
+    padding: 7px 11px;
+
+    border-radius: 5px;
+
+    color: #718078;
+
+    font-size: 0.79rem;
+
+    text-decoration: none;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+
+/* Small dot */
+
+.hr-sidebar-sub-link::before {
+    content: "";
+
+    position: absolute;
+
+    left: -9px;
+    top: 50%;
+
+    width: 4px;
+    height: 4px;
+
+    background: #CFD8D2;
+
+    border-radius: 50%;
+
+    transform: translateY(-50%);
+}
+
+
+/* Hover */
+
+.hr-sidebar-sub-link:hover {
+    background: var(--green-soft);
+
+    color: var(--green-dark);
+}
+
+
+/* Active submenu */
+
+.hr-sidebar-sub-link.active {
+    background: var(--green-soft-2);
+
+    color: var(--green-dark);
+
+    font-weight: 500;
+}
+
+.hr-sidebar-sub-link.active::before {
+    background: var(--green);
+}
+
+
+/* ==========================================================
+   SIDEBAR FOOTER
+   ========================================================== */
+
+.hr-sidebar-footer {
+    flex-shrink: 0;
+
+    padding: 14px;
+
+    background: #FFFFFF;
+
+    border-top: 1px solid var(--border);
+}
+
+
+/* ==========================================================
+   SIDEBAR USER
+   ========================================================== */
+
+.hr-sidebar-user {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 11px;
+}
+
+
+/* Avatar */
+
+.hr-sidebar-avatar {
+    width: 35px;
+    height: 35px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--green-soft-2);
+
+    border: 1px solid #CEE2D5;
+
+    border-radius: 50%;
+
+    color: var(--green-dark);
+
+    font-family: var(--font-display);
+
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+
+/* User text */
+
+.hr-sidebar-user-info {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.hr-sidebar-user-info strong {
+    overflow: hidden;
+
+    color: var(--ink);
+
+    font-size: 0.8rem;
+    font-weight: 600;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.hr-sidebar-user-info span {
+    overflow: hidden;
+
+    margin-top: 1px;
+
+    color: #8A958E;
+
+    font-family: var(--font-mono);
+
+    font-size: 0.6rem;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+/* ==========================================================
+   LOGOUT BUTTON
+   ========================================================== */
+
+.hr-logout-btn {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 8px 12px;
+
+    background: #FFFFFF;
+
+    border: 1px solid var(--border);
+
+    border-radius: 6px;
+
+    color: var(--ink-soft);
+
+    font-size: 0.77rem;
+    font-weight: 500;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.hr-logout-btn i {
+    color: var(--rose);
+}
+
+.hr-logout-btn:hover {
+    background: var(--rose-soft);
+
+    border-color: #EDCAC3;
+
+    color: var(--rose-dark);
+}
+
+
+/* ==========================================================
+   MAIN APPLICATION
+   ========================================================== */
+
+.hr-main {
+    min-height: 100vh;
+
+    margin-left: 270px;
+
+    display: flex;
+    flex-direction: column;
+
+    background: var(--bg);
+}
+
+
+/* ==========================================================
+   TOPBAR
+   ========================================================== */
+
+.hr-topbar {
+    position: sticky;
+
+    top: 0;
+
+    z-index: 1020;
+
+    min-height: 67px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 11px 27px;
+
+    background: rgba(255, 255, 255, 0.97);
+
+    border-bottom: 1px solid var(--border-green);
+
+    backdrop-filter: blur(8px);
+}
+
+.hr-topbar-left {
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+}
+
+
+/* Header title */
+
+.hr-topbar-title {
+    display: flex;
+    flex-direction: column;
+}
+
+.hr-topbar-title strong {
+    color: var(--navy);
+
+    font-family: var(--font-display);
+
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.hr-topbar-eyebrow {
+    color: var(--green);
+
+    font-family: var(--font-mono);
+
+    font-size: 0.58rem;
+    font-weight: 600;
+
+    letter-spacing: 0.09em;
+
+    text-transform: uppercase;
+}
+
+
+/* ==========================================================
+   TOPBAR USER
+   ========================================================== */
+
+.hr-topbar-user {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+}
+
+.hr-user-avatar {
+    width: 34px;
+    height: 34px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--green-soft-2);
+
+    border: 1px solid #CDE1D4;
+
+    border-radius: 50%;
+
+    color: var(--green-dark);
+
+    font-family: var(--font-display);
+
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.hr-user-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.hr-user-details strong {
+    max-width: 160px;
+
+    overflow: hidden;
+
+    color: var(--ink);
+
+    font-size: 0.76rem;
+    font-weight: 600;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.hr-user-details span {
+    color: #89958E;
+
+    font-family: var(--font-mono);
+
+    font-size: 0.57rem;
+}
+
+
+/* ==========================================================
+   PAGE CONTENT
+   ========================================================== */
+
+.hr-content {
+    flex: 1;
+
+    padding: 28px 0 36px;
+
+    background: var(--bg);
+}
+
+
+/* ==========================================================
+   MOBILE MENU BUTTON
+   ========================================================== */
+
+.hr-mobile-menu-btn {
+    width: 38px;
+    height: 38px;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    background: #FFFFFF;
+
+    border: 1px solid var(--border-green);
+
+    border-radius: 6px;
+
+    color: var(--green-dark);
+
+    font-size: 1.2rem;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.hr-mobile-menu-btn:hover {
+    background: var(--green-soft-2);
+
+    border-color: #BED8C7;
+
+    color: var(--green-dark);
+}
+
+
+/* ==========================================================
+   SIDEBAR MOBILE OVERLAY
+   ========================================================== */
+
+.hr-sidebar-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    display: none;
+
+    background: rgba(24, 61, 47, 0.18);
+
+    z-index: 1030;
+
+    backdrop-filter: blur(1px);
+}
+/* ==========================================================
+   SKYSOURCE LANDING STYLE FOOTER
+   ========================================================== */
+
+.skysource-footer {
+    position: relative;
+
+    width: 100%;
+
+    overflow: hidden;
+
+    margin-top: auto;
+
+    padding: 62px 70px;
+
+    background: #063F32;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+    border-radius: 0 0 28px 28px;
+
+    color: #FFFFFF;
+}
+
+
+/* ==========================================================
+   DECORATIVE BACKGROUND
+   ========================================================== */
+
+.skysource-footer::before {
+    content: "";
+
+    position: absolute;
+
+    top: -290px;
+    right: 110px;
+
+    width: 620px;
+    height: 620px;
+
+    border: 34px solid rgba(255, 255, 255, 0.025);
+
+    border-radius: 50%;
+
+    pointer-events: none;
+}
+
+
+.skysource-footer::after {
+    content: "";
+
+    position: absolute;
+
+    top: -390px;
+    right: -120px;
+
+    width: 720px;
+    height: 720px;
+
+    border: 40px solid rgba(255, 255, 255, 0.018);
+
+    border-radius: 50%;
+
+    pointer-events: none;
+}
+
+
+.skysource-footer-decoration {
+    position: absolute;
+
+    inset: 0;
+
+    pointer-events: none;
+}
+
+
+.skysource-footer-decoration::before {
+    content: "";
+
+    position: absolute;
+
+    top: -240px;
+    left: 55%;
+
+    width: 520px;
+    height: 520px;
+
+    border: 28px solid rgba(255, 255, 255, 0.015);
+
+    border-radius: 50%;
+}
+
+
+/* ==========================================================
+   INNER LAYOUT
+   ========================================================== */
+
+.skysource-footer-inner {
+    position: relative;
+
+    z-index: 2;
+
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns: 1fr auto 1fr;
+
+    align-items: center;
+
+    gap: 40px;
+}
+
+
+/* ==========================================================
+   BRAND
+   ========================================================== */
+
+.skysource-footer-brand {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    width: fit-content;
+
+    color: #FFFFFF;
+
+    text-decoration: none;
+}
+
+
+.skysource-footer-brand:hover {
+    color: #FFFFFF;
+}
+
+
+/* Logo */
+
+.skysource-footer-logo {
+    width: 50px;
+    height: 50px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    background: #FFFFFF;
+
+    border-radius: 9px;
+
+    color: #174F3E;
+
+    font-family: var(--font-display);
+
+    font-size: 1.15rem;
+
+    font-weight: 700;
+
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+
+/* Brand name */
+
+.skysource-footer-brand span {
+    color: #FFFFFF;
+
+    font-family: var(--font-display);
+
+    font-size: 1.25rem;
+
+    font-weight: 700;
+
+    letter-spacing: -0.025em;
+}
+
+
+/* ==========================================================
+   FOOTER NAVIGATION
+   ========================================================== */
+
+.skysource-footer-nav {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 46px;
+}
+
+
+.skysource-footer-nav a {
+    position: relative;
+
+    color: rgba(255, 255, 255, 0.48);
+
+    font-family: var(--font-body);
+
+    font-size: 0.92rem;
+
+    font-weight: 500;
+
+    text-decoration: none;
+
+    transition: color 0.18s ease;
+}
+
+
+.skysource-footer-nav a:hover {
+    color: #FFFFFF;
+}
+
+
+/* Tiny underline animation */
+
+.skysource-footer-nav a::after {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    bottom: -7px;
+
+    width: 0;
+    height: 1px;
+
+    background: rgba(255, 255, 255, 0.75);
+
+    transition: width 0.18s ease;
+}
+
+
+.skysource-footer-nav a:hover::after {
+    width: 100%;
+}
+
+
+/* ==========================================================
+   COPYRIGHT
+   ========================================================== */
+
+.skysource-footer-copy {
+    justify-self: end;
+
+    color: rgba(255, 255, 255, 0.4);
+
+    font-family: var(--font-body);
+
+    font-size: 0.84rem;
+
+    font-weight: 400;
+
+    white-space: nowrap;
+}
+
+
+/* ==========================================================
+   AUTHENTICATED HRMS FOOTER
+   Sidebar-aware adjustment
+   ========================================================== */
+
+.hr-authenticated .skysource-footer {
+    border-radius: 0;
+}
+
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media (max-width: 991.98px) {
+
+    .skysource-footer {
+        padding: 48px 32px;
+    }
+
+    .skysource-footer-inner {
+        grid-template-columns: 1fr;
+
+        justify-items: center;
+
+        gap: 30px;
+    }
+
+    .skysource-footer-brand {
+        justify-self: center;
+    }
+
+    .skysource-footer-copy {
+        justify-self: center;
+
+        text-align: center;
+    }
+
+}
+
+
+@media (max-width: 575.98px) {
+
+    .skysource-footer {
+        padding: 40px 20px;
+    }
+
+    .skysource-footer-nav {
+        flex-direction: column;
+
+        gap: 16px;
+    }
+
+    .skysource-footer-logo {
+        width: 44px;
+        height: 44px;
+    }
+
+    .skysource-footer-brand span {
+        font-size: 1.1rem;
+    }
+
+    .skysource-footer-copy {
+        font-size: 0.76rem;
+    }
+
+}
+
+/* ==========================================================
+   GENERAL BOOTSTRAP LIGHT OVERRIDES
+   Keeps interface consistent
+   ========================================================== */
+
+
+/* Cards */
+
+.card {
+    background: #FFFFFF;
+
+    border-color: var(--border) !important;
+
+    box-shadow: none;
+}
+
+
+/* Form controls */
+
+.form-control,
+.form-select {
+    border-color: #D9E1DC;
+
+    color: var(--ink);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #8CB59B;
+
+    box-shadow: 0 0 0 0.2rem rgba(47, 107, 79, 0.10);
+}
+
+
+/* Tables */
+
+.table {
+    --bs-table-color: var(--ink);
+}
+
+.table > :not(caption) > * > * {
+    border-bottom-color: var(--border);
+}
+
+
+/* Bootstrap primary button */
+
+.btn-primary {
+    background: var(--green) !important;
+
+    border-color: var(--green) !important;
+
+    color: #FFFFFF !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background: var(--green-dark) !important;
+
+    border-color: var(--green-dark) !important;
+}
+
+
+/* Outline primary */
+
+.btn-outline-primary {
+    background: #FFFFFF;
+
+    border-color: #AFCDBA;
+
+    color: var(--green-dark);
+}
+
+.btn-outline-primary:hover {
+    background: var(--green-soft-2);
+
+    border-color: #94BDA3;
+
+    color: var(--green-dark);
+}
+
+
+/* Success */
+
+.text-success {
+    color: var(--green) !important;
+}
+
+
+/* Links */
+
+.link-primary {
+    color: var(--green) !important;
+}
+
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media (max-width: 991.98px) {
+
+    .hr-sidebar {
+        transform: translateX(-100%);
+
+        box-shadow:
+            8px 0 30px rgba(24, 61, 47, 0.08);
+    }
+
+    .hr-main {
+        margin-left: 0;
+    }
+
+    .hr-mobile-menu-btn {
+        display: flex;
+    }
+
+    body.sidebar-open {
+        overflow: hidden;
+    }
+
+    body.sidebar-open .hr-sidebar {
+        transform: translateX(0);
+    }
+
+    body.sidebar-open .hr-sidebar-overlay {
+        display: block;
+    }
+
+    .hr-topbar {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+}
+
+
+@media (max-width: 575.98px) {
+
+    .hr-sidebar {
+        width: min(285px, 88vw);
+    }
+
+    .hr-user-details {
+        display: none;
+    }
+
+    .hr-content {
+        padding-top: 20px;
+    }
+
+    .hr-topbar-title strong {
+        font-size: 0.84rem;
+    }
+
+}
+
+/* ==========================================================
+   SKYSOURCE SIDEBAR
+   LIGHT SAGE THEME - HIGHER CONTRAST
+   ========================================================== */
+
+:root {
+    --sidebar-bg: #EEF3F0;
+    --sidebar-brand-bg: #F7F9F8;
+
+    --sidebar-border: #C9D7CF;
+    --sidebar-divider: #D8E2DC;
+
+    --sidebar-green-deep: #073F32;
+    --sidebar-green: #245C49;
+    --sidebar-green-medium: #49685B;
+
+    --sidebar-text: #344E43;
+    --sidebar-muted: #708278;
+
+    --sidebar-active: #DCEBE2;
+    --sidebar-active-border: #BDD5C7;
+
+    --sidebar-hover: #E5EEE9;
+
+    --sidebar-coral: #C96F5D;
+    --sidebar-coral-soft: #FAEEEB;
+}
+
+
+/* ==========================================================
+   SIDEBAR CONTAINER
+   ========================================================== */
+
+.hr-sidebar {
+    background: var(--sidebar-bg) !important;
+
+    border-right: 1px solid var(--sidebar-border) !important;
+
+    box-shadow:
+        4px 0 14px rgba(7, 63, 50, 0.035) !important;
+}
+
+
+/* ==========================================================
+   BRAND
+   ========================================================== */
+
+.hr-sidebar-brand {
+    background: var(--sidebar-brand-bg) !important;
+
+    border-bottom: 1px solid var(--sidebar-border) !important;
+
+    padding: 20px 18px;
+}
+
+
+.hr-sidebar-brand a {
+    color: var(--sidebar-green-deep) !important;
+
+    text-decoration: none;
+}
+
+
+.hr-brand-mark {
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #FFFFFF !important;
+
+    border: 1px solid #BFD4C7 !important;
+
+    border-radius: 8px;
+
+    color: var(--sidebar-green-deep) !important;
+
+    font-family: var(--font-display);
+
+    font-size: 1rem;
+    font-weight: 700;
+
+    box-shadow:
+        0 1px 3px rgba(7, 63, 50, 0.06);
+}
+
+
+.hr-brand-text strong {
+    color: var(--sidebar-green-deep) !important;
+
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+
+.hr-brand-text span {
+    color: #71847A !important;
+
+    font-size: 0.63rem;
+
+    letter-spacing: 0.08em;
+}
+
+
+/* ==========================================================
+   NAVIGATION AREA
+   ========================================================== */
+
+.hr-sidebar-nav {
+    background: var(--sidebar-bg) !important;
+
+    padding: 18px 12px;
+}
+
+
+.hr-sidebar-nav::-webkit-scrollbar {
+    width: 5px;
+}
+
+
+.hr-sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+
+.hr-sidebar-nav::-webkit-scrollbar-thumb {
+    background: #BFCFC6;
+
+    border-radius: 20px;
+}
+
+
+/* ==========================================================
+   SECTION LABELS
+   ========================================================== */
+
+.hr-sidebar-section-title {
+    padding-left: 10px;
+
+    margin-bottom: 7px;
+
+    color: #71857A !important;
+
+    font-family: var(--font-mono);
+
+    font-size: 0.61rem;
+
+    font-weight: 600;
+
+    letter-spacing: 0.1em;
+
+    text-transform: uppercase;
+}
+
+
+/* ==========================================================
+   MAIN LINKS
+   ========================================================== */
+
+.hr-sidebar-link {
+    min-height: 42px;
+
+    padding: 9px 11px;
+
+    margin-bottom: 4px;
+
+    background: transparent !important;
+
+    border: 1px solid transparent !important;
+
+    border-radius: 7px;
+
+    color: var(--sidebar-text) !important;
+
+    font-size: 0.86rem;
+
+    font-weight: 500;
+
+    transition:
+        background 0.16s ease,
+        border-color 0.16s ease,
+        color 0.16s ease;
+}
+
+
+/* Icons */
+
+.hr-sidebar-link > i,
+.hr-sidebar-link-main > i {
+    color: #647B70 !important;
+
+    font-size: 1rem;
+
+    transition: color 0.16s ease;
+}
+
+
+/* ==========================================================
+   HOVER
+   ========================================================== */
+
+.hr-sidebar-link:hover,
+.hr-sidebar-link:focus {
+    background: var(--sidebar-hover) !important;
+
+    border-color: #CAD9D0 !important;
+
+    color: var(--sidebar-green-deep) !important;
+}
+
+
+.hr-sidebar-link:hover > i,
+.hr-sidebar-link:hover .hr-sidebar-link-main > i {
+    color: var(--sidebar-green-deep) !important;
+}
+
+
+/* ==========================================================
+   ACTIVE
+   ========================================================== */
+
+.hr-sidebar-link.active {
+    position: relative;
+
+    background: var(--sidebar-active) !important;
+
+    border-color: var(--sidebar-active-border) !important;
+
+    color: var(--sidebar-green-deep) !important;
+
+    font-weight: 600;
+}
+
+
+.hr-sidebar-link.active > i {
+    color: var(--sidebar-green-deep) !important;
+}
+
+
+/* Stronger active indicator */
+
+.hr-sidebar-link.active::before {
+    content: "";
+
+    position: absolute;
+
+    left: -1px;
+
+    top: 7px;
+    bottom: 7px;
+
+    width: 3px;
+
+    background: var(--sidebar-green);
+
+    border-radius: 0 4px 4px 0;
+}
+
+
+/* ==========================================================
+   ACTIVE PARENT
+   ========================================================== */
+
+.hr-sidebar-link.active-parent {
+    background: #E2ECE6 !important;
+
+    border-color: #C8D8CF !important;
+
+    color: var(--sidebar-green-deep) !important;
+
+    font-weight: 600;
+}
+
+
+.hr-sidebar-link.active-parent .hr-sidebar-link-main > i {
+    color: var(--sidebar-green-deep) !important;
+}
+
+
+/* ==========================================================
+   DROPDOWN ARROW
+   ========================================================== */
+
+.hr-sidebar-chevron {
+    color: #71857A !important;
+
+    font-size: 0.68rem !important;
+}
+
+
+.hr-sidebar-toggle[aria-expanded="true"] .hr-sidebar-chevron {
+    color: var(--sidebar-green-deep) !important;
+}
+
+
+/* ==========================================================
+   SUBMENU
+   ========================================================== */
+
+.hr-sidebar-submenu {
+    padding-top: 4px;
+
+    padding-bottom: 5px;
+
+    padding-left: 29px;
+}
+
+
+.hr-sidebar-subheading {
+    margin-top: 10px;
+
+    margin-bottom: 4px;
+
+    padding-left: 10px;
+
+    color: #778A80 !important;
+
+    font-family: var(--font-mono);
+
+    font-size: 0.58rem;
+
+    font-weight: 600;
+
+    letter-spacing: 0.065em;
+
+    text-transform: uppercase;
+}
+
+
+/* ==========================================================
+   SUBMENU LINKS
+   ========================================================== */
+
+.hr-sidebar-sub-link {
+    position: relative;
+
+    display: block;
+
+    margin-bottom: 2px;
+
+    padding: 7px 10px;
+
+    border-radius: 6px;
+
+    color: #5F756A !important;
+
+    font-size: 0.79rem;
+
+    text-decoration: none;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+
+.hr-sidebar-sub-link::before {
+    content: "";
+
+    position: absolute;
+
+    left: -8px;
+
+    top: 50%;
+
+    width: 4px;
+    height: 4px;
+
+    background: #AEBFB5 !important;
+
+    border-radius: 50%;
+
+    transform: translateY(-50%);
+}
+
+
+.hr-sidebar-sub-link:hover {
+    background: #E4EDE7 !important;
+
+    color: var(--sidebar-green-deep) !important;
+}
+
+
+.hr-sidebar-sub-link.active {
+    background: var(--sidebar-active) !important;
+
+    color: var(--sidebar-green-deep) !important;
+
+    font-weight: 600;
+}
+
+
+.hr-sidebar-sub-link.active::before {
+    background: var(--sidebar-green) !important;
+}
+
+
+/* ==========================================================
+   SIDEBAR FOOTER
+   ========================================================== */
+
+.hr-sidebar-footer {
+    background: #E9F0EC !important;
+
+    border-top: 1px solid var(--sidebar-border) !important;
+
+    padding: 14px;
+}
+
+
+/* User avatar */
+
+.hr-sidebar-avatar {
+    width: 37px;
+    height: 37px;
+
+    background: #FFFFFF !important;
+
+    border: 1px solid #BCD2C5 !important;
+
+    color: var(--sidebar-green-deep) !important;
+
+    font-weight: 700;
+}
+
+
+/* Name */
+
+.hr-sidebar-user-info strong {
+    color: #183A2E !important;
+
+    font-size: 0.81rem;
+}
+
+
+/* Username */
+
+.hr-sidebar-user-info span {
+    color: #71847A !important;
+
+    font-size: 0.6rem;
+}
+
+
+/* ==========================================================
+   LOGOUT
+   ========================================================== */
+
+.hr-logout-btn {
+    width: 100%;
+
+    background: rgba(255, 255, 255, 0.55) !important;
+
+    border: 1px solid #C8D6CE !important;
+
+    border-radius: 7px;
+
+    color: #53695E !important;
+
+    font-size: 0.77rem;
+}
+
+
+.hr-logout-btn i {
+    color: var(--sidebar-coral) !important;
+}
+
+
+.hr-logout-btn:hover {
+    background: var(--sidebar-coral-soft) !important;
+
+    border-color: #E4BDB5 !important;
+
+    color: #A75345 !important;
+}
+
+
+/* ==========================================================
+   TOPBAR
+   ========================================================== */
+
+.hr-topbar {
+    background: #FFFFFF !important;
+
+    border-bottom: 1px solid #CFDDD5 !important;
+
+    box-shadow:
+        0 1px 3px rgba(7, 63, 50, 0.025) !important;
+}
+
+
+.hr-topbar-eyebrow {
+    color: var(--sidebar-green) !important;
+}
+
+
+.hr-topbar-title strong {
+    color: var(--sidebar-green-deep) !important;
+}
+
+
+/* ==========================================================
+   MAIN PAGE
+   Keep visibly different from sidebar
+   ========================================================== */
+
+.hr-authenticated,
+.hr-main,
+.hr-content {
+    background: #F8F9F7 !important;
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+.hr-mobile-menu-btn {
+    background: #FFFFFF !important;
+
+    border-color: var(--sidebar-border) !important;
+
+    color: var(--sidebar-green-deep) !important;
+}
+
+
+.hr-mobile-menu-btn:hover {
+    background: var(--sidebar-active) !important;
+}
+
+
+.hr-sidebar-overlay {
+    background: rgba(7, 63, 50, 0.25) !important;
+}
+
+
+@media (max-width: 991.98px) {
+
+    .hr-sidebar {
+        box-shadow:
+            10px 0 35px rgba(7, 63, 50, 0.14) !important;
+    }
+
+}
+/* ==========================================================
+   DARK HEADER STRIP
+   Make top section match landing/footer green
+   ========================================================== */
+
+:root {
+    --header-green: #063F32;
+    --header-green-2: #0A4A3A;
+    --header-border: rgba(255, 255, 255, 0.08);
+    --header-text-soft: rgba(255, 255, 255, 0.68);
+    --header-text-muted: rgba(255, 255, 255, 0.50);
+}
+
+
+/* ==========================================================
+   SIDEBAR TOP BRAND SECTION
+   ========================================================== */
+
+.hr-sidebar-brand {
+    background: var(--header-green) !important;
+
+    border-bottom: 1px solid var(--header-border) !important;
+}
+
+.hr-sidebar-brand a {
+    color: #FFFFFF !important;
+}
+
+.hr-brand-mark {
+    background: #FFFFFF !important;
+
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+
+    color: var(--header-green) !important;
+
+    box-shadow: none !important;
+}
+
+.hr-brand-text strong {
+    color: #FFFFFF !important;
+}
+
+.hr-brand-text span {
+    color: var(--header-text-soft) !important;
+}
+
+
+/* ==========================================================
+   MAIN TOPBAR
+   ========================================================== */
+
+.hr-topbar {
+    background: var(--header-green) !important;
+
+    border-bottom: 1px solid var(--header-border) !important;
+
+    box-shadow: none !important;
+}
+
+
+/* left title area */
+
+.hr-topbar-eyebrow {
+    color: rgba(255, 255, 255, 0.70) !important;
+}
+
+.hr-topbar-title strong {
+    color: #FFFFFF !important;
+}
+
+
+/* ==========================================================
+   TOPBAR USER AREA
+   ========================================================== */
+
+.hr-user-avatar {
+    background: rgba(255, 255, 255, 0.12) !important;
+
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+
+    color: #FFFFFF !important;
+}
+
+.hr-user-details strong {
+    color: #FFFFFF !important;
+}
+
+.hr-user-details span {
+    color: var(--header-text-soft) !important;
+}
+
+
+/* ==========================================================
+   MOBILE MENU BUTTON
+   ========================================================== */
+
+.hr-mobile-menu-btn {
+    background: rgba(255, 255, 255, 0.08) !important;
+
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+
+    color: #FFFFFF !important;
+}
+
+.hr-mobile-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.14) !important;
+
+    border-color: rgba(255, 255, 255, 0.22) !important;
+
+    color: #FFFFFF !important;
+}
+
+
+/* ==========================================================
+   OPTIONAL:
+   make the whole very top row visually continuous
+   ========================================================== */
+
+.hr-sidebar {
+    overflow: hidden;
+}
+
+.hr-sidebar-brand,
+.hr-topbar {
+    min-height: 95px;
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width: 991.98px) {
+
+    .hr-topbar {
+        background: var(--header-green) !important;
+    }
+
+    .hr-sidebar-brand {
+        background: var(--header-green) !important;
+    }
+
 }

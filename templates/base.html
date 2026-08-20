@@ -1,47 +1,388 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <meta
+        http-equiv="X-UA-Compatible"
+        content="IE=edge"
+    >
+
     <title>
         {% block title %}
             HRMS
         {% endblock %}
     </title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="{% block meta_description %}My Django Application{% endblock %}">
-    <meta name="keywords" content="{% block meta_keywords %}django, python{% endblock %}">
-    <meta name="author" content="Your Company">
-    <meta name="robots" content="index, follow">
-    <link rel="icon" href="{% static 'images/favicon.ico' %}">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <meta
+        name="description"
+        content="{% block meta_description %}My Django Application{% endblock %}"
+    >
+
+    <meta
+        name="keywords"
+        content="{% block meta_keywords %}django, python{% endblock %}"
+    >
+
+    <meta
+        name="author"
+        content="Your Company"
+    >
+
+    <meta
+        name="robots"
+        content="index, follow"
+    >
+
+
+    <!-- ========================================= -->
+    <!-- FAVICON -->
+    <!-- ========================================= -->
+
+    <link
+        rel="icon"
+        href="{% static 'images/favicon.ico' %}"
+    >
+
+
+    <!-- ========================================= -->
+    <!-- BOOTSTRAP -->
+    <!-- ========================================= -->
+
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
-        rel="stylesheet">
+        rel="stylesheet"
+    >
+
+
+    <!-- ========================================= -->
+    <!-- BOOTSTRAP ICONS -->
+    <!-- ========================================= -->
+
     <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
-        rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
+        rel="stylesheet"
+    >
+
+
+    <!-- ========================================= -->
+    <!-- GOOGLE FONTS -->
+    <!-- ========================================= -->
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <!-- ========================================= -->
+    <!-- GLOBAL CSS -->
+    <!-- ========================================= -->
+
+    <link
+        rel="stylesheet"
+        href="{% static 'css/style.css' %}"
+    >
+
+
+    <!-- ========================================= -->
+    <!-- PAGE SPECIFIC CSS -->
+    <!-- ========================================= -->
+
     {% block extra_css %}
     {% endblock %}
+
 </head>
-<body class="bg-light">
-{% include 'includes/navbar.html' %}
-{% include 'includes/messages.html' %}
 
-<div class="container">
-    {% block content %}
-    {% endblock %}
-</div>
 
-{% include 'includes/footer.html' %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
-<script src="{% static 'js/main.js' %}"></script>
+
+<body
+    class="{% if user.is_authenticated %}hr-authenticated{% else %}bg-light{% endif %}"
+>
+
+
+<!-- ========================================================= -->
+<!-- AUTHENTICATED USER WRAPPER -->
+<!-- ========================================================= -->
+
+{% if user.is_authenticated %}
+
+
+    <div class="hr-app-shell">
+
+
+        <!-- ========================================= -->
+        <!-- SIDEBAR -->
+        <!-- ========================================= -->
+
+        {% include 'includes/sidebar.html' %}
+
+
+
+        <!-- ========================================= -->
+        <!-- MOBILE SIDEBAR OVERLAY -->
+        <!-- ========================================= -->
+
+        <div
+            class="hr-sidebar-overlay"
+            id="sidebarOverlay"
+        ></div>
+
+
+
+        <!-- ========================================= -->
+        <!-- MAIN APPLICATION AREA -->
+        <!-- ========================================= -->
+
+        <div class="hr-main">
+
+
+            <!-- ========================================= -->
+            <!-- TOPBAR -->
+            <!-- ========================================= -->
+
+            <header class="hr-topbar">
+
+
+                <!-- LEFT SIDE -->
+
+                <div class="hr-topbar-left">
+
+
+                    <!-- Mobile Sidebar Button -->
+
+                    <button
+                        type="button"
+                        class="hr-mobile-menu-btn"
+                        id="sidebarToggle"
+                        aria-label="Open sidebar"
+                    >
+
+                        <i class="bi bi-list"></i>
+
+                    </button>
+
+
+
+                    <!-- Workspace Title -->
+
+                    <div class="hr-topbar-title">
+
+                        <span class="hr-topbar-eyebrow">
+                            SkySource
+                        </span>
+
+                        <strong>
+                            HRMS Workspace
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- RIGHT SIDE -->
+
+                <div class="hr-topbar-user">
+
+
+                    <!-- Avatar -->
+
+                    <div class="hr-user-avatar">
+
+                        {{ user.first_name|default:user.username|slice:":1"|upper }}
+
+                    </div>
+
+
+
+                    <!-- User Details -->
+
+                    <div class="hr-user-details">
+
+                        <strong>
+                            {{ user.first_name|default:user.username }}
+                        </strong>
+
+                        <span>
+                            Signed in
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+
+            </header>
+
+
+
+            <!-- ========================================= -->
+            <!-- MESSAGES -->
+            <!-- ========================================= -->
+
+            {% include 'includes/messages.html' %}
+
+
+
+            <!-- ========================================= -->
+            <!-- AUTHENTICATED CONTENT WRAPPER START -->
+            <!-- ========================================= -->
+
+            <main class="hr-content">
+
+                <div class="container">
+
+
+{% else %}
+
+
+<!-- ========================================================= -->
+<!-- PUBLIC / LOGGED OUT WRAPPER -->
+<!-- ========================================================= -->
+
+
+    <!-- ========================================= -->
+    <!-- PUBLIC NAVBAR -->
+    <!-- ========================================= -->
+
+    {% include 'includes/navbar.html' %}
+
+
+
+    <!-- ========================================= -->
+    <!-- MESSAGES -->
+    <!-- ========================================= -->
+
+    {% include 'includes/messages.html' %}
+
+
+
+    <!-- ========================================= -->
+    <!-- PUBLIC CONTENT WRAPPER START -->
+    <!-- ========================================= -->
+
+    <div class="container">
+
+
+{% endif %}
+
+
+
+<!-- ========================================================= -->
+<!-- MAIN PAGE CONTENT -->
+<!-- IMPORTANT: ONLY ONE CONTENT BLOCK EXISTS -->
+<!-- ========================================================= -->
+
+{% block content %}
+{% endblock %}
+
+
+
+<!-- ========================================================= -->
+<!-- CLOSE CORRECT WRAPPER -->
+<!-- ========================================================= -->
+
+{% if user.is_authenticated %}
+
+
+                </div>
+
+            </main>
+
+
+
+            <!-- ========================================= -->
+            <!-- FOOTER -->
+            <!-- ========================================= -->
+
+            {% include 'includes/footer.html' %}
+
+
+        </div>
+
+
+    </div>
+
+
+{% else %}
+
+
+    </div>
+
+
+
+    <!-- ========================================= -->
+    <!-- PUBLIC FOOTER -->
+    <!-- ========================================= -->
+
+    {% include 'includes/footer.html' %}
+
+
+{% endif %}
+
+
+
+<!-- ========================================================= -->
+<!-- JAVASCRIPT -->
+<!-- ========================================================= -->
+
+
+<!-- Bootstrap -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+></script>
+
+
+
+<!-- Existing Project JS -->
+
+<script
+    src="{% static 'js/main.js' %}"
+></script>
+
+
+
+<!-- Sidebar JS -->
+
+<script
+    src="{% static 'js/sidebar.js' %}"
+></script>
+
+
+
+<!-- ========================================= -->
+<!-- PAGE SPECIFIC JS -->
+<!-- ========================================= -->
+
 {% block extra_js %}
 {% endblock %}
+
+
 </body>
+
 </html>

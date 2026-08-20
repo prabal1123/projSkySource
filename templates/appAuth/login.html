@@ -1,38 +1,465 @@
-{% extends "base.html" %}
 {% load static %}
 
-{% block title %}Login{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/auth.css' %}">
-{% endblock %}
+<head>
 
-{% block content %}
-<div class="sky-auth-wrap">
-    <div class="sky-auth-card">
-        <span class="sky-auth-eyebrow">MyProject / Sign In</span>
-        <h1>Welcome Back</h1>
+    <meta charset="UTF-8">
 
-        {% if form.non_field_errors %}
-        <div class="sky-auth-error-banner">
-            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
-        </div>
-        {% endif %}
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-        <form method="post" novalidate>
-            {% csrf_token %}
-            {% for field in form %}
-            <div class="sky-auth-field">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}
-                    <div class="sky-form-error">{{ field.errors|striptags }}</div>
-                {% endif %}
+    <title>Login | SkySource</title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{% static 'css/login.css' %}"
+    >
+
+</head>
+
+
+<body>
+
+<div class="sky-login-page">
+
+
+    <!-- =====================================================
+         LEFT BRAND PANEL
+    ====================================================== -->
+
+    <section class="sky-login-brand-panel">
+
+
+        <!-- Decorative shapes -->
+
+        <div class="login-decoration decoration-one"></div>
+        <div class="login-decoration decoration-two"></div>
+
+
+        <div class="sky-login-brand-content">
+
+
+            <!-- Logo -->
+
+            <a
+                href="/app/"
+                class="sky-login-logo"
+            >
+
+                <span class="sky-login-logo-mark">
+
+                    <span></span>
+                    <span></span>
+                    <span></span>
+
+                </span>
+
+                <span>
+                    SkySource
+                </span>
+
+            </a>
+
+
+
+            <!-- Main Copy -->
+
+            <div class="sky-login-hero">
+
+                <span class="sky-login-eyebrow">
+                    HUMAN RESOURCE MANAGEMENT
+                </span>
+
+                <h1>
+                    Your workforce.
+                    <br>
+                    <strong>
+                        One connected
+                        <br>
+                        workspace.
+                    </strong>
+                </h1>
+
+                <p>
+                    Manage employees, attendance,
+                    leave, holidays and HR workflows
+                    securely from one centralized platform.
+                </p>
+
             </div>
-            {% endfor %}
-            <button type="submit" class="sky-auth-submit">Log In</button>
-        </form>
 
-    </div>
+
+
+            <!-- Benefits -->
+
+            <div class="sky-login-benefits">
+
+                <div>
+
+                    <span class="benefit-check">
+                        ✓
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Connected HR workflows
+                        </strong>
+
+                        <span>
+                            Employee operations in one system
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div>
+
+                    <span class="benefit-check">
+                        ✓
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Role-based access
+                        </strong>
+
+                        <span>
+                            Users only access permitted features
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div>
+
+                    <span class="benefit-check">
+                        ✓
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Built for everyday HR
+                        </strong>
+
+                        <span>
+                            Attendance, leave, holidays and more
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Footer -->
+
+            <div class="sky-login-panel-footer">
+
+                <span>
+                    SkySource HRMS
+                </span>
+
+                <span>
+                    © 2026
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         LOGIN FORM
+    ====================================================== -->
+
+    <section class="sky-login-form-section">
+
+
+        <!-- Top Link -->
+
+        <div class="sky-login-top">
+
+            <a
+                href="/app/"
+                class="back-home-link"
+            >
+                ← Back to website
+            </a>
+
+        </div>
+
+
+
+        <div class="sky-login-form-wrap">
+
+
+            <!-- Mobile Brand -->
+
+            <a
+                href="/app/"
+                class="sky-login-mobile-logo"
+            >
+
+                <span class="sky-login-logo-mark">
+
+                    <span></span>
+                    <span></span>
+                    <span></span>
+
+                </span>
+
+                SkySource
+
+            </a>
+
+
+
+            <!-- Heading -->
+
+            <div class="sky-login-heading">
+
+                <span class="sky-form-eyebrow">
+                    SECURE SIGN IN
+                </span>
+
+                <h2>
+                    Welcome back.
+                </h2>
+
+                <p>
+                    Sign in to continue to your
+                    SkySource workspace.
+                </p>
+
+            </div>
+
+
+
+            <!-- Errors -->
+
+            {% if form.non_field_errors %}
+
+                <div class="sky-auth-error-banner">
+
+                    <span class="error-icon">
+                        !
+                    </span>
+
+                    <div>
+
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            {% endif %}
+
+
+
+            <!-- Form -->
+
+            <form
+                method="post"
+                novalidate
+                class="sky-login-form"
+            >
+
+                {% csrf_token %}
+
+
+                {% for field in form %}
+
+                    <div class="sky-auth-field">
+
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                        </label>
+
+
+                        <div
+                            class="
+                                sky-input-wrap
+                                {% if field.name == 'password' %}
+                                    password-input-wrap
+                                {% endif %}
+                            "
+                        >
+
+                            {{ field }}
+
+
+                            {% if field.name == "password" %}
+
+                                <button
+                                    type="button"
+                                    class="password-toggle"
+                                    aria-label="Show password"
+                                >
+                                    Show
+                                </button>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        {% if field.errors %}
+
+                            <div class="sky-form-error">
+                                {{ field.errors|striptags }}
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
+
+
+                <button
+                    type="submit"
+                    class="sky-auth-submit"
+                >
+
+                    <span>
+                        Sign In
+                    </span>
+
+                    <span class="submit-arrow">
+                        →
+                    </span>
+
+                </button>
+
+            </form>
+
+
+
+            <!-- Security Note -->
+
+            <div class="sky-login-security">
+
+                <span class="security-icon">
+                    ◇
+                </span>
+
+                <span>
+                    Secure access powered by
+                    SkySource role-based permissions.
+                </span>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
 </div>
-{% endblock %}
+
+
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const toggle =
+            document.querySelector(
+                ".password-toggle"
+            );
+
+        if (!toggle) {
+            return;
+        }
+
+        const wrapper =
+            toggle.closest(
+                ".password-input-wrap"
+            );
+
+        const input =
+            wrapper.querySelector("input");
+
+        toggle.addEventListener(
+            "click",
+            function () {
+
+                if (
+                    input.type === "password"
+                ) {
+
+                    input.type = "text";
+
+                    toggle.textContent =
+                        "Hide";
+
+                    toggle.setAttribute(
+                        "aria-label",
+                        "Hide password"
+                    );
+
+                } else {
+
+                    input.type =
+                        "password";
+
+                    toggle.textContent =
+                        "Show";
+
+                    toggle.setAttribute(
+                        "aria-label",
+                        "Show password"
+                    );
+
+                }
+
+            }
+        );
+
+    }
+);
+
+</script>
+
+
+</body>
+
+</html>

@@ -1,1 +1,814 @@
-{% comment %} Use OffCanvas from bootstrap 5.3 {% endcomment %}
+<aside
+    class="hr-sidebar"
+    id="hrSidebar"
+>
+
+    <!-- ========================================= -->
+    <!-- BRAND -->
+    <!-- ========================================= -->
+
+    <div class="hr-sidebar-brand">
+
+        <a href="{% url 'dashboard' %}">
+
+            <div class="hr-brand-mark">
+                S
+            </div>
+
+            <div class="hr-brand-text">
+
+                <strong>
+                    SkySource
+                </strong>
+
+                <span>
+                    HRMS
+                </span>
+
+            </div>
+
+        </a>
+
+    </div>
+
+
+    <!-- ========================================= -->
+    <!-- NAVIGATION -->
+    <!-- ========================================= -->
+
+    <nav class="hr-sidebar-nav">
+
+
+        <!-- ===================================== -->
+        <!-- GENERAL -->
+        <!-- ===================================== -->
+
+        <div class="hr-sidebar-section">
+
+            <div class="hr-sidebar-section-title">
+                General
+            </div>
+
+
+            <a
+                href="{% url 'dashboard' %}"
+                class="hr-sidebar-link
+                {% if request.resolver_match.url_name == 'dashboard' %}
+                    active
+                {% endif %}"
+            >
+
+                <i class="bi bi-grid-1x2"></i>
+
+                <span>
+                    Dashboard
+                </span>
+
+            </a>
+
+        </div>
+
+
+
+        <!-- ===================================== -->
+        <!-- EMPLOYEES -->
+        <!-- ===================================== -->
+
+        {% if can_manage_employees %}
+
+            <div class="hr-sidebar-section">
+
+                <div class="hr-sidebar-section-title">
+                    People
+                </div>
+
+
+                <button
+                    class="hr-sidebar-link hr-sidebar-toggle
+                    {% if request.resolver_match.url_name == 'register' or request.resolver_match.url_name == 'employeeList' %}
+                        active-parent
+                    {% endif %}"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#employeeMenu"
+                    aria-expanded="false"
+                >
+
+                    <span class="hr-sidebar-link-main">
+
+                        <i class="bi bi-people"></i>
+
+                        <span>
+                            Employees
+                        </span>
+
+                    </span>
+
+                    <i class="bi bi-chevron-down hr-sidebar-chevron"></i>
+
+                </button>
+
+
+                <div
+                    class="collapse hr-sidebar-submenu
+                    {% if request.resolver_match.url_name == 'register' or request.resolver_match.url_name == 'employeeList' %}
+                        show
+                    {% endif %}"
+                    id="employeeMenu"
+                >
+
+                    <div class="hr-sidebar-subheading">
+                        Employee Management
+                    </div>
+
+
+                    <a
+                        href="{% url 'register' %}"
+                        class="hr-sidebar-sub-link
+                        {% if request.resolver_match.url_name == 'register' %}
+                            active
+                        {% endif %}"
+                    >
+                        Add Employee
+                    </a>
+
+
+                    <a
+                        href="{% url 'employeeList' %}"
+                        class="hr-sidebar-sub-link
+                        {% if request.resolver_match.url_name == 'employeeList' %}
+                            active
+                        {% endif %}"
+                    >
+                        View Employees
+                    </a>
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+
+        <!-- ===================================== -->
+        <!-- ATTENDANCE -->
+        <!-- ===================================== -->
+
+        {% if has_employee_profile or can_review_attendance_exception %}
+
+            <div class="hr-sidebar-section">
+
+                <div class="hr-sidebar-section-title">
+                    Workforce
+                </div>
+
+
+                <button
+                    class="hr-sidebar-link hr-sidebar-toggle
+                    {% if request.resolver_match.url_name == 'attendanceCalendarSelf' or request.resolver_match.url_name == 'pendingAttendanceExceptions' %}
+                        active-parent
+                    {% endif %}"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#attendanceMenu"
+                    aria-expanded="false"
+                >
+
+                    <span class="hr-sidebar-link-main">
+
+                        <i class="bi bi-clock-history"></i>
+
+                        <span>
+                            Attendance
+                        </span>
+
+                    </span>
+
+                    <i class="bi bi-chevron-down hr-sidebar-chevron"></i>
+
+                </button>
+
+
+                <div
+                    class="collapse hr-sidebar-submenu
+                    {% if request.resolver_match.url_name == 'attendanceCalendarSelf' or request.resolver_match.url_name == 'pendingAttendanceExceptions' %}
+                        show
+                    {% endif %}"
+                    id="attendanceMenu"
+                >
+
+
+                    {% if has_employee_profile %}
+
+                        <div class="hr-sidebar-subheading">
+                            My Attendance
+                        </div>
+
+
+                        <a
+                            href="{% url 'attendanceCalendarSelf' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'attendanceCalendarSelf' %}
+                                active
+                            {% endif %}"
+                        >
+                            Attendance Calendar
+                        </a>
+
+                    {% endif %}
+
+
+                    {% if can_review_attendance_exception %}
+
+                        <div class="hr-sidebar-subheading">
+                            Attendance Review
+                        </div>
+
+
+                        <a
+                            href="{% url 'pendingAttendanceExceptions' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'pendingAttendanceExceptions' %}
+                                active
+                            {% endif %}"
+                        >
+                            Attendance Exceptions
+                        </a>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+
+        <!-- ===================================== -->
+        <!-- LEAVES -->
+        <!-- ===================================== -->
+
+        {% if has_employee_profile or can_review_leave or can_manage_leave_balance %}
+
+            <div class="hr-sidebar-section">
+
+                <button
+                    class="hr-sidebar-link hr-sidebar-toggle
+                    {% if request.resolver_match.url_name == 'applyLeave' or request.resolver_match.url_name == 'myLeaveRequests' or request.resolver_match.url_name == 'pendingLeaveRequests' or request.resolver_match.url_name == 'allLeaveRequests' or request.resolver_match.url_name == 'leaveBalanceList' %}
+                        active-parent
+                    {% endif %}"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#leaveMenu"
+                    aria-expanded="false"
+                >
+
+                    <span class="hr-sidebar-link-main">
+
+                        <i class="bi bi-calendar2-check"></i>
+
+                        <span>
+                            Leaves
+                        </span>
+
+                    </span>
+
+                    <i class="bi bi-chevron-down hr-sidebar-chevron"></i>
+
+                </button>
+
+
+                <div
+                    class="collapse hr-sidebar-submenu
+                    {% if request.resolver_match.url_name == 'applyLeave' or request.resolver_match.url_name == 'myLeaveRequests' or request.resolver_match.url_name == 'pendingLeaveRequests' or request.resolver_match.url_name == 'allLeaveRequests' or request.resolver_match.url_name == 'leaveBalanceList' %}
+                        show
+                    {% endif %}"
+                    id="leaveMenu"
+                >
+
+
+                    {% if has_employee_profile %}
+
+                        <div class="hr-sidebar-subheading">
+                            My Leaves
+                        </div>
+
+
+                        <a
+                            href="{% url 'applyLeave' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'applyLeave' %}
+                                active
+                            {% endif %}"
+                        >
+                            Apply Leave
+                        </a>
+
+
+                        <a
+                            href="{% url 'myLeaveRequests' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'myLeaveRequests' %}
+                                active
+                            {% endif %}"
+                        >
+                            My Leave Requests
+                        </a>
+
+                    {% endif %}
+
+
+
+                    {% if can_review_leave %}
+
+                        <div class="hr-sidebar-subheading">
+                            Leave Review
+                        </div>
+
+
+                        <a
+                            href="{% url 'pendingLeaveRequests' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'pendingLeaveRequests' %}
+                                active
+                            {% endif %}"
+                        >
+                            Pending Leave Requests
+                        </a>
+
+
+                        <a
+                            href="{% url 'allLeaveRequests' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'allLeaveRequests' %}
+                                active
+                            {% endif %}"
+                        >
+                            All Leave Requests
+                        </a>
+
+                    {% endif %}
+
+
+
+                    {% if can_manage_leave_balance %}
+
+                        <div class="hr-sidebar-subheading">
+                            Leave Administration
+                        </div>
+
+
+                        <a
+                            href="{% url 'leaveBalanceList' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'leaveBalanceList' %}
+                                active
+                            {% endif %}"
+                        >
+                            Leave Balances
+                        </a>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+
+        <!-- ===================================== -->
+        <!-- HOLIDAYS -->
+        <!-- ===================================== -->
+
+        {% if has_employee_profile or can_review_leave or can_manage_attendance %}
+
+            <div class="hr-sidebar-section">
+
+                <button
+                    class="hr-sidebar-link hr-sidebar-toggle
+                    {% if request.resolver_match.url_name == 'optionalHolidayApply' or request.resolver_match.url_name == 'pendingOptionalHolidayRequests' or request.resolver_match.url_name == 'holidayList' or request.resolver_match.url_name == 'holidayCalendar' or request.resolver_match.url_name == 'holidayYear' or request.resolver_match.url_name == 'holidayBulkUpload' or request.resolver_match.url_name == 'workScheduleList' %}
+                        active-parent
+                    {% endif %}"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#holidayMenu"
+                    aria-expanded="false"
+                >
+
+                    <span class="hr-sidebar-link-main">
+
+                        <i class="bi bi-calendar-event"></i>
+
+                        <span>
+                            Holidays
+                        </span>
+
+                    </span>
+
+                    <i class="bi bi-chevron-down hr-sidebar-chevron"></i>
+
+                </button>
+
+
+                <div
+                    class="collapse hr-sidebar-submenu
+                    {% if request.resolver_match.url_name == 'optionalHolidayApply' or request.resolver_match.url_name == 'pendingOptionalHolidayRequests' or request.resolver_match.url_name == 'holidayList' or request.resolver_match.url_name == 'holidayCalendar' or request.resolver_match.url_name == 'holidayYear' or request.resolver_match.url_name == 'holidayBulkUpload' or request.resolver_match.url_name == 'workScheduleList' %}
+                        show
+                    {% endif %}"
+                    id="holidayMenu"
+                >
+
+
+                    {% if has_employee_profile %}
+
+                        <div class="hr-sidebar-subheading">
+                            My Holidays
+                        </div>
+
+
+                        <a
+                            href="{% url 'optionalHolidayApply' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'optionalHolidayApply' %}
+                                active
+                            {% endif %}"
+                        >
+                            Optional Holidays
+                        </a>
+
+                    {% endif %}
+
+
+
+                    {% if can_review_leave %}
+
+                        <div class="hr-sidebar-subheading">
+                            Holiday Requests
+                        </div>
+
+
+                        <a
+                            href="{% url 'pendingOptionalHolidayRequests' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'pendingOptionalHolidayRequests' %}
+                                active
+                            {% endif %}"
+                        >
+                            Pending Optional Requests
+                        </a>
+
+                    {% endif %}
+
+
+
+                    {% if can_manage_attendance %}
+
+                        <div class="hr-sidebar-subheading">
+                            Holiday Management
+                        </div>
+
+
+                        <a
+                            href="{% url 'holidayList' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'holidayList' %}
+                                active
+                            {% endif %}"
+                        >
+                            Holiday List
+                        </a>
+
+
+                        <a
+                            href="{% url 'holidayCalendar' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'holidayCalendar' %}
+                                active
+                            {% endif %}"
+                        >
+                            Monthly Calendar
+                        </a>
+
+
+                        <a
+                            href="{% url 'holidayYear' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'holidayYear' %}
+                                active
+                            {% endif %}"
+                        >
+                            Year Calendar
+                        </a>
+
+
+                        <a
+                            href="{% url 'holidayBulkUpload' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'holidayBulkUpload' %}
+                                active
+                            {% endif %}"
+                        >
+                            Bulk Holiday Upload
+                        </a>
+
+
+                        <div class="hr-sidebar-subheading">
+                            Work Schedule
+                        </div>
+
+
+                        <a
+                            href="{% url 'workScheduleList' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'workScheduleList' %}
+                                active
+                            {% endif %}"
+                        >
+                            Work Schedules
+                        </a>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+
+        <!-- ===================================== -->
+        <!-- EXIT & CLEARANCE -->
+        <!-- ===================================== -->
+
+        {% if has_employee_profile or can_review_manager_noc or can_review_finance_noc or can_view_all_clearance_requests or can_initiate_employee_exit or can_finalize_employee_exit %}
+
+            <div class="hr-sidebar-section">
+
+                <div class="hr-sidebar-section-title">
+                    Employee Lifecycle
+                </div>
+
+
+                <button
+                    class="hr-sidebar-link hr-sidebar-toggle"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#exitMenu"
+                    aria-expanded="false"
+                >
+
+                    <span class="hr-sidebar-link-main">
+
+                        <i class="bi bi-box-arrow-right"></i>
+
+                        <span>
+                            Exit &amp; Clearance
+                        </span>
+
+                    </span>
+
+                    <i class="bi bi-chevron-down hr-sidebar-chevron"></i>
+
+                </button>
+
+
+                <div
+                    class="collapse hr-sidebar-submenu"
+                    id="exitMenu"
+                >
+
+
+                    {% if has_employee_profile %}
+
+                        <div class="hr-sidebar-subheading">
+                            My Exit
+                        </div>
+
+
+                        <a
+                            href="{% url 'submitResignation' %}"
+                            class="hr-sidebar-sub-link"
+                        >
+                            Submit Resignation
+                        </a>
+
+
+                        <a
+                            href="{% url 'myResignations' %}"
+                            class="hr-sidebar-sub-link"
+                        >
+                            My Resignations
+                        </a>
+
+                    {% endif %}
+
+
+
+                    {% if can_review_manager_noc %}
+
+                        <div class="hr-sidebar-subheading">
+                            Manager
+                        </div>
+
+
+                        <a
+                            href="{% url 'managerClearanceQueue' %}"
+                            class="hr-sidebar-sub-link"
+                        >
+                            Pending Manager NOCs
+                        </a>
+
+                    {% endif %}
+
+
+
+                    {% if can_review_finance_noc %}
+
+                        <div class="hr-sidebar-subheading">
+                            Finance
+                        </div>
+
+
+                        <a
+                            href="{% url 'financeClearanceQueue' %}"
+                            class="hr-sidebar-sub-link"
+                        >
+                            Pending Finance NOCs
+                        </a>
+
+                    {% endif %}
+
+
+
+                    {% if can_view_all_clearance_requests or can_initiate_employee_exit or can_finalize_employee_exit %}
+
+                        <div class="hr-sidebar-subheading">
+                            HR Administration
+                        </div>
+
+
+                        {% if can_view_all_clearance_requests %}
+
+                            <a
+                                href="{% url 'pendingResignations' %}"
+                                class="hr-sidebar-sub-link"
+                            >
+                                Pending Resignations
+                            </a>
+
+
+                            <a
+                                href="{% url 'allExitRequests' %}"
+                                class="hr-sidebar-sub-link"
+                            >
+                                All Exit Requests
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_initiate_employee_exit %}
+
+                            <a
+                                href="{% url 'initiateTermination' %}"
+                                class="hr-sidebar-sub-link"
+                            >
+                                Initiate Termination
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_finalize_employee_exit %}
+
+                            <a
+                                href="{% url 'readyForFinalization' %}"
+                                class="hr-sidebar-sub-link"
+                            >
+                                Ready for Finalization
+                            </a>
+
+                        {% endif %}
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+
+        <!-- ===================================== -->
+        <!-- ACCOUNT -->
+        <!-- ===================================== -->
+
+        <div class="hr-sidebar-section">
+
+            <div class="hr-sidebar-section-title">
+                Account
+            </div>
+
+
+            {% if has_employee_profile %}
+
+                <a
+                    href="{% url 'myProfile' %}"
+                    class="hr-sidebar-link
+                    {% if request.resolver_match.url_name == 'myProfile' %}
+                        active
+                    {% endif %}"
+                >
+
+                    <i class="bi bi-person"></i>
+
+                    <span>
+                        My Profile
+                    </span>
+
+                </a>
+
+            {% endif %}
+
+
+            <a
+                href="{% url 'password_change' %}"
+                class="hr-sidebar-link
+                {% if request.resolver_match.url_name == 'password_change' %}
+                    active
+                {% endif %}"
+            >
+
+                <i class="bi bi-shield-lock"></i>
+
+                <span>
+                    Change Password
+                </span>
+
+            </a>
+
+        </div>
+
+    </nav>
+
+
+
+    <!-- ========================================= -->
+    <!-- USER / LOGOUT -->
+    <!-- ========================================= -->
+
+    <div class="hr-sidebar-footer">
+
+        <div class="hr-sidebar-user">
+
+            <div class="hr-sidebar-avatar">
+
+                {{ user.first_name|default:user.username|slice:":1"|upper }}
+
+            </div>
+
+
+            <div class="hr-sidebar-user-info">
+
+                <strong>
+                    {{ user.first_name|default:user.username }}
+                </strong>
+
+                <span>
+                    {{ user.username }}
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <form
+            method="post"
+            action="{% url 'logout' %}"
+        >
+
+            {% csrf_token %}
+
+            <button
+                type="submit"
+                class="hr-logout-btn"
+            >
+
+                <i class="bi bi-box-arrow-left"></i>
+
+                Logout
+
+            </button>
+
+        </form>
+
+    </div>
+
+</aside>

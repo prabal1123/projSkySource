@@ -1,0 +1,1134 @@
+/* =========================================================
+   SKY SOURCE LOGIN
+========================================================= */
+
+:root {
+    --login-green: #063b2d;
+    --login-green-dark: #042f24;
+
+    --login-coral: #d16d4e;
+    --login-coral-dark: #bd5f43;
+
+    --login-text: #07382c;
+    --login-muted: #82938c;
+
+    --login-border: #dce3df;
+
+    --login-bg: #f7f8f5;
+    --login-white: #ffffff;
+}
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+
+    margin: 0;
+}
+
+
+body {
+    font-family:
+        "Inter",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    background:
+        var(--login-bg);
+
+    color:
+        var(--login-text);
+
+    -webkit-font-smoothing:
+        antialiased;
+}
+
+
+a {
+    text-decoration: none;
+}
+
+
+/* =========================================================
+   MAIN LAYOUT
+========================================================= */
+
+.sky-login-page {
+    min-height: 100vh;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(420px, 0.9fr)
+        minmax(500px, 1.1fr);
+}
+
+
+/* =========================================================
+   LEFT PANEL
+========================================================= */
+
+.sky-login-brand-panel {
+    min-height: 100vh;
+
+    position: relative;
+
+    overflow: hidden;
+
+    background:
+        var(--login-green);
+
+    color:
+        #ffffff;
+}
+
+
+.sky-login-brand-content {
+    width: 100%;
+    height: 100%;
+
+    min-height: 100vh;
+
+    position: relative;
+
+    z-index: 2;
+
+    padding:
+        45px
+        clamp(40px, 5vw, 78px);
+
+    display: flex;
+
+    flex-direction: column;
+}
+
+
+/* =========================================================
+   LOGO
+========================================================= */
+
+.sky-login-logo,
+.sky-login-mobile-logo {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    color:
+        #ffffff;
+
+    font-family:
+        "Space Grotesk",
+        sans-serif;
+
+    font-size: 19px;
+
+    font-weight: 700;
+}
+
+
+.sky-login-logo {
+    align-self: flex-start;
+}
+
+
+.sky-login-logo-mark {
+    width: 38px;
+    height: 38px;
+
+    border-radius: 4px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 2px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.10
+        );
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            0.13
+        );
+}
+
+
+.sky-login-logo-mark span {
+    width: 16px;
+    height: 5px;
+
+    border:
+        1.5px solid
+        #ffffff;
+
+    clip-path:
+        polygon(
+            50% 0,
+            100% 30%,
+            50% 100%,
+            0 30%
+        );
+}
+
+
+/* =========================================================
+   LEFT HERO
+========================================================= */
+
+.sky-login-hero {
+    max-width: 580px;
+
+    margin-top: auto;
+}
+
+
+.sky-login-eyebrow,
+.sky-form-eyebrow {
+    display: block;
+
+    margin-bottom: 20px;
+
+    color:
+        #dc8062;
+
+    font-size: 10px;
+
+    font-weight: 750;
+
+    letter-spacing: 2.3px;
+}
+
+
+.sky-login-hero h1 {
+    margin: 0;
+
+    font-family:
+        "Space Grotesk",
+        sans-serif;
+
+    font-size:
+        clamp(
+            45px,
+            4.5vw,
+            66px
+        );
+
+    line-height: 1.02;
+
+    letter-spacing: -3px;
+
+    font-weight: 400;
+}
+
+
+.sky-login-hero h1 strong {
+    font-weight: 700;
+}
+
+
+.sky-login-hero p {
+    max-width: 520px;
+
+    margin:
+        25px 0 0;
+
+    color:
+        rgba(
+            255,
+            255,
+            255,
+            0.58
+        );
+
+    font-size: 15px;
+
+    line-height: 1.7;
+}
+
+
+/* =========================================================
+   BENEFITS
+========================================================= */
+
+.sky-login-benefits {
+    max-width: 530px;
+
+    margin-top: 43px;
+
+    display: grid;
+
+    gap: 13px;
+}
+
+
+.sky-login-benefits > div {
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+}
+
+
+.benefit-check {
+    width: 31px;
+    height: 31px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    color:
+        var(--login-coral);
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.08
+        );
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+.sky-login-benefits strong,
+.sky-login-benefits
+div div span {
+    display: block;
+}
+
+
+.sky-login-benefits strong {
+    font-size: 11px;
+
+    font-weight: 600;
+}
+
+
+.sky-login-benefits
+div div span {
+    margin-top: 3px;
+
+    color:
+        rgba(
+            255,
+            255,
+            255,
+            0.42
+        );
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   LEFT FOOTER
+========================================================= */
+
+.sky-login-panel-footer {
+    margin-top: auto;
+
+    padding-top: 40px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    color:
+        rgba(
+            255,
+            255,
+            255,
+            0.30
+        );
+
+    font-size: 9px;
+
+    letter-spacing: 0.5px;
+}
+
+
+/* =========================================================
+   DECORATION
+========================================================= */
+
+.login-decoration {
+    position: absolute;
+
+    border-radius: 50%;
+
+    pointer-events: none;
+}
+
+
+.decoration-one {
+    width: 480px;
+    height: 480px;
+
+    right: -230px;
+    top: -170px;
+
+    border:
+        75px solid
+        rgba(
+            255,
+            255,
+            255,
+            0.025
+        );
+}
+
+
+.decoration-two {
+    width: 300px;
+    height: 300px;
+
+    left: -130px;
+    bottom: -130px;
+
+    border:
+        55px solid
+        rgba(
+            209,
+            109,
+            78,
+            0.055
+        );
+}
+
+
+/* =========================================================
+   FORM SIDE
+========================================================= */
+
+.sky-login-form-section {
+    min-height: 100vh;
+
+    padding: 35px 55px 55px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    background:
+        #ffffff;
+}
+
+
+.sky-login-top {
+    width: 100%;
+
+    display: flex;
+
+    justify-content: flex-end;
+}
+
+
+.back-home-link {
+    color:
+        #7e9088;
+
+    font-size: 11px;
+
+    font-weight: 500;
+
+    transition:
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.back-home-link:hover {
+    color:
+        var(--login-coral);
+
+    transform:
+        translateX(-3px);
+}
+
+
+/* =========================================================
+   FORM WRAPPER
+========================================================= */
+
+.sky-login-form-wrap {
+    width: 100%;
+
+    max-width: 440px;
+
+    margin: auto;
+}
+
+
+.sky-login-mobile-logo {
+    display: none;
+
+    margin-bottom: 42px;
+
+    color:
+        var(--login-green);
+}
+
+
+.sky-login-mobile-logo
+.sky-login-logo-mark {
+    background:
+        var(--login-green);
+
+    border: 0;
+}
+
+
+/* =========================================================
+   HEADING
+========================================================= */
+
+.sky-login-heading {
+    margin-bottom: 36px;
+}
+
+
+.sky-form-eyebrow {
+    margin-bottom: 12px;
+}
+
+
+.sky-login-heading h2 {
+    margin: 0;
+
+    font-family:
+        "Space Grotesk",
+        sans-serif;
+
+    color:
+        var(--login-green);
+
+    font-size:
+        clamp(
+            36px,
+            4vw,
+            46px
+        );
+
+    line-height: 1.05;
+
+    letter-spacing: -2px;
+}
+
+
+.sky-login-heading p {
+    margin:
+        13px 0 0;
+
+    max-width: 370px;
+
+    color:
+        var(--login-muted);
+
+    font-size: 13px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.sky-login-form {
+    display: grid;
+
+    gap: 20px;
+}
+
+
+.sky-auth-field {
+    display: grid;
+
+    gap: 8px;
+}
+
+
+.sky-auth-field label {
+    color:
+        #435e54;
+
+    font-size: 10px;
+
+    font-weight: 650;
+}
+
+
+.sky-input-wrap {
+    position: relative;
+}
+
+
+.sky-auth-field input {
+    width: 100%;
+    height: 50px;
+
+    padding:
+        0 15px;
+
+    border:
+        1px solid
+        var(--login-border);
+
+    border-radius: 4px;
+
+    outline: none;
+
+    background:
+        #fbfcfa;
+
+    color:
+        var(--login-green);
+
+    font-family:
+        inherit;
+
+    font-size: 13px;
+
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.password-input-wrap input {
+    padding-right: 70px;
+}
+
+
+.sky-auth-field input:hover {
+    border-color:
+        #bdcac4;
+}
+
+
+.sky-auth-field input:focus {
+    background:
+        #ffffff;
+
+    border-color:
+        var(--login-green);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(
+            6,
+            59,
+            45,
+            0.06
+        );
+}
+
+
+/* Browser autofill */
+
+.sky-auth-field input:-webkit-autofill,
+.sky-auth-field input:-webkit-autofill:hover,
+.sky-auth-field input:-webkit-autofill:focus {
+    -webkit-text-fill-color:
+        var(--login-green);
+
+    -webkit-box-shadow:
+        0 0 0 1000px
+        #fbfcfa inset;
+}
+
+
+/* =========================================================
+   PASSWORD TOGGLE
+========================================================= */
+
+.password-toggle {
+    position: absolute;
+
+    right: 12px;
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+
+    padding: 4px 6px;
+
+    border: 0;
+
+    background:
+        transparent;
+
+    color:
+        var(--login-coral);
+
+    font-family:
+        inherit;
+
+    font-size: 9px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   SUBMIT
+========================================================= */
+
+.sky-auth-submit {
+    width: 100%;
+    height: 52px;
+
+    margin-top: 6px;
+
+    padding:
+        0 20px;
+
+    border: 0;
+
+    border-radius: 28px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    background:
+        var(--login-coral);
+
+    color:
+        #ffffff;
+
+    font-family:
+        inherit;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 10px 25px
+        rgba(
+            209,
+            109,
+            78,
+            0.18
+        );
+
+    transition:
+        transform 0.22s ease,
+        background 0.22s ease,
+        box-shadow 0.22s ease;
+}
+
+
+.sky-auth-submit:hover {
+    transform:
+        translateY(-2px);
+
+    background:
+        var(--login-coral-dark);
+
+    box-shadow:
+        0 14px 30px
+        rgba(
+            209,
+            109,
+            78,
+            0.22
+        );
+}
+
+
+.sky-auth-submit:active {
+    transform:
+        scale(0.985);
+}
+
+
+.submit-arrow {
+    font-size: 16px;
+
+    transition:
+        transform 0.2s ease;
+}
+
+
+.sky-auth-submit:hover
+.submit-arrow {
+    transform:
+        translateX(4px);
+}
+
+
+/* =========================================================
+   ERRORS
+========================================================= */
+
+.sky-auth-error-banner {
+    margin-bottom: 25px;
+
+    padding: 13px 15px;
+
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 11px;
+
+    border:
+        1px solid
+        #f0cabe;
+
+    background:
+        #fff4ef;
+
+    color:
+        #a84f36;
+
+    font-size: 10px;
+
+    line-height: 1.5;
+}
+
+
+.error-icon {
+    width: 22px;
+    height: 22px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background:
+        #f1d2c8;
+
+    font-size: 9px;
+
+    font-weight: 800;
+}
+
+
+.sky-form-error {
+    margin-top: 2px;
+
+    color:
+        #b8543a;
+
+    font-size: 9px;
+
+    line-height: 1.4;
+}
+
+
+/* =========================================================
+   SECURITY NOTE
+========================================================= */
+
+.sky-login-security {
+    margin-top: 32px;
+
+    padding-top: 20px;
+
+    border-top:
+        1px solid
+        #edf0ee;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    color:
+        #9aa7a1;
+
+    font-size: 9px;
+
+    text-align: center;
+}
+
+
+.security-icon {
+    color:
+        var(--login-green);
+}
+
+
+/* =========================================================
+   ENTRY ANIMATION
+========================================================= */
+
+.sky-login-hero,
+.sky-login-form-wrap {
+    animation:
+        loginEnter
+        0.65s
+        cubic-bezier(
+            0.22,
+            1,
+            0.36,
+            1
+        )
+        both;
+}
+
+
+.sky-login-form-wrap {
+    animation-delay:
+        0.08s;
+}
+
+
+@keyframes loginEnter {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(18px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+
+    .sky-login-page {
+        grid-template-columns:
+            minmax(350px, 0.8fr)
+            minmax(430px, 1.2fr);
+    }
+
+
+    .sky-login-brand-content {
+        padding:
+            40px
+            38px;
+    }
+
+
+    .sky-login-hero h1 {
+        font-size: 45px;
+
+        letter-spacing: -2px;
+    }
+
+
+    .sky-login-form-section {
+        padding:
+            32px
+            38px;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE / SMALL TABLET
+========================================================= */
+
+@media (max-width: 760px) {
+
+    .sky-login-page {
+        display: block;
+
+        min-height: 100vh;
+    }
+
+
+    /* Hide desktop green panel */
+
+    .sky-login-brand-panel {
+        display: none;
+    }
+
+
+    .sky-login-form-section {
+        min-height: 100vh;
+
+        padding:
+            25px
+            22px
+            40px;
+
+        background:
+            linear-gradient(
+                180deg,
+                #f8faf7 0%,
+                #ffffff 45%
+            );
+    }
+
+
+    .sky-login-top {
+        justify-content:
+            flex-end;
+    }
+
+
+    .sky-login-form-wrap {
+        max-width: 480px;
+
+        margin:
+            50px auto auto;
+    }
+
+
+    .sky-login-mobile-logo {
+        display:
+            inline-flex;
+    }
+
+
+    .sky-login-heading {
+        margin-bottom: 30px;
+    }
+
+
+    .sky-login-heading h2 {
+        font-size: 39px;
+    }
+
+
+    .sky-login-heading p {
+        font-size: 12px;
+    }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 420px) {
+
+    .sky-login-form-section {
+        padding:
+            20px
+            17px
+            30px;
+    }
+
+
+    .sky-login-form-wrap {
+        margin-top:
+            38px;
+    }
+
+
+    .sky-login-mobile-logo {
+        margin-bottom:
+            35px;
+    }
+
+
+    .sky-login-heading h2 {
+        font-size:
+            34px;
+
+        letter-spacing:
+            -1.5px;
+    }
+
+
+    .sky-auth-field input {
+        height:
+            49px;
+    }
+
+
+    .sky-auth-submit {
+        height:
+            50px;
+    }
+
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+========================================================= */
+
+@media (
+    prefers-reduced-motion:
+    reduce
+) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration:
+            0.01ms !important;
+
+        animation-iteration-count:
+            1 !important;
+
+        transition-duration:
+            0.01ms !important;
+    }
+
+}

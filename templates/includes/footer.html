@@ -1,18 +1,61 @@
-<footer class="bg-dark text-white mt-auto py-4">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-6">
-                <h5>HRMS</h5>
-                <p class="small">
-                    Enterprise-grade Django application.
-                </p>
+<footer class="skysource-footer">
+
+    <!-- Decorative background shapes -->
+    <div class="skysource-footer-decoration" aria-hidden="true"></div>
+
+    <div class="skysource-footer-inner">
+
+        <!-- ========================================= -->
+        <!-- BRAND -->
+        <!-- ========================================= -->
+
+        <a
+            href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}/app/{% endif %}"
+            class="skysource-footer-brand"
+        >
+
+            <div class="skysource-footer-logo">
+                S
             </div>
-            <div class="col-md-6 text-md-end">
-                <small>
-                    &copy; {% now "Y" %}
-                    All Rights Reserved.
-                </small>
-            </div>
+
+            <span>
+                SkySource
+            </span>
+
+        </a>
+
+
+        <!-- ========================================= -->
+        <!-- NAVIGATION -->
+        <!-- ========================================= -->
+
+        <nav class="skysource-footer-nav">
+
+            <a href="/app/#platform">
+                Platform
+            </a>
+
+            <a href="/app/#workflow">
+                Workflow
+            </a>
+
+            <a href="/app/#why-skysource">
+                Why SkySource
+            </a>
+
+        </nav>
+
+
+        <!-- ========================================= -->
+        <!-- COPYRIGHT -->
+        <!-- ========================================= -->
+
+        <div class="skysource-footer-copy">
+
+            &copy; {% now "Y" %} SkySource HRMS
+
         </div>
+
     </div>
+
 </footer>
