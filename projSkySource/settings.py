@@ -193,6 +193,7 @@ AZURE_EMAIL_SENDER = os.getenv("AZURE_EMAIL_SENDER")
 # =========================================================
 
 LOGIN_REDIRECT_URL = "/emp/dashboard/"
+LOGIN_URL = "/app/login/"
 
 
 # =========================================================

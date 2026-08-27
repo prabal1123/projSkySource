@@ -290,7 +290,14 @@
             {% endif %}
 
 
-
+{% if messages %}
+    {% for message in messages %}
+        <div class="sky-auth-error-banner">
+            <span class="error-icon">!</span>
+            <div>{{ message }}</div>
+        </div>
+    {% endfor %}
+{% endif %}
             <!-- Form -->
 
             <form

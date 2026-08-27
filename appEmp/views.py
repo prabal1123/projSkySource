@@ -103,7 +103,7 @@ from appEmp.whatsapp_router import (
     get_payroll_reply,
 )
 
-
+from django.views.decorators.cache import never_cache
 
 def user_has_permission(user, permission_codename):
     return (
@@ -250,7 +250,8 @@ def empProfile_view(request):
         },
     )
 
-
+@never_cache
+@login_required
 def dashboard_view(request):
     profile = get_object_or_404(
         empProfile.objects.select_related(

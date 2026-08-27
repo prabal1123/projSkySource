@@ -13,7 +13,8 @@ from .forms import LoginForm, registerEmp, RequestOTPForm, VerifyOTPForm
 from .models import ActivityLog
 from appEmp.models import empProfile, EmailOTP
 from .utils import send_azure_otp
-
+from django.views.decorators.cache import never_cache
+from django.contrib.auth.decorators import login_required
 
 def get_client_ip(request):
     """
@@ -83,7 +84,7 @@ def login_view(request):
         user = User.objects.filter(email__iexact=email, empprofile__isnull=False).first()
 
         if not user:
-            messages.error(request, "No employee account found for this email. Contact HR/Admin.")
+            messages.error(request, "This email is not registered. Contact HR/Admin to get access.")
             return render(request, "appAuth/login.html", {"form": form})
 
         otp = f"{random.randint(100000, 999999)}"
@@ -256,14 +257,15 @@ def logout_view(request):
     logout(request)
     return redirect("login")
 
+# @never_cache
+# @login_required
+# def dashboard_view(request):
+#     if not request.user.is_authenticated:
+#         return redirect("login")
 
-def dashboard_view(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
-
-    return render(
-        request,
-        "dashboard.html",
-        {"user": request.user},
-    )
+#     return render(
+#         request,
+#         "dashboard.html",
+#         {"user": request.user},
+#     )
 
