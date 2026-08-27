@@ -153,7 +153,7 @@ class EmployeeForm(forms.ModelForm):
         model = empProfile
 
         fields = [
-            "username",
+            # "username",
             "first_name",
             "last_name",
             "email",
@@ -274,16 +274,11 @@ class EmployeeForm(forms.ModelForm):
 
         return profile
 
+
 class ProfileFormAdmin(forms.ModelForm):
     """
     HR/Admin/Manager employee profile update form.
     """
-
-    username = forms.CharField(
-        required=False,
-        label="Username",
-        disabled=True,
-    )
 
     first_name = forms.CharField(
         required=False,
@@ -312,7 +307,6 @@ class ProfileFormAdmin(forms.ModelForm):
     class Meta:
         model = empProfile
         fields = [
-            "username",
             "first_name",
             "last_name",
             "email",
@@ -361,9 +355,7 @@ class ProfileFormAdmin(forms.ModelForm):
             and current_employee.pk
             and current_employee.user_id
         ):
-            self.fields["username"].initial = (
-                current_employee.user.username
-            )
+            
 
             self.fields["first_name"].initial = (
                 current_employee.user.first_name

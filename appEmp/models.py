@@ -7,6 +7,16 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 import calendar
 
+class EmailOTP(models.Model):
+    email = models.EmailField(db_index=True)
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used = models.BooleanField(default=False)
+
+    def is_valid(self):
+        not_expired = (timezone.now() - self.created_at).seconds < 300  # 5 min
+        return not_expired and not self.used
+    
 
 def add_calendar_months(source_date, months):
     """
@@ -45,11 +55,6 @@ class empProfile(models.Model):
         on_delete=models.CASCADE
     )
 
-    # role = models.CharField(
-    #     max_length=20,
-    #     choices=ROLE_CHOICES,
-    #     default="EMPLOYEE"
-    # )
 
     manager = models.ForeignKey(
         "self",
@@ -1439,6 +1444,7 @@ EMPLOYEE_EXIT_STATUS_CHOICES = (
 
 
 class EmployeeExitRequest(models.Model):
+
     """
     Represents an employee resignation or an HR-initiated termination.
 
@@ -1579,3 +1585,30 @@ class EmployeeExitRequest(models.Model):
             f"{self.get_exit_type_display()} - "
             f"{self.get_status_display()}"
         )
+
+class WhatsAppTicket(models.Model):
+
+    CATEGORY_CHOICES = [
+        ("leave", "Leave"),
+        ("attendance", "Attendance"),
+        ("payroll", "Payroll"),
+        ("general", "General"),
+    ]
+
+    STATUS_CHOICES = [
+        ('new', 'New'),
+        ('in_progress', 'In Progress'),
+        ('resolved', 'Resolved'),
+        ('auto_resolved', 'Auto-resolved'),
+    ]
+
+    wa_message_id = models.CharField(max_length=100, unique=True)
+    sender_wa_id = models.CharField(max_length=20)       # employee's WhatsApp number
+    sender_name = models.CharField(max_length=100, blank=True)
+    message_body = models.TextField()
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="general")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Ticket #{self.id} from {self.sender_name or self.sender_wa_id}"

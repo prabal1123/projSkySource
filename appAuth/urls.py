@@ -23,6 +23,8 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('register/', views.register_view, name='register'),
+    
+    path('login/verify/', views.verify_otp_view, name='verify_otp'),
 
     # Email-based reset - wired but inactive until EMAIL_BACKEND is configured
     path('forgot-password/', auth_views.PasswordResetView.as_view(), name='password_reset'),

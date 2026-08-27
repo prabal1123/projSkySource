@@ -102,7 +102,7 @@ urlpatterns = [
         views.salary_update_view,
         name="salaryUpdate",
     ),
-
+    path('whatsapp/webhook/', views.whatsapp_webhook, name='whatsapp_webhook'),
     path(
         "salary/slip/<int:year>/<int:month>/",
         views.salary_slip_self_view,

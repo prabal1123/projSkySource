@@ -24,6 +24,13 @@ from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from django.core.exceptions import ValidationError
 
+import random
+from django.shortcuts import render, redirect
+from django.contrib.auth.models import User
+from django.contrib.auth import login as django_login
+from django.core.mail import send_mail
+from django.conf import settings
+from .models import EmailOTP
 from django.db import transaction
 
 from .forms import (
@@ -76,11 +83,27 @@ from .models import (
 )
 import csv
 import io
+from appEmp.whatsapp_router import find_employee_by_phone
 
 from openpyxl import load_workbook
 from datetime import datetime
 from .services import create_clearance_request,finalize_employee_exit
 from .models import OptionalHolidayRequest
+from .models import WhatsAppTicket
+import json
+from .whatsapp_utils import send_whatsapp_message
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse, HttpResponse
+from appEmp.whatsapp_router import (
+    classify_message,
+    find_employee_by_phone,
+    get_leave_balance_reply,
+    get_attendance_reply,
+    get_payroll_reply,
+)
+
+
 
 def user_has_permission(user, permission_codename):
     return (
@@ -227,294 +250,6 @@ def empProfile_view(request):
         },
     )
 
-
-# @login_required
-# def dashboard_view(request):
-#     profile = get_object_or_404(
-#         empProfile,
-#         user=request.user,
-#     )
-
-#     today = timezone.localdate()
-#     is_admin_view = user_has_hr_access(request.user)
-
-#     # =========================================================
-#     # EXIT / CLEARANCE DASHBOARD COUNTS
-#     # =========================================================
-
-#     # Employee's own active resignation
-#     active_resignation_count = (
-#         EmployeeExitRequest.objects.filter(
-#             employee=profile,
-#             exit_type="RESIGNATION",
-#             status__in=[
-#                 "SUBMITTED",
-#                 "CLEARANCE_IN_PROGRESS",
-#                 "READY_FOR_FINALIZATION",
-#             ],
-#         ).count()
-#     )
-
-#     # Manager NOCs specifically assigned to current user
-#     pending_manager_noc_count = (
-#         ClearanceApproval.objects.filter(
-#             approval_type="MANAGER_NOC",
-#             assigned_to=request.user,
-#             status="PENDING",
-#             clearance_request__status="PENDING",
-#         ).count()
-#     )
-
-#     # Finance shared queue
-#     pending_finance_noc_count = 0
-
-#     if (
-#         request.user.is_superuser
-#         or request.user.has_perm(
-#             "appEmp.review_finance_noc"
-#         )
-#     ):
-#         pending_finance_noc_count = (
-#             ClearanceApproval.objects.filter(
-#                 approval_type="FINANCE_NOC",
-#                 status="PENDING",
-#                 clearance_request__status="PENDING",
-#             ).count()
-#         )
-
-#     # HR exit counts
-#     pending_resignations_count = 0
-#     ready_for_finalization_count = 0
-#     rejected_exit_requests_count = 0
-#     total_exit_requests_count = 0
-
-#     if (
-#         request.user.is_superuser
-#         or request.user.has_perm(
-#             "appEmp.view_all_clearance_requests"
-#         )
-#     ):
-#         pending_resignations_count = (
-#             EmployeeExitRequest.objects.filter(
-#                 exit_type="RESIGNATION",
-#                 status="SUBMITTED",
-#             ).count()
-#         )
-
-#         rejected_exit_requests_count = (
-#             EmployeeExitRequest.objects.filter(
-#                 status__in=[
-#                     "HR_REJECTED",
-#                     "CLEARANCE_REJECTED",
-#                 ],
-#             ).count()
-#         )
-
-#         total_exit_requests_count = (
-#             EmployeeExitRequest.objects.count()
-#         )
-
-#     if (
-#         request.user.is_superuser
-#         or request.user.has_perm(
-#             "appEmp.finalize_employee_exit"
-#         )
-#     ):
-#         ready_for_finalization_count = (
-#             EmployeeExitRequest.objects.filter(
-#                 status="READY_FOR_FINALIZATION",
-#             ).count()
-#         )
-
-#     # Common context used for both HR/Admin
-#     # and normal employee dashboards
-#     exit_clearance_context = {
-#         "active_resignation_count": (
-#             active_resignation_count
-#         ),
-#         "pending_manager_noc_count": (
-#             pending_manager_noc_count
-#         ),
-#         "pending_finance_noc_count": (
-#             pending_finance_noc_count
-#         ),
-#         "pending_resignations_count": (
-#             pending_resignations_count
-#         ),
-#         "ready_for_finalization_count": (
-#             ready_for_finalization_count
-#         ),
-#         "rejected_exit_requests_count": (
-#             rejected_exit_requests_count
-#         ),
-#         "total_exit_requests_count": (
-#             total_exit_requests_count
-#         ),
-#     }
-
-#     # =========================================================
-#     # HR / ADMIN DASHBOARD
-#     # =========================================================
-
-#     if is_admin_view:
-#         total_employees = empProfile.objects.count()
-
-#         verification_stats = {
-#             "email": empProfile.objects.filter(
-#                 is_email_verified=True
-#             ).count(),
-
-#             "phone": empProfile.objects.filter(
-#                 is_phone_verified=True
-#             ).count(),
-
-#             "address": empProfile.objects.filter(
-#                 is_address_verified=True
-#             ).count(),
-
-#             "aadhar": empProfile.objects.filter(
-#                 is_aadhar_verified=True
-#             ).count(),
-
-#             "background_check": empProfile.objects.filter(
-#                 is_background_check_completed=True
-#             ).count(),
-#         }
-
-#         today_attendance = Attendance.objects.filter(
-#             date=today
-#         )
-
-#         attendance_summary = {
-#             "present": today_attendance.filter(
-#                 status__in=[
-#                     "PRESENT",
-#                     "LATE",
-#                     "HALF_DAY",
-#                 ]
-#             ).count(),
-
-#             "absent": today_attendance.filter(
-#                 status="ABSENT"
-#             ).count(),
-
-#             "leave": today_attendance.filter(
-#                 status="LEAVE"
-#             ).count(),
-
-#             "not_marked": (
-#                 total_employees
-#                 - today_attendance.count()
-#             ),
-#         }
-
-#         pending_leave_requests_count = (
-#             LeaveRequest.objects.filter(
-#                 status="PENDING"
-#             ).count()
-#         )
-
-#         pending_attendance_exceptions_count = (
-#             AttendanceException.objects.filter(
-#                 status="PENDING"
-#             ).count()
-#         )
-
-#         current_year = today.year
-
-#         employees_without_leave_balance = (
-#             empProfile.objects
-#             .filter(
-#                 is_active=True
-#             )
-#             .exclude(
-#                 leave_balances__year=current_year
-#             )
-#             .distinct()
-#             .count()
-#         )
-
-#         context = {
-#             "is_admin_view": True,
-
-#             "total_employees": (
-#                 total_employees
-#             ),
-
-#             "verification_stats": (
-#                 verification_stats
-#             ),
-
-#             "attendance_summary": (
-#                 attendance_summary
-#             ),
-
-#             "today_attendance": (
-#                 today_attendance.select_related(
-#                     "employee__user"
-#                 )
-#             ),
-
-#             "pending_leave_requests_count": (
-#                 pending_leave_requests_count
-#             ),
-
-#             "pending_attendance_exceptions_count": (
-#                 pending_attendance_exceptions_count
-#             ),
-
-#             "employees_without_leave_balance": (
-#                 employees_without_leave_balance
-#             ),
-#         }
-
-#     # =========================================================
-#     # EMPLOYEE DASHBOARD
-#     # =========================================================
-
-#     else:
-#         my_attendance_today = (
-#             Attendance.objects.filter(
-#                 employee=profile,
-#                 date=today,
-#             ).first()
-#         )
-
-#         recent_attendance = (
-#             Attendance.objects
-#             .filter(
-#                 employee=profile
-#             )
-#             .order_by("-date")[:7]
-#         )
-
-#         context = {
-#             "is_admin_view": False,
-
-#             "profile": profile,
-
-#             "my_attendance_today": (
-#                 my_attendance_today
-#             ),
-
-#             "recent_attendance": (
-#                 recent_attendance
-#             ),
-#         }
-
-#     # =========================================================
-#     # COMMON EXIT / CLEARANCE CONTEXT
-#     # =========================================================
-
-#     context.update(
-#         exit_clearance_context
-#     )
-
-#     return render(
-#         request,
-#         "dashboard.html",
-#         context,
-#     )
 
 def dashboard_view(request):
     profile = get_object_or_404(
@@ -1291,8 +1026,8 @@ def dashboard_view(request):
     )
 
 
-def _get_attendance_date(employee, current_datetime):
-    
+
+def _get_attendance_date(employee, current_datetime):    
     local_datetime = timezone.localtime(
         current_datetime
     )
@@ -5583,3 +5318,80 @@ def review_optional_holiday_request_view(request, uuid):
     return redirect(
         "pendingOptionalHolidayRequests"
     )
+
+
+@csrf_exempt
+def whatsapp_webhook(request):
+    if request.method == 'GET':
+        mode = request.GET.get('hub.mode')
+        token = request.GET.get('hub.verify_token')
+        challenge = request.GET.get('hub.challenge')
+
+        if mode == 'subscribe' and token == settings.WHATSAPP_VERIFY_TOKEN:
+            return HttpResponse(challenge, status=200)
+        return HttpResponse('Verification failed', status=403)
+
+    if request.method == 'POST':
+        data = json.loads(request.body)
+
+        try:
+            entry = data['entry'][0]
+            changes = entry['changes'][0]['value']
+
+            if 'messages' not in changes:
+                return JsonResponse({'status': 'ignored'}, status=200)
+
+            message = changes['messages'][0]
+            contact = changes['contacts'][0]
+
+            wa_message_id = message['id']
+            sender_wa_id = message['from']
+            sender_name = contact.get('profile', {}).get('name', '')
+            message_body = message.get('text', {}).get('body', '')
+
+            category = classify_message(message_body)
+
+            ticket, created = WhatsAppTicket.objects.get_or_create(
+                wa_message_id=wa_message_id,
+                defaults={
+                    'sender_wa_id': sender_wa_id,
+                    'sender_name': sender_name,
+                    'message_body': message_body,
+                    'category': category,
+                }
+            )
+
+            if created:
+                reply_text = None
+
+                if category == "leave":
+                    employee = find_employee_by_phone(sender_wa_id)
+                    if employee:
+                        reply_text = get_leave_balance_reply(employee)
+                        ticket.status = "auto_resolved"
+                        ticket.save(update_fields=["status"])
+
+                elif category == "attendance":
+                    employee = find_employee_by_phone(sender_wa_id)
+                    if employee:
+                        reply_text = get_attendance_reply(employee)
+                        ticket.status = "auto_resolved"
+                        ticket.save(update_fields=["status"])
+
+                elif category == "payroll":
+                    employee = find_employee_by_phone(sender_wa_id)
+                    if employee:
+                        reply_text = get_payroll_reply(employee)
+                        ticket.status = "auto_resolved"
+                        ticket.save(update_fields=["status"])
+
+                if not reply_text:
+                    reply_text = f"Thanks {sender_name or ''}, we've logged your message as ticket #{ticket.id}. Our HR team will get back to you."
+
+                send_whatsapp_message(sender_wa_id, reply_text)
+
+        except (KeyError, IndexError):
+            pass
+
+        return JsonResponse({'status': 'ok'}, status=200)
+    

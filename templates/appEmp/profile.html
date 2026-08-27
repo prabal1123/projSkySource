@@ -19,17 +19,12 @@
     {% if profile.user.first_name or profile.user.last_name %}
         {{ profile.user.first_name }} {{ profile.user.last_name }}
     {% else %}
-        {{ profile.user.username }}
+        {{ profile.user.email }}
     {% endif %}
 </h1>
 
 <p class="sky-help-text">
-    Username: {{ profile.user.username }}
-
-    {% if profile.user.email %}
-        &nbsp;·&nbsp;
-        {{ profile.user.email }}
-    {% endif %}
+    {{ profile.user.email }}
 </p>
             </div>
         </div>
@@ -61,29 +56,6 @@
 
                     <div class="row">
                         <div class="row">
-
-    <!-- Username -->
-    {% if form.username %}
-        <div class="col-md-6 mb-3">
-
-            <label
-                class="sky-form-label"
-                for="{{ form.username.id_for_label }}"
-            >
-                {{ form.username.label }}
-            </label>
-
-            {{ form.username }}
-
-            {% for error in form.username.errors %}
-                <div class="sky-form-error">
-                    {{ error }}
-                </div>
-            {% endfor %}
-
-        </div>
-    {% endif %}
-
 
     <!-- First Name -->
     {% if form.first_name %}

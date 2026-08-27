@@ -361,4 +361,11 @@ class WorkScheduleAdmin(admin.ModelAdmin):
         "is_default",
         "is_active",
     )
-    
+
+from .models import WhatsAppTicket
+
+@admin.register(WhatsAppTicket)
+class WhatsAppTicketAdmin(admin.ModelAdmin):
+    list_display = ('id', 'sender_name', 'sender_wa_id', 'category', 'status', 'created_at')
+    list_filter = ('category', 'status')
+    search_fields = ('sender_name', 'sender_wa_id', 'message_body')

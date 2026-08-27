@@ -19,17 +19,24 @@
     --bg: #F5F6F8;
     --card: #FFFFFF;
     --border: #E6E8EC;
+    /* Ensure all text headers inside the employee punch card are white */
+.sky-dashboard .employee-punch-card h2,
+.sky-dashboard .employee-punch-card p {
+    color: #ffffff !important;
+}
 
     font-family: 'Inter', -apple-system, sans-serif;
     color: var(--ink);
     background: var(--bg);
     padding: 2.5rem 0 3.5rem;
+    
 }
 
 .sky-dashboard h1, .sky-dashboard h2, .sky-dashboard h3,
 .sky-dashboard h4, .sky-dashboard h5, .sky-dashboard h6 {
     font-family: 'Space Grotesk', 'Inter', sans-serif;
     letter-spacing: -0.01em;
+    
 }
 
 .sky-mono {
@@ -292,6 +299,7 @@
 .sky-dashboard textarea {
     resize: vertical;
     min-height: 90px;
+    
 }
 
 .sky-dashboard select:focus,
@@ -992,4 +1000,9 @@ a.sky-action-card:hover {
     background: #fff7ed !important;
     color: #c2410c !important;
     border: 1px solid #fdba74;
+}
+/* Make text inside the employee punch card readable against the dark background */
+.employee-punch-card h2,
+.employee-punch-card p {
+    color: #efecd8 !important;
 }

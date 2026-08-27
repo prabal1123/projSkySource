@@ -1,0 +1,90 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Code | SkySource</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+</head>
+<body>
+<div class="sky-login-page">
+
+    <section class="sky-login-brand-panel">
+        <div class="login-decoration decoration-one"></div>
+        <div class="login-decoration decoration-two"></div>
+        <div class="sky-login-brand-content">
+            <a href="/app/" class="sky-login-logo">
+                <span class="sky-login-logo-mark"><span></span><span></span><span></span></span>
+                <span>SkySource</span>
+            </a>
+            <div class="sky-login-hero">
+                <span class="sky-login-eyebrow">HUMAN RESOURCE MANAGEMENT</span>
+                <h1>Almost there.<br><strong>Check your inbox.</strong></h1>
+                <p>We emailed a 6-digit code to {{ email }}. Enter it to finish signing in.</p>
+            </div>
+            <div class="sky-login-panel-footer">
+                <span>SkySource HRMS</span>
+                <span>© 2026</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="sky-login-form-section">
+        <div class="sky-login-top">
+            <a href="/app/" class="back-home-link">← Back to website</a>
+        </div>
+
+        <div class="sky-login-form-wrap">
+            <a href="/app/" class="sky-login-mobile-logo">
+                <span class="sky-login-logo-mark"><span></span><span></span><span></span></span>
+                SkySource
+            </a>
+
+            <div class="sky-login-heading">
+                <span class="sky-form-eyebrow">SECURE SIGN IN</span>
+                <h2>Enter your code.</h2>
+                <p>Sent to {{ email }}. Expires in 5 minutes.</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="sky-auth-error-banner">
+                        <span class="error-icon">!</span>
+                        <div>{{ message }}</div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" novalidate class="sky-login-form">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="sky-auth-field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        <div class="sky-input-wrap">
+                            {{ field }}
+                        </div>
+                        {% if field.errors %}
+                            <div class="sky-form-error">{{ field.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+                <button type="submit" class="sky-auth-submit">
+                    <span>Verify</span>
+                    <span class="submit-arrow">→</span>
+                </button>
+            </form>
+
+            <div class="sky-login-security">
+                <span class="security-icon">◇</span>
+                <span>Secure access powered by SkySource role-based permissions.</span>
+            </div>
+        </div>
+    </section>
+</div>
+</body>
+</html>

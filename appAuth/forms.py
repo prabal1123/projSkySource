@@ -9,7 +9,6 @@ class LoginForm(forms.Form):
         widget=forms.PasswordInput(attrs={"autocomplete": "current-password"})
     )
 
-
 class registerEmp(forms.Form):
     first_name = forms.CharField(
         widget=forms.TextInput(attrs={"autofocus": True, "autocomplete": "given-name"})
@@ -20,9 +19,15 @@ class registerEmp(forms.Form):
     email = forms.EmailField(
         widget=forms.EmailInput(attrs={"autocomplete": "email"})
     )
-    username = forms.CharField(
-        widget=forms.TextInput(attrs={"autocomplete": "username"})
+    
+class RequestOTPForm(forms.Form):
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={"autofocus": True, "autocomplete": "email"})
     )
-    password = forms.CharField(
-        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"})
+
+
+class VerifyOTPForm(forms.Form):
+    otp = forms.CharField(
+        max_length=6,
+        widget=forms.TextInput(attrs={"autofocus": True, "autocomplete": "one-time-code"})
     )
