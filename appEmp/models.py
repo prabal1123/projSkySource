@@ -5,6 +5,7 @@ from datetime import time
 from django.utils import timezone
 from decimal import Decimal
 from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator
 import calendar
 
 class EmailOTP(models.Model):
@@ -1585,6 +1586,90 @@ class EmployeeExitRequest(models.Model):
             f"{self.get_exit_type_display()} - "
             f"{self.get_status_display()}"
         )
+
+
+
+def emp_document_path(instance, filename):
+    return f"employee_documents/{instance.employee.uuid}/{filename}"
+
+
+MAX_DOCUMENT_SIZE_MB = 5
+ALLOWED_DOCUMENT_EXTENSIONS = ["pdf", "jpg", "jpeg", "png", "docx"]
+
+
+def validate_document_size(file):
+    max_size_bytes = MAX_DOCUMENT_SIZE_MB * 1024 * 1024
+    if file.size > max_size_bytes:
+        raise ValidationError(
+            f"File too large. Maximum allowed size is {MAX_DOCUMENT_SIZE_MB}MB."
+        )
+
+
+class DocumentTypeMaster(models.Model):
+    name = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text="e.g. Aadhar Card, Resume, Offer Letter"
+    )
+
+    description = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Inactive types won't show up as options for new uploads."
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Document Type"
+        verbose_name_plural = "Document Types"
+
+    def __str__(self):
+        return self.name
+
+
+class empDocument(models.Model):
+    employee = models.ForeignKey(
+        "empProfile",
+        on_delete=models.CASCADE,
+        related_name="documents"
+    )
+
+    document_type = models.ForeignKey(
+        DocumentTypeMaster,
+        on_delete=models.PROTECT,
+        related_name="documents"
+    )
+
+    file = models.FileField(
+        upload_to=emp_document_path,
+        validators=[
+            FileExtensionValidator(allowed_extensions=ALLOWED_DOCUMENT_EXTENSIONS),
+            validate_document_size,
+        ]
+    )
+
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    is_verified = models.BooleanField(
+        default=False,
+        help_text="Whether HR has verified this document."
+    )
+
+    class Meta:
+        ordering = ["-uploaded_at"]
+        verbose_name = "Employee Document"
+        verbose_name_plural = "Employee Documents"
+
+    def __str__(self):
+        return f"{self.employee} - {self.document_type.name}"
+    
 
 class WhatsAppTicket(models.Model):
 

@@ -90,12 +90,13 @@ from .models import (
     WorkSchedule,
     OptionalHolidayRequest,
     Holiday,
+    empDocument, DocumentTypeMaster
 )
 from django import forms
 
 from django.contrib.auth.models import Group
 from django.db.models import Q
-
+from .models import empDocument, DocumentTypeMaster, empProfile
 
 
 
@@ -274,7 +275,6 @@ class EmployeeForm(forms.ModelForm):
 
         return profile
 
-
 class ProfileFormAdmin(forms.ModelForm):
     """
     HR/Admin/Manager employee profile update form.
@@ -312,7 +312,6 @@ class ProfileFormAdmin(forms.ModelForm):
             "email",
             "access_group",
             "manager",
-            "designation",
             "shift",
             "work_schedule",
             "phone_number",
@@ -355,7 +354,6 @@ class ProfileFormAdmin(forms.ModelForm):
             and current_employee.pk
             and current_employee.user_id
         ):
-            
 
             self.fields["first_name"].initial = (
                 current_employee.user.first_name
@@ -397,16 +395,6 @@ class ProfileFormAdmin(forms.ModelForm):
                 )
 
         # -----------------------------------------------------
-        # Designations
-        # -----------------------------------------------------
-
-        self.fields["designation"].queryset = (
-            DesignationMaster.objects
-            .filter(is_active=True)
-            .order_by("name")
-        )
-
-        # -----------------------------------------------------
         # Shifts
         # -----------------------------------------------------
 
@@ -415,6 +403,7 @@ class ProfileFormAdmin(forms.ModelForm):
             .filter(is_active=True)
             .order_by("name")
         )
+
         # -----------------------------------------------------
         # Work Schedules
         # -----------------------------------------------------
@@ -444,9 +433,16 @@ class ProfileFormAdmin(forms.ModelForm):
                 pk=current_employee.pk
             )
 
-        self.fields["manager"].queryset = (
-            manager_queryset
-        )
+            # Keep the currently assigned manager selectable even if
+            # their profile has since been marked inactive, otherwise
+            # the field renders with nothing selected after a reload.
+            if current_employee.manager_id:
+                manager_queryset = (
+                    manager_queryset
+                    | empProfile.objects.filter(pk=current_employee.manager_id)
+                )
+
+        self.fields["manager"].queryset = manager_queryset.distinct()
 
         # -----------------------------------------------------
         # Bootstrap classes
@@ -530,8 +526,8 @@ class ProfileFormAdmin(forms.ModelForm):
                         selected_group
                     )
 
-        return profile    
-
+        return profile
+    
 class AttendanceUpdateForm(forms.ModelForm):
     class Meta:
         model = Attendance
@@ -644,8 +640,6 @@ class AttendanceExceptionForm(forms.ModelForm):
         labels = {
             "reason": "Reason for regularisation",
         }
-
-
 
 
 class LeaveRequestForm(forms.ModelForm):
@@ -1456,7 +1450,6 @@ class WorkScheduleForm(forms.ModelForm):
             "is_active",
         ]
 
-
 class OptionalHolidayRequestForm(forms.ModelForm):
 
     class Meta:
@@ -1522,3 +1515,22 @@ class OptionalHolidayRequestForm(forms.ModelForm):
         self.fields["holiday"].empty_label = (
             "Select Optional Holiday"
         )
+
+class empDocumentForm(forms.ModelForm):
+    class Meta:
+        model = empDocument
+        fields = ["document_type", "file"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["document_type"].queryset = DocumentTypeMaster.objects.filter(is_active=True)
+
+
+class HrDocumentUploadForm(empDocumentForm):
+    employee = forms.ModelChoiceField(
+        queryset=empProfile.objects.select_related("user").order_by("user__first_name", "user__last_name"),
+        label="Employee",
+    )
+
+    class Meta(empDocumentForm.Meta):
+        fields = ["employee", "document_type", "file"]

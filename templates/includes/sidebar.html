@@ -247,6 +247,102 @@
 
 
         <!-- ===================================== -->
+        <!-- DOCUMENTS -->
+        <!-- ===================================== -->
+
+        {% if has_employee_profile or can_manage_employees %}
+
+            <div class="hr-sidebar-section">
+
+                <div class="hr-sidebar-section-title">
+                    Records
+                </div>
+
+
+                <button
+                    class="hr-sidebar-link hr-sidebar-toggle
+                    {% if request.resolver_match.url_name == 'upload_document' or request.resolver_match.url_name == 'hr_document_list' %}
+                        active-parent
+                    {% endif %}"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#documentsMenu"
+                    aria-expanded="false"
+                >
+
+                    <span class="hr-sidebar-link-main">
+
+                        <i class="bi bi-file-earmark-text"></i>
+
+                        <span>
+                            Documents
+                        </span>
+
+                    </span>
+
+                    <i class="bi bi-chevron-down hr-sidebar-chevron"></i>
+
+                </button>
+
+
+                <div
+                    class="collapse hr-sidebar-submenu
+                    {% if request.resolver_match.url_name == 'upload_document' or request.resolver_match.url_name == 'hr_document_list' %}
+                        show
+                    {% endif %}"
+                    id="documentsMenu"
+                >
+
+
+                    {% if has_employee_profile %}
+
+                        <div class="hr-sidebar-subheading">
+                            My Documents
+                        </div>
+
+
+                        <a
+                            href="{% url 'upload_document' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'upload_document' %}
+                                active
+                            {% endif %}"
+                        >
+                            My Documents
+                        </a>
+
+                    {% endif %}
+
+
+
+                    {% if can_manage_employees %}
+
+                        <div class="hr-sidebar-subheading">
+                            HR Review
+                        </div>
+
+
+                        <a
+                            href="{% url 'hr_document_list' %}"
+                            class="hr-sidebar-sub-link
+                            {% if request.resolver_match.url_name == 'hr_document_list' %}
+                                active
+                            {% endif %}"
+                        >
+                            Document Review
+                        </a>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+
+        <!-- ===================================== -->
         <!-- LEAVES -->
         <!-- ===================================== -->
 

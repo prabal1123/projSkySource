@@ -50,8 +50,8 @@ from .forms import (
     HolidayForm,
     HolidayBulkUploadForm,WorkScheduleForm,
     OptionalHolidayRequestForm,
-
-
+    empDocumentForm,
+     HrDocumentUploadForm,
 )
 from django.db.models import Count, Q
 from .services import (
@@ -80,7 +80,10 @@ from .models import (
     Holiday,
     WorkSchedule,
     OptionalHolidayRequest,
+    empDocument,
+    DocumentTypeMaster
 )
+
 import csv
 import io
 from appEmp.whatsapp_router import find_employee_by_phone
@@ -145,6 +148,81 @@ def empList_view(request):
     )
 
 
+# @login_required
+# def profileDetail_view(request, uuid):
+#     logged_in_profile = get_object_or_404(
+#         empProfile,
+#         user=request.user
+#     )
+
+#     employee = get_object_or_404(
+#         empProfile.objects.select_related(
+#             "user",
+#             "manager__user",
+#             "designation",
+#             "shift",
+#         ),
+#         uuid=uuid,
+#     )
+
+#     # is_admin = user_has_permission(request.user, "manage_employees")
+#     is_admin = user_has_permission(request.user, "manage_employees")
+#     is_direct_manager = employee.manager_id == logged_in_profile.id
+
+#     if not is_admin and not is_direct_manager:
+#         messages.error(
+#             request,
+#             "You don't have permission to edit this employee profile."
+#         )
+#         return redirect("dashboard")
+
+#     if request.method == "POST":
+#         form = ProfileFormAdmin(
+#             request.POST,
+#             instance=employee
+#         )
+
+#         if form.is_valid():
+#             form.save()
+
+#             messages.success(
+#                 request,
+#                 "Profile updated successfully."
+#             )
+
+#             return redirect(
+#                 "editProfile",
+#                 uuid=employee.uuid
+#             )
+#     else:
+#         form = ProfileFormAdmin(
+#             instance=employee
+#         )
+
+#     target_salary = employee.salary_records.filter(
+#         is_active=True
+#     ).first()
+
+#     return render(
+#         request,
+#         "appEmp/profile.html",
+#         {
+#             "employee": employee,
+#             "profile": employee,
+#             "form": form,
+#             "salary": target_salary,
+#             # "can_edit_salary": is_admin,
+#             "can_edit_salary": user_has_permission(request.user,"manage_salary"),
+#             "can_edit_profile": True,
+#             "salary_form": SalaryForm(
+#                 instance=target_salary
+#             ),
+#             "target_uuid": employee.uuid,
+#             "current_year": timezone.now().year,
+#             "current_month": timezone.now().month,
+#         },
+#     )
+
 @login_required
 def profileDetail_view(request, uuid):
     logged_in_profile = get_object_or_404(
@@ -162,7 +240,6 @@ def profileDetail_view(request, uuid):
         uuid=uuid,
     )
 
-    # is_admin = user_has_permission(request.user, "manage_employees")
     is_admin = user_has_permission(request.user, "manage_employees")
     is_direct_manager = employee.manager_id == logged_in_profile.id
 
@@ -208,8 +285,7 @@ def profileDetail_view(request, uuid):
             "profile": employee,
             "form": form,
             "salary": target_salary,
-            # "can_edit_salary": is_admin,
-            "can_edit_salary": user_has_permission(request.user,"manage_salary"),
+            "can_edit_salary": user_has_permission(request.user, "manage_salary"),
             "can_edit_profile": True,
             "salary_form": SalaryForm(
                 instance=target_salary
@@ -217,6 +293,8 @@ def profileDetail_view(request, uuid):
             "target_uuid": employee.uuid,
             "current_year": timezone.now().year,
             "current_month": timezone.now().month,
+            "document_form": empDocumentForm(),
+            "documents": employee.documents.all(),
         },
     )
 
@@ -5320,6 +5398,97 @@ def review_optional_holiday_request_view(request, uuid):
         "pendingOptionalHolidayRequests"
     )
 
+
+
+@login_required
+def upload_document(request):
+    employee = request.user.empprofile
+    can_upload_for_others = request.user.has_perm("appEmp.manage_employees")
+
+    FormClass = HrDocumentUploadForm if can_upload_for_others else empDocumentForm
+
+    if request.method == "POST":
+        form = FormClass(request.POST, request.FILES)
+        if form.is_valid():
+            doc = form.save(commit=False)
+            doc.employee = form.cleaned_data["employee"] if can_upload_for_others else employee
+            doc.save()
+            return redirect("upload_document")
+    else:
+        form = FormClass()
+
+    documents = employee.documents.all()
+
+    return render(request, "appEmp/upload_document.html", {
+        "form": form,
+        "documents": documents,
+        "can_upload_for_others": can_upload_for_others,
+    })
+
+@login_required
+@permission_required("appEmp.manage_employees", raise_exception=True)
+def hr_document_list(request):
+    documents = empDocument.objects.select_related(
+        "employee__user", "document_type"
+    ).all()
+
+    selected_type = request.GET.get("document_type", "")
+    selected_status = request.GET.get("is_verified", "")
+
+    if selected_type:
+        documents = documents.filter(document_type_id=selected_type)
+
+    if selected_status in ("true", "false"):
+        documents = documents.filter(is_verified=(selected_status == "true"))
+
+    document_types = DocumentTypeMaster.objects.filter(is_active=True)
+
+    return render(request, "appEmp/hr_document_list.html", {
+        "documents": documents,
+        "document_types": document_types,
+        "selected_type": selected_type,
+        "selected_status": selected_status,
+    })
+
+
+@login_required
+@permission_required("appEmp.manage_employees", raise_exception=True)
+def hr_verify_document(request, doc_id):
+    document = get_object_or_404(empDocument, id=doc_id)
+
+    if request.method == "POST":
+        document.is_verified = True
+        document.save()
+
+    return redirect("hr_document_list")
+
+from django.core.exceptions import PermissionDenied
+
+from django.contrib import messages
+
+@login_required
+def profile_document_upload(request, uuid):
+    profile = get_object_or_404(empProfile, uuid=uuid)
+
+    is_self = hasattr(request.user, "empprofile") and request.user.empprofile.id == profile.id
+    can_manage = request.user.has_perm("appEmp.manage_employees")
+
+    if not (is_self or can_manage):
+        raise PermissionDenied
+
+    if request.method == "POST":
+        form = empDocumentForm(request.POST, request.FILES)
+        if form.is_valid():
+            doc = form.save(commit=False)
+            doc.employee = profile
+            doc.save()
+            messages.success(request, "Document uploaded successfully.")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+
+    return redirect("editProfile", uuid=profile.uuid)
 
 @csrf_exempt
 def whatsapp_webhook(request):

@@ -581,7 +581,110 @@
 
         </div>
 
+        <div class="sky-panel">
 
+            <div class="sky-panel-head">
+                <h6>Documents</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                {% if document_form.non_field_errors %}
+                    <div class="sky-auth-error-banner">
+                        {{ document_form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <form method="post" action="{% url 'profile_document_upload' profile.uuid %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+
+                    <div class="row">
+
+                        <div class="col-md-6 mb-3">
+                            <label
+                                class="sky-form-label"
+                                for="{{ document_form.document_type.id_for_label }}"
+                            >
+                                {{ document_form.document_type.label }}
+                            </label>
+
+                            {{ document_form.document_type }}
+
+                            {% for error in document_form.document_type.errors %}
+                                <div class="sky-form-error">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label
+                                class="sky-form-label"
+                                for="{{ document_form.file.id_for_label }}"
+                            >
+                                {{ document_form.file.label }}
+                            </label>
+
+                            {{ document_form.file }}
+
+                            <div class="sky-help-text">
+                                PDF, JPG, PNG or DOCX. Max 5MB.
+                            </div>
+
+                            {% for error in document_form.file.errors %}
+                                <div class="sky-form-error">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="sky-header-btn">
+                        Upload Document
+                    </button>
+
+                </form>
+
+                <hr>
+
+                {% if documents %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Uploaded</th>
+                                <th>Status</th>
+                                <th>File</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for doc in documents %}
+                            <tr>
+                                <td>{{ doc.document_type.name }}</td>
+                                <td>{{ doc.uploaded_at|date:"d M Y" }}</td>
+                                <td>
+                                    {% if doc.is_verified %}
+                                        Verified
+                                    {% else %}
+                                        Pending
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ doc.file.url }}" target="_blank">View</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="sky-help-text">No documents uploaded yet.</p>
+                {% endif %}
+
+            </div>
+
+        </div>
         {% include "appEmp/_salary_block.html" %}
 
     </div>

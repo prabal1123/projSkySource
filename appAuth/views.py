@@ -16,6 +16,7 @@ from .utils import send_azure_otp
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
 
+
 def get_client_ip(request):
     """
     Get the real client IP when Django is running behind Nginx.
@@ -33,9 +34,13 @@ def get_client_ip(request):
     )
 
 
-def home_view(request):
-    return render(request, "home.html")
+# def home_view(request):
+#     return render(request, "home.html")
 
+def home_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    return render(request, "home.html")
 
 # def login_view(request):
 #     form = LoginForm(request.POST or None)

@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import empProfile, Attendance , ShiftMaster, DesignationMaster,AttendanceException,LeaveTypeMaster,LeaveBalance,LeaveRequest
 from .models import Holiday,WorkSchedule
+from .models import DocumentTypeMaster, empDocument,WhatsAppTicket
 
 # admin.site.register(empProfile)
 @admin.register(empProfile)
@@ -362,7 +363,20 @@ class WorkScheduleAdmin(admin.ModelAdmin):
         "is_active",
     )
 
-from .models import WhatsAppTicket
+
+@admin.register(DocumentTypeMaster)
+class DocumentTypeMasterAdmin(admin.ModelAdmin):
+    list_display = ("name", "is_active", "created_at")
+    list_filter = ("is_active",)
+    search_fields = ("name",)
+
+
+@admin.register(empDocument)
+class empDocumentAdmin(admin.ModelAdmin):
+    list_display = ("employee", "document_type", "uploaded_at", "is_verified")
+    list_filter = ("document_type", "is_verified")
+    search_fields = ("employee__user__first_name", "employee__user__last_name")
+    
 
 @admin.register(WhatsAppTicket)
 class WhatsAppTicketAdmin(admin.ModelAdmin):

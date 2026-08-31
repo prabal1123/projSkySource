@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Document Review{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 1100px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">HR / Document Review</span>
+                <h1>Employee Documents</h1>
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="sky-calendar-message">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="attendance-filter-bar">
+
+            <a href="?" class="attendance-filter-pill filter-all {% if not selected_type and not selected_status %}active{% endif %}">
+                All
+            </a>
+
+            {% for dtype in document_types %}
+                <a href="?document_type={{ dtype.id }}{% if selected_status %}&is_verified={{ selected_status }}{% endif %}"
+                   class="attendance-filter-pill filter-all {% if selected_type == dtype.id|stringformat:'s' %}active{% endif %}">
+                    {{ dtype.name }}
+                </a>
+            {% endfor %}
+
+        </div>
+
+        <div class="attendance-filter-bar">
+
+            <a href="?is_verified=false{% if selected_type %}&document_type={{ selected_type }}{% endif %}"
+               class="attendance-filter-pill legend-pending {% if selected_status == 'false' %}active{% endif %}">
+                Pending
+            </a>
+
+            <a href="?is_verified=true{% if selected_type %}&document_type={{ selected_type }}{% endif %}"
+               class="attendance-filter-pill legend-present {% if selected_status == 'true' %}active{% endif %}">
+                Verified
+            </a>
+
+        </div>
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+                <h6>Documents</h6>
+                <span class="sky-count">{{ documents|length }} shown</span>
+            </div>
+
+            {% if documents %}
+                <div class="attendance-list-wrapper">
+                    <table class="sky-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Type</th>
+                                <th>Uploaded</th>
+                                <th>Status</th>
+                                <th>File</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for doc in documents %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'editProfile' doc.employee.uuid %}" class="sky-edit-link">
+                                        {{ doc.employee }}
+                                    </a>
+                                </td>
+                                <td>{{ doc.document_type.name }}</td>
+                                <td class="sky-time">{{ doc.uploaded_at|date:"d M Y" }}</td>
+                                <td>
+                                    {% if doc.is_verified %}
+                                        <span class="sky-pill verified">Verified</span>
+                                    {% else %}
+                                        <span class="sky-pill pending">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ doc.file.url }}" target="_blank" class="sky-edit-link">View</a>
+                                </td>
+                                <td>
+                                    {% if not doc.is_verified %}
+                                        <form method="post" action="{% url 'hr_verify_document' doc.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="sky-header-btn">
+                                                Verify
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="sky-empty">No documents match this filter.</p>
+            {% endif %}
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -124,6 +124,10 @@ path(
     all_leave_requests_view,
     name="allLeaveRequests",
 ),
+path("documents/", views.upload_document, name="upload_document"),
+path("hr/documents/", views.hr_document_list, name="hr_document_list"),
+path("hr/documents/<int:doc_id>/verify/", views.hr_verify_document, name="hr_verify_document"),
+
 
 path(
     "leave/<uuid:uuid>/review/",
@@ -279,4 +283,5 @@ path(
     views.review_optional_holiday_request_view,
     name="reviewOptionalHolidayRequest",
 ),
+path("profile/<uuid:uuid>/documents/upload/", views.profile_document_upload, name="profile_document_upload"),
 ]

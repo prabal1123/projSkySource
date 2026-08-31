@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Documents{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 900px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Employee / Documents</span>
+                <h1>My Documents</h1>
+                <p class="sky-help-text">
+                    Upload and track your HR documents — ID proof, resume, offer letter, and more.
+                    {% if can_upload_for_others %}
+                        As an HR user, you can also upload a document on behalf of another employee below.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="sky-auth-error-banner">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+                <h6>Upload New Document</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                {% if form.non_field_errors %}
+                    <div class="sky-auth-error-banner">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="row">
+
+                        {% if form.employee %}
+                        <div class="col-md-6 mb-3">
+                            <label
+                                class="sky-form-label"
+                                for="{{ form.employee.id_for_label }}"
+                            >
+                                {{ form.employee.label }}
+                            </label>
+
+                            {{ form.employee }}
+
+                            {% for error in form.employee.errors %}
+                                <div class="sky-form-error">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="col-md-6 mb-3">
+                            <label
+                                class="sky-form-label"
+                                for="{{ form.document_type.id_for_label }}"
+                            >
+                                {{ form.document_type.label }}
+                            </label>
+
+                            {{ form.document_type }}
+
+                            {% for error in form.document_type.errors %}
+                                <div class="sky-form-error">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label
+                                class="sky-form-label"
+                                for="{{ form.file.id_for_label }}"
+                            >
+                                {{ form.file.label }}
+                            </label>
+
+                            {{ form.file }}
+
+                            <div class="sky-help-text">
+                                PDF, JPG, PNG or DOCX. Max 5MB.
+                            </div>
+
+                            {% for error in form.file.errors %}
+                                <div class="sky-form-error">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="sky-header-btn">
+                        Upload Document
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+                <h6>Uploaded Documents</h6>
+            </div>
+
+            <div class="sky-panel-body">
+
+                {% if documents %}
+                    <div class="table-responsive">
+                        <table class="table sky-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Uploaded</th>
+                                    <th>Status</th>
+                                    <th>File</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for doc in documents %}
+                                <tr>
+                                    <td>{{ doc.document_type.name }}</td>
+                                    <td>{{ doc.uploaded_at|date:"d M Y" }}</td>
+                                    <td>
+                                        {% if doc.is_verified %}
+                                            <span class="sky-badge sky-badge-success">Verified</span>
+                                        {% else %}
+                                            <span class="sky-badge sky-badge-pending">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ doc.file.url }}" target="_blank" class="sky-link">View</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="sky-help-text">No documents uploaded yet.</p>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}
