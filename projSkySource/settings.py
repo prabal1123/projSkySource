@@ -16,7 +16,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Environment Variables
 # =========================================================
 
-load_dotenv(BASE_DIR / ".env")
+# =========================================================
+# Environment Variables
+# =========================================================
+
+DJANGO_ENV = os.environ.get("DJANGO_ENV", "local")  # "local" or "production"
+env_file = ".env.production" if DJANGO_ENV == "production" else ".env"
+load_dotenv(BASE_DIR / env_file)
 
 
 # =========================================================
@@ -46,6 +52,9 @@ ALLOWED_HOSTS = [
 
 CSRF_TRUSTED_ORIGINS = [
     "http://18.61.200.14:8001",
+    "https://numa-hr.com",
+    "https://www.numa-hr.com",
+    "http://16.113.71.212",
 ]
 
 
@@ -60,6 +69,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "storages",
+
 
     "appAuth",
     "appEmp",
@@ -134,10 +145,21 @@ TEMPLATES = [
 # Database
 # =========================================================
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("DB_NAME"),
+        "USER": os.environ.get("DB_USER"),
+        "PASSWORD": os.environ.get("DB_PASSWORD"),
+        "HOST": os.environ.get("DB_HOST"),
+        "PORT": os.environ.get("DB_PORT"),
     }
 }
 
@@ -196,11 +218,14 @@ LOGIN_REDIRECT_URL = "/emp/dashboard/"
 LOGIN_URL = "/app/login/"
 
 
+
 # =========================================================
 # Static Files
 # =========================================================
 
 STATIC_URL = "/static/"
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 STATICFILES_DIRS = [
     BASE_DIR / "static",
@@ -218,3 +243,26 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 WHATSAPP_TOKEN = os.environ.get('WHATSAPP_TOKEN')
 WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
 WHATSAPP_VERIFY_TOKEN = os.environ.get('WHATSAPP_VERIFY_TOKEN')
+
+# =========================================================
+# File Storage (S3)
+# =========================================================
+
+USE_S3 = os.environ.get("USE_S3", "False") == "True"
+
+if USE_S3:
+    AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
+    AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = None
+    AWS_QUERYSTRING_AUTH = True
+    AWS_QUERYSTRING_EXPIRE = 3600
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
