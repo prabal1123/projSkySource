@@ -58,6 +58,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 
+
 # =========================================================
 # Applications
 # =========================================================
@@ -105,7 +106,9 @@ MIDDLEWARE = [
 ROOT_URLCONF = "projSkySource.urls"
 
 WSGI_APPLICATION = "projSkySource.wsgi.application"
-
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
 # =========================================================
 # Templates
