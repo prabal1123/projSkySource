@@ -27,6 +27,17 @@
     href="{% static 'css/hr_dashboard.css' %}"
 >
 
+<style>
+    /* Bigger Quick Actions buttons (size only), overriding the
+       min-height/padding in hr_dashboard.css's "QUICK ACTIONS — COMPACT" block.
+       Icon and text sizes are left untouched. */
+
+    .hr-quick-grid a {
+        min-height: 112px;
+        padding: 18px 16px;
+    }
+</style>
+
 {% endblock %}
 
 
@@ -255,6 +266,10 @@
                      ATTENDANCE OVERVIEW
                 ================================================== -->
 
+                <div
+                    style="grid-column: span 7; display: flex; flex-direction: column; gap: 18px; align-self: start;"
+                >
+
                 <article class="hr-card hr-attendance-card">
 
                     <div class="hr-card-header">
@@ -410,6 +425,106 @@
 
 
                 <!-- =================================================
+                     UPCOMING HOLIDAYS
+                ================================================== -->
+
+                <article class="hr-card">
+
+                    <div class="hr-card-header">
+
+                        <div>
+
+                            <span class="hr-section-label">
+                                CALENDAR
+                            </span>
+
+                            <h2>
+                                Upcoming holidays
+                            </h2>
+
+                        </div>
+
+
+                        {% if can_manage_attendance %}
+
+                            <a
+                                href="{% url 'holidayCalendar' %}"
+                                class="hr-text-link"
+                            >
+                                Calendar →
+                            </a>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="hr-holiday-list">
+
+                        {% for holiday in upcoming_holidays %}
+
+                            <div class="hr-holiday-row">
+
+                                <div class="holiday-date-box">
+
+                                    <strong>
+                                        {{ holiday.date|date:"d" }}
+                                    </strong>
+
+                                    <span>
+                                        {{ holiday.date|date:"M" }}
+                                    </span>
+
+                                </div>
+
+
+                                <div>
+
+                                    <strong>
+                                        {{ holiday.name }}
+                                    </strong>
+
+                                    <span>
+                                        {{ holiday.date|date:"l" }}
+                                    </span>
+
+                                </div>
+
+
+                                {% if holiday.holiday_type == "OPTIONAL" %}
+
+                                    <span class="holiday-type optional">
+                                        Optional
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="holiday-type mandatory">
+                                        Company
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+
+                        {% empty %}
+
+                            <div class="hr-empty-state">
+                                No upcoming holidays.
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </article>
+
+                </div>
+
+
+
+                <!-- =================================================
                      PENDING HR ACTIONS
                 ================================================== -->
 
@@ -528,6 +643,40 @@
 
                                 <b>
                                     {{ pending_attendance_exceptions_count }}
+                                </b>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_manage_employees %}
+
+                            <!-- Document Review -->
+
+                            <a
+                                href="{% url 'hr_document_list' %}"
+                                class="hr-action-row"
+                            >
+
+                                <span class="action-row-icon">
+                                    D
+                                </span>
+
+                                <div>
+
+                                    <strong>
+                                        Document Review
+                                    </strong>
+
+                                    <span>
+                                        Employee documents awaiting verification
+                                    </span>
+
+                                </div>
+
+                                <b>
+                                    {{ pending_document_reviews_count }}
                                 </b>
 
                             </a>
@@ -669,10 +818,233 @@
 
 
                 <!-- =================================================
+                     QUICK ACTIONS
+                ================================================== -->
+
+                <article
+                    class="hr-card hr-quick-actions-card"
+                    style="grid-column: span 5;"
+                >
+
+                    <div class="hr-card-header">
+
+                        <div>
+
+                            <span class="hr-section-label">
+                                SHORTCUTS
+                            </span>
+
+                            <h2>
+                                Quick actions
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="hr-quick-grid">
+
+
+                        {% if can_manage_employees %}
+
+                            <a href="{% url 'register' %}">
+
+                                <span>+</span>
+
+                                <strong>
+                                    Add Employee
+                                </strong>
+
+                            </a>
+
+
+                            <a href="{% url 'employeeList' %}">
+
+                                <span>E</span>
+
+                                <strong>
+                                    View Employees
+                                </strong>
+
+                            </a>
+
+
+                            <a href="{% url 'employeeBulkImport' %}">
+
+                                <span>I</span>
+
+                                <strong>
+                                    Bulk Import Employees
+                                </strong>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_review_leave %}
+
+                            <a href="{% url 'pendingLeaveRequests' %}">
+
+                                <span>P</span>
+
+                                <strong>
+                                    Review Leaves
+                                </strong>
+
+                            </a>
+
+
+                            <a href="{% url 'allLeaveRequests' %}">
+
+                                <span>L</span>
+
+                                <strong>
+                                    All Leave Requests
+                                </strong>
+
+                            </a>
+
+
+                            <a href="{% url 'pendingOptionalHolidayRequests' %}">
+
+                                <span>O</span>
+
+                                <strong>
+                                    Optional Holiday Requests
+                                </strong>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_review_attendance_exception %}
+
+                            <a href="{% url 'pendingAttendanceExceptions' %}">
+
+                                <span>A</span>
+
+                                <strong>
+                                    Attendance Exceptions
+                                </strong>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_manage_employees %}
+
+                            <a href="{% url 'hr_document_list' %}">
+
+                                <span>D</span>
+
+                                <strong>
+                                    Review Documents
+                                </strong>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_manage_attendance %}
+
+                            <a href="{% url 'holidayList' %}">
+
+                                <span>H</span>
+
+                                <strong>
+                                    Manage Holidays
+                                </strong>
+
+                            </a>
+
+
+                            <a href="{% url 'holidayBulkUpload' %}">
+
+                                <span>U</span>
+
+                                <strong>
+                                    Bulk Holiday Upload
+                                </strong>
+
+                            </a>
+
+
+                            <a href="{% url 'workScheduleList' %}">
+
+                                <span>W</span>
+
+                                <strong>
+                                    Work Schedules
+                                </strong>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_manage_leave_balance %}
+
+                            <a href="{% url 'leaveBalanceList' %}">
+
+                                <span>B</span>
+
+                                <strong>
+                                    Leave Balances
+                                </strong>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_initiate_employee_exit %}
+
+                            <a href="{% url 'initiateTermination' %}">
+
+                                <span>T</span>
+
+                                <strong>
+                                    Initiate Termination
+                                </strong>
+
+                            </a>
+
+                        {% endif %}
+
+
+                        {% if can_view_all_clearance_requests %}
+
+                            <a href="{% url 'allExitRequests' %}">
+
+                                <span>X</span>
+
+                                <strong>
+                                    All Exit Requests
+                                </strong>
+
+                            </a>
+
+                        {% endif %}
+
+                    </div>
+
+                </article>
+
+
+
+                <!-- =================================================
                      WORKFORCE
                 ================================================== -->
 
-                <article class="hr-card">
+                <article
+                    class="hr-card"
+                    style="grid-column: span 4;"
+                >
 
                     <div class="hr-card-header">
 
@@ -816,7 +1188,10 @@
                      LEAVE OVERVIEW
                 ================================================== -->
 
-                <article class="hr-card">
+                <article
+                    class="hr-card"
+                    style="grid-column: span 3;"
+                >
 
                     <div class="hr-card-header">
 
@@ -906,221 +1281,6 @@
                             </div>
 
                         {% endfor %}
-
-                    </div>
-
-                </article>
-
-
-
-                <!-- =================================================
-                     UPCOMING HOLIDAYS
-                ================================================== -->
-
-                <article class="hr-card">
-
-                    <div class="hr-card-header">
-
-                        <div>
-
-                            <span class="hr-section-label">
-                                CALENDAR
-                            </span>
-
-                            <h2>
-                                Upcoming holidays
-                            </h2>
-
-                        </div>
-
-
-                        {% if can_manage_attendance %}
-
-                            <a
-                                href="{% url 'holidayCalendar' %}"
-                                class="hr-text-link"
-                            >
-                                Calendar →
-                            </a>
-
-                        {% endif %}
-
-                    </div>
-
-
-                    <div class="hr-holiday-list">
-
-                        {% for holiday in upcoming_holidays %}
-
-                            <div class="hr-holiday-row">
-
-                                <div class="holiday-date-box">
-
-                                    <strong>
-                                        {{ holiday.date|date:"d" }}
-                                    </strong>
-
-                                    <span>
-                                        {{ holiday.date|date:"M" }}
-                                    </span>
-
-                                </div>
-
-
-                                <div>
-
-                                    <strong>
-                                        {{ holiday.name }}
-                                    </strong>
-
-                                    <span>
-                                        {{ holiday.date|date:"l" }}
-                                    </span>
-
-                                </div>
-
-
-                                {% if holiday.holiday_type == "OPTIONAL" %}
-
-                                    <span class="holiday-type optional">
-                                        Optional
-                                    </span>
-
-                                {% else %}
-
-                                    <span class="holiday-type mandatory">
-                                        Company
-                                    </span>
-
-                                {% endif %}
-
-                            </div>
-
-
-                        {% empty %}
-
-                            <div class="hr-empty-state">
-                                No upcoming holidays.
-                            </div>
-
-                        {% endfor %}
-
-                    </div>
-
-                </article>
-
-
-
-                <!-- =================================================
-                     QUICK ACTIONS
-                ================================================== -->
-
-                <article class="hr-card hr-quick-actions-card">
-
-                    <div class="hr-card-header">
-
-                        <div>
-
-                            <span class="hr-section-label">
-                                SHORTCUTS
-                            </span>
-
-                            <h2>
-                                Quick actions
-                            </h2>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="hr-quick-grid">
-
-
-                        {% if can_manage_employees %}
-
-                            <a href="{% url 'register' %}">
-
-                                <span>+</span>
-
-                                <strong>
-                                    Add Employee
-                                </strong>
-
-                            </a>
-
-                        {% endif %}
-
-
-                        {% if can_review_leave %}
-
-                            <a href="{% url 'pendingLeaveRequests' %}">
-
-                                <span>L</span>
-
-                                <strong>
-                                    Review Leaves
-                                </strong>
-
-                            </a>
-
-                        {% endif %}
-
-
-                        {% if can_review_attendance_exception %}
-
-                            <a href="{% url 'pendingAttendanceExceptions' %}">
-
-                                <span>A</span>
-
-                                <strong>
-                                    Attendance Exceptions
-                                </strong>
-
-                            </a>
-
-                        {% endif %}
-
-
-                        {% if can_manage_attendance %}
-
-                            <a href="{% url 'holidayList' %}">
-
-                                <span>H</span>
-
-                                <strong>
-                                    Manage Holidays
-                                </strong>
-
-                            </a>
-
-
-                            <a href="{% url 'workScheduleList' %}">
-
-                                <span>W</span>
-
-                                <strong>
-                                    Work Schedules
-                                </strong>
-
-                            </a>
-
-                        {% endif %}
-
-
-                        {% if can_manage_leave_balance %}
-
-                            <a href="{% url 'leaveBalanceList' %}">
-
-                                <span>B</span>
-
-                                <strong>
-                                    Leave Balances
-                                </strong>
-
-                            </a>
-
-                        {% endif %}
 
                     </div>
 
@@ -1302,25 +1462,32 @@
                                         </td>
 
 
-                                        <!-- Check Out -->
+                                                                               <!-- Check Out -->
 
                                         <td>
                                             {{ record.check_out|time:"H:i"|default:"—" }}
+
+                                            {% if record.check_out and not record.check_out_latitude %}
+                                                <span
+                                                    title="Checkout location not shared"
+                                                    style="color: #c0392b; font-size: 0.75rem; font-weight: 600; margin-left: 4px;"
+                                                >
+                                                    ⚠
+                                                </span>
+                                            {% endif %}
                                         </td>
 
-
-                                        <!-- Edit -->
+                                        <!-- Edit / Location -->
 
                                         {% if can_manage_attendance %}
 
                                             <td>
 
-                                                <a
-                                                    href="{% url 'editAttendance' record.uuid %}"
-                                                    class="table-action"
-                                                >
-                                                    Edit
-                                                </a>
+                                                <a href="{% url 'editAttendance' record.uuid %}" class="table-action">Edit</a>
+
+                                                {% if record.check_in_latitude and record.check_in_longitude or record.check_out_latitude and record.check_out_longitude %}
+                                                    <a href="{% url 'attendanceLocation' record.uuid %}" class="table-action" style="margin-left: 8px;">View Location</a>
+                                                {% endif %}
 
                                             </td>
 
@@ -1386,7 +1553,6 @@
                         <strong>
                             {{ profile.user.first_name|default:profile.user.username }}
                         </strong>
-
                     </h1>
 
                     <p>
@@ -1493,33 +1659,38 @@
                         </span>
 
 
-                    {% elif my_attendance_today.check_in %}
+                        {% elif my_attendance_today.check_in %}
 
-                        <h2>
-                            You're checked in
-                        </h2>
+                            <h2>
+                                You're checked in
+                            </h2>
 
-                        <p>
-                            Started at
-                            {{ my_attendance_today.check_in|time:"H:i" }}.
-                        </p>
+                            <p>
+                                Started at
+                                {{ my_attendance_today.check_in|time:"H:i" }}.
+                            </p>
 
 
-                        <form
-                            method="post"
-                            action="{% url 'checkinCheckout' %}"
-                        >
-
-                            {% csrf_token %}
-
-                            <button
-                                type="submit"
-                                class="employee-punch-button"
+                            <form
+                                method="post"
+                                action="{% url 'checkinCheckout' %}"
+                                id="checkOutForm"
                             >
-                                Check Out →
-                            </button>
 
-                        </form>
+                                {% csrf_token %}
+
+                                <input type="hidden" name="latitude" id="checkOutLatitude">
+                                <input type="hidden" name="longitude" id="checkOutLongitude">
+
+                                <button
+                                    type="submit"
+                                    class="employee-punch-button"
+                                    id="checkOutButton"
+                                >
+                                    Check Out →
+                                </button>
+
+                            </form>
 
 
                     {% else %}
@@ -1536,13 +1707,26 @@
                         <form
                             method="post"
                             action="{% url 'checkinCheckout' %}"
+                            id="checkInForm"
                         >
 
                             {% csrf_token %}
 
+                            <input type="hidden" name="latitude" id="checkInLatitude">
+                            <input type="hidden" name="longitude" id="checkInLongitude">
+
+                            <p
+                                id="checkInLocationError"
+                                class="employee-location-error"
+                                style="display: none; color: #c0392b; font-size: 0.85rem; margin-top: 6px;"
+                            >
+                                Please allow location and refresh the page.
+                            </p>
+
                             <button
                                 type="submit"
                                 class="employee-punch-button"
+                                id="checkInButton"
                             >
                                 Check In →
                             </button>
@@ -1633,6 +1817,10 @@
 
                         <a href="{% url 'optionalHolidayApply' %}">
                             Optional Holidays →
+                        </a>
+
+                        <a href="{% url 'upload_document' %}">
+                            My Documents →
                         </a>
 
                     </div>
@@ -2008,5 +2196,7 @@
     </div>
 
 </div>
+
+<script src="{% static 'js/checkin.js' %}"></script>
 
 {% endblock %}

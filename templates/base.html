@@ -375,6 +375,15 @@
 
 
 
+<script src="{% static 'js/compress_upload.js' %}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const fileInput = document.getElementById("{{ form.file.id_for_label }}");
+    if (fileInput) {
+      attachCompression(fileInput, { maxKB: 190 });
+    }
+  });
+</script>
 <!-- ========================================= -->
 <!-- PAGE SPECIFIC JS -->
 <!-- ========================================= -->

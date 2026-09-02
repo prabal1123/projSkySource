@@ -106,9 +106,9 @@ MIDDLEWARE = [
 ROOT_URLCONF = "projSkySource.urls"
 
 WSGI_APPLICATION = "projSkySource.wsgi.application"
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = DJANGO_ENV == "production"
+SESSION_COOKIE_SECURE = DJANGO_ENV == "production"
+CSRF_COOKIE_SECURE = DJANGO_ENV == "production"
 
 # =========================================================
 # Templates
@@ -271,4 +271,3 @@ if USE_S3:
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
-    

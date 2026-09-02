@@ -1999,7 +1999,9 @@ span {
 
     line-height: 1.25;
 }
-
+   .hr-attendance-card {
+       align-self: start;
+   }
 .hr-action-row div span {
     margin-top: 4px;
 

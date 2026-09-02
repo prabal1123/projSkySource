@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load dict_extras %}
+{% block content %}
+<div class="container mt-4">
+<h3>Bulk Import Employees</h3>
+
+{% if not preview_rows %}
+<form method="post" enctype="multipart/form-data" class="mb-4">
+{% csrf_token %}
+{{ form.file }}
+<button type="submit" class="btn btn-success mt-2">Preview Import</button>
+</form>
+
+<details class="mb-3">
+<summary>Expected columns</summary>
+<ul>
+{% for c in configs %}
+<li>{{ c.column_label }}{% if c.is_required %} <strong>(required)</strong>{% endif %}</li>
+{% endfor %}
+</ul>
+</details>
+{% endif %}
+
+{% if preview_rows %}
+<p>
+<span class="badge bg-success">{{ ready_count }} ready</span>
+<span class="badge bg-info text-dark">{{ warning_count }} with optional fields skipped</span>
+<span class="badge bg-warning">{{ skip_count }} skipped</span>
+{% if has_errors %}<span class="badge bg-danger">some rows blocked (missing required fields)</span>{% endif %}
+</p>
+
+<div class="table-responsive">
+<table class="table table-sm table-bordered">
+<thead>
+<tr>
+<th>Row</th><th>Status</th>
+{% for c in configs %}<th>{{ c.display_name }}</th>{% endfor %}
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+{% for row in preview_rows %}
+<tr class="{% if row.status == 'ERROR' %}table-danger{% elif row.status == 'SKIP' %}table-warning{% elif row.status == 'WARNING' %}table-info{% else %}table-success{% endif %}">
+<td>{{ row.row_number }}</td>
+<td>{{ row.status }}</td>
+{% for c in configs %}<td>{{ row.display_values|dict_get:c.display_name }}</td>{% endfor %}
+<td>
+{% for e in row.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+{% for w in row.warnings %}<div class="text-muted small">{{ w }}</div>{% endfor %}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+{% if ready_count > 0 %}
+<form method="post">
+{% csrf_token %}
+<input type="hidden" name="action" value="confirm_import">
+<button type="submit" class="btn btn-primary">Confirm Import ({{ ready_count }})</button>
+</form>
+{% endif %}
+{% if has_errors %}
+<p class="text-danger">Some rows are missing a required field and won't be imported. Fix and re-upload those specific rows, or go ahead with everything else above.</p>
+{% endif %}
+
+<a href="{% url 'employeeBulkImport' %}" class="btn btn-link mt-2">Start Over</a>
+{% endif %}
+</div>
+{% endblock %}

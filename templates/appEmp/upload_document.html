@@ -24,13 +24,13 @@
             </div>
         </div>
 
-        {% if messages %}
-            {% for message in messages %}
-                <div class="sky-auth-error-banner">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="sky-alert sky-alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
 
         <div class="sky-panel">
 
@@ -98,7 +98,7 @@
                             {{ form.file }}
 
                             <div class="sky-help-text">
-                                PDF, JPG, PNG or DOCX. Max 5MB.
+                                PDF, JPG, PNG or DOCX. Max 200 Kb.
                             </div>
 
                             {% for error in form.file.errors %}
@@ -169,4 +169,5 @@
 
     </div>
 </div>
+
 {% endblock %}

@@ -60,10 +60,27 @@ urlpatterns = [
         update_attendance_view,
         name="editAttendance",
     ),
+        path(
+        "attendance/<uuid:uuid>/edit/",
+        update_attendance_view,
+        name="editAttendance",
+    ),
+
     path(
+        "attendance/<uuid:uuid>/location/",
+        views.attendance_location_view,
+        name="attendanceLocation",
+    ),
+    path(
+
     "holidays/optional/apply/",
     views.optional_holiday_apply_view,
     name="optionalHolidayApply",
+),
+path(
+    "employees/bulk-import/",
+    views.employee_bulk_import_view,
+    name="employeeBulkImport",
 ),
 
 

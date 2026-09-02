@@ -143,6 +143,16 @@
                         View Employees
                     </a>
 
+<a
+    href="{% url 'employeeBulkImport' %}"
+    class="hr-sidebar-sub-link
+    {% if request.resolver_match.url_name == 'employeeBulkImport' %}
+        active
+    {% endif %}"
+>
+    Bulk Import
+</a>
+
                 </div>
 
             </div>

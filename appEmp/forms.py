@@ -90,7 +90,8 @@ from .models import (
     WorkSchedule,
     OptionalHolidayRequest,
     Holiday,
-    empDocument, DocumentTypeMaster
+    empDocument, DocumentTypeMaster,
+    compress_image_if_needed
 )
 from django import forms
 
@@ -1518,13 +1519,30 @@ class OptionalHolidayRequestForm(forms.ModelForm):
 
 class empDocumentForm(forms.ModelForm):
     class Meta:
-        model = empDocument
+        model = empDocument  # noqa: F821 (defined in your models.py)
         fields = ["document_type", "file"]
+ 
+    def clean_file(self):
+        file = self.cleaned_data["file"]
+        original_size = file.size
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["document_type"].queryset = DocumentTypeMaster.objects.filter(is_active=True)
+        compressed_file = compress_image_if_needed(file)
 
+        if compressed_file.size != original_size:
+            self.compression_info = {
+                "original_kb": original_size / 1024,
+                "compressed_kb": compressed_file.size / 1024,
+            }
+        else:
+            self.compression_info = None
+
+        return compressed_file
+
+class EmployeeBulkImportForm(forms.Form):
+    file = forms.FileField(
+        help_text="Upload the onboarding .xlsx sheet.",
+        widget=forms.ClearableFileInput(attrs={"class": "form-control"}),
+    )
 
 class HrDocumentUploadForm(empDocumentForm):
     employee = forms.ModelChoiceField(

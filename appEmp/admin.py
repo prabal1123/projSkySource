@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import empProfile, Attendance , ShiftMaster, DesignationMaster,AttendanceException,LeaveTypeMaster,LeaveBalance,LeaveRequest
 from .models import Holiday,WorkSchedule
 from .models import DocumentTypeMaster, empDocument,WhatsAppTicket
+from .models import EmployeeImportFieldConfig
 
 # admin.site.register(empProfile)
 @admin.register(empProfile)
@@ -31,6 +32,16 @@ class EmployeeAdmin(admin.ModelAdmin):
     )
 
 
+@admin.register(EmployeeImportFieldConfig)
+class EmployeeImportFieldConfigAdmin(admin.ModelAdmin):
+    list_display = (
+        "order", "column_label", "field_key", "display_name",
+        "target_model", "data_type", "is_required", "is_active",
+    )
+    list_display_links = ("field_key",)
+    list_editable = ("column_label", "is_required", "is_active", "order")
+    ordering = ("order",)
+    
 
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):

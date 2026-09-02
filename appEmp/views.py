@@ -62,6 +62,7 @@ from .services import (
     finalize_employee_exit,
     initiate_termination,
 )
+
 import calendar
 from datetime import date
 
@@ -105,8 +106,162 @@ from appEmp.whatsapp_router import (
     get_attendance_reply,
     get_payroll_reply,
 )
+import re
+from .models import EmployeeImportFieldConfig
+from .forms import EmployeeBulkImportForm
 
 from django.views.decorators.cache import never_cache
+
+def _add_compression_message(request, form):
+    info = getattr(form, "compression_info", None)
+    if info:
+        messages.info(
+            request,
+            f"Image compressed from {info['original_kb']:.0f}KB to "
+            f"{info['compressed_kb']:.0f}KB to meet the 200KB limit."
+        )
+
+
+# def _parse_date_cell(raw):
+#     if raw in (None, ""):
+#         return None, None
+#     if isinstance(raw, datetime):
+#         return raw.date(), None
+#     if isinstance(raw, date):
+#         return raw, None
+#     for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y"):
+#         try:
+#             return datetime.strptime(str(raw).strip(), fmt).date(), None
+#         except ValueError:
+#             continue
+#     return None, f"Unrecognized date: {raw!r}"
+
+
+# def _clean_import_value(config, raw_value):
+#     if config.data_type == "DATE":
+#         parsed, err = _parse_date_cell(raw_value)
+#         if err:
+#             return None, err
+#         if config.is_required and parsed is None:
+#             return None, f"{config.display_name} is required."
+#         return parsed, None
+
+#     value = "" if raw_value is None else str(raw_value).strip()
+
+#     if config.is_required and not value:
+#         return None, f"{config.display_name} is required."
+
+#     if not value:
+#         return None, None
+
+#     if config.data_type in ("TEXT", "PHONE"):
+#         return value, None
+
+#     if config.data_type == "FULL_NAME":
+#         parts = value.split(" ", 1)
+#         return {"first_name": parts[0], "last_name": parts[1] if len(parts) > 1 else ""}, None
+
+#     if config.data_type == "EMAIL":
+#         cleaned = value.lower()
+#         if "@" not in cleaned:
+#             return None, f"{config.display_name} is not a valid email."
+#         return cleaned, None
+
+#     if config.data_type == "REGEX":
+#         test_value = value.upper() if config.field_key == "pan_no" else value
+#         if config.validation_regex and not re.match(config.validation_regex, test_value):
+#             return None, config.validation_message or f"{config.display_name} format is invalid."
+#         return test_value, None
+
+#     if config.data_type == "DESIGNATION_FK":
+#         return value, None
+
+#     return value, None
+
+DATE_TOKEN_RE = re.compile(r"\d{1,2}[./-]\d{1,2}[./-]\d{4}|\d{4}[./-]\d{1,2}[./-]\d{1,2}")
+
+
+def _parse_date_cell(raw):
+    if raw in (None, ""):
+        return None, None
+    if isinstance(raw, datetime):
+        return raw.date(), None
+    if isinstance(raw, date):
+        return raw, None
+
+    text = str(raw).strip()
+    match = DATE_TOKEN_RE.search(text)
+    candidate = match.group(0) if match else text.splitlines()[0].strip()
+
+    for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%d.%m.%Y", "%Y.%m.%d"):
+        try:
+            return datetime.strptime(candidate, fmt).date(), None
+        except ValueError:
+            continue
+    return None, f"Unrecognized date: {raw!r}"
+
+
+def _clean_import_value(config, raw_value):
+    if isinstance(raw_value, float) and raw_value.is_integer():
+        raw_value = int(raw_value)
+
+    if config.data_type == "DATE":
+        parsed, err = _parse_date_cell(raw_value)
+        if err:
+            if config.is_required:
+                return None, err
+            return None, None
+        if config.is_required and parsed is None:
+            return None, f"{config.display_name} is required."
+        return parsed, None
+
+    value = "" if raw_value is None else str(raw_value).strip()
+
+    if config.is_required and not value:
+        return None, f"{config.display_name} is required."
+
+    if not value:
+        return None, None
+
+    if config.data_type in ("TEXT", "PHONE"):
+        return value, None
+
+    if config.data_type == "FULL_NAME":
+        parts = value.split(" ", 1)
+        return {"first_name": parts[0], "last_name": parts[1] if len(parts) > 1 else ""}, None
+
+    if config.data_type == "EMAIL":
+        cleaned = value.lower()
+        if "@" not in cleaned:
+            return None, f"{config.display_name} is not a valid email."
+        return cleaned, None
+
+    if config.data_type == "REGEX":
+        test_value = re.sub(r"\s+", "", value.splitlines()[0])
+        if config.field_key == "pan_no":
+            test_value = test_value.upper()
+        elif config.field_key == "aadhar_no":
+            test_value = re.sub(r"\D", "", test_value)
+        if config.validation_regex and not re.match(config.validation_regex, test_value):
+            return None, (
+                config.validation_message
+                or f"{config.display_name} format is invalid ({value!r})."
+            )
+        return test_value, None
+
+    if config.data_type == "DESIGNATION_FK":
+        return value, None
+
+    return value, None
+
+def _find_header_row(rows, configs):
+    required_labels = {c.column_label.strip().lower() for c in configs if c.is_required}
+    for i, row in enumerate(rows[:5]):
+        cells = {str(c).strip().lower() for c in row if c is not None}
+        if required_labels and required_labels.issubset(cells):
+            return i, [str(c).strip() if c is not None else "" for c in row]
+    return None, None
+
 
 def user_has_permission(user, permission_codename):
     return (
@@ -126,6 +281,179 @@ def can_review_leave(user):
 def can_review_attendance_exception(user):
     return user_has_permission(user, "review_attendance_exception")
 
+
+@login_required
+@permission_required("appEmp.manage_employees", raise_exception=True)
+def employee_bulk_import_view(request):
+    configs = list(
+        EmployeeImportFieldConfig.objects.filter(is_active=True).order_by("order")
+    )
+
+    preview_rows = []
+    has_errors = False
+    ready_count = 0
+    skip_count = 0
+    warning_count = 0
+
+    # ---------------- CONFIRM ----------------
+    if request.method == "POST" and request.POST.get("action") == "confirm_import":
+        import_rows = request.session.get("employee_import_rows", [])
+        if not import_rows:
+            messages.error(request, "No validated employees are available for import.")
+            return redirect("employeeBulkImport")
+
+        created_count, skipped_count = 0, 0
+
+        with transaction.atomic():
+            for row in import_rows:
+                email = row["user_fields"].get("email")
+
+                if not email or User.objects.filter(email__iexact=email).exists():
+                    skipped_count += 1
+                    continue
+
+                user = User.objects.create(
+                    username=email,
+                    email=email,
+                    first_name=row["user_fields"].get("first_name", ""),
+                    last_name=row["user_fields"].get("last_name", ""),
+                )
+                user.set_unusable_password()
+                user.save()  # signal auto-creates empProfile
+
+                profile = empProfile.objects.get(user=user)
+
+                for key, value in row["profile_fields"].items():
+                    if key == "designation" and value:
+                        designation, _ = DesignationMaster.objects.get_or_create(name=value)
+                        profile.designation = designation
+                    elif key in ("date_hired", "avsec_training_date", "police_verification_date"):
+                        setattr(profile, key, datetime.strptime(value, "%Y-%m-%d").date() if value else None)
+                    else:
+                        setattr(profile, key, value or None)
+
+                profile.save()
+                created_count += 1
+
+        request.session.pop("employee_import_rows", None)
+        messages.success(
+            request,
+            f"{created_count} employee(s) imported successfully. {skipped_count} duplicate(s) skipped."
+        )
+        return redirect("employeeList")
+
+    # ---------------- PREVIEW ----------------
+    if request.method == "POST":
+        form = EmployeeBulkImportForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            uploaded_file = form.cleaned_data["file"]
+            try:
+                workbook = load_workbook(uploaded_file, data_only=True)
+                worksheet = workbook.active
+                rows = [list(r) for r in worksheet.iter_rows(values_only=True)]
+
+                header_idx, headers = _find_header_row(rows, configs)
+
+                if header_idx is None:
+                    required_labels = ", ".join(c.column_label for c in configs if c.is_required)
+                    messages.error(
+                        request,
+                        f"Could not find the expected header row. Required columns: {required_labels}."
+                    )
+                else:
+                    col_index = {h.strip().lower(): i for i, h in enumerate(headers) if h}
+                    seen_emails = set()
+
+                    for row_number, row in enumerate(rows[header_idx + 1:], start=header_idx + 2):
+                        if not any(c is not None and str(c).strip() for c in row):
+                            continue
+
+                        row_blocking_errors, row_soft_errors, row_warnings = [], [], []
+                        user_fields, profile_fields, display_values = {}, {}, {}
+
+                        for config in configs:
+                            idx = col_index.get(config.column_label.strip().lower())
+                            raw_value = row[idx] if idx is not None and idx < len(row) else None
+
+                            value, error = _clean_import_value(config, raw_value)
+
+                            if error or isinstance(value, dict):
+                                display_values[config.display_name] = raw_value
+                            else:
+                                display_values[config.display_name] = value
+
+                            if error:
+                                if config.is_required:
+                                    row_blocking_errors.append(error)
+                                else:
+                                    row_soft_errors.append(f"{error} -- skipped, row still imported.")
+                                continue
+                            if value is None:
+                                continue
+
+                            if config.data_type == "FULL_NAME":
+                                user_fields.update(value)
+                            elif config.target_model == "USER":
+                                user_fields[config.field_key] = value
+                            elif config.data_type == "DATE":
+                                profile_fields[config.field_key] = value.isoformat()
+                            else:
+                                profile_fields[config.field_key] = value
+
+                        email = user_fields.get("email", "")
+                        is_duplicate = False
+
+                        if email and not row_blocking_errors:
+                            if email in seen_emails:
+                                is_duplicate = True
+                                row_warnings.append("Duplicate email inside uploaded file -- will be skipped.")
+                            elif User.objects.filter(email__iexact=email).exists():
+                                is_duplicate = True
+                                row_warnings.append("An account with this email already exists -- will be skipped.")
+                            else:
+                                seen_emails.add(email)
+
+                        if row_blocking_errors:
+                            status = "ERROR"
+                            has_errors = True
+                        elif is_duplicate:
+                            status = "SKIP"
+                            skip_count += 1
+                        elif row_soft_errors:
+                            status = "WARNING"
+                            ready_count += 1
+                            warning_count += 1
+                        else:
+                            status = "READY"
+                            ready_count += 1
+
+                        preview_rows.append({
+                            "row_number": row_number,
+                            "display_values": display_values,
+                            "errors": row_blocking_errors,
+                            "warnings": row_warnings + row_soft_errors,
+                            "status": status,
+                            "_user_fields": user_fields,
+                            "_profile_fields": profile_fields,
+                        })
+
+                    request.session["employee_import_rows"] = [
+                        {"user_fields": r["_user_fields"], "profile_fields": r["_profile_fields"]}
+                        for r in preview_rows if r["status"] in ("READY", "WARNING")
+                    ]
+
+            except Exception as exc:
+                request.session.pop("employee_import_rows", None)
+                messages.error(request, f"Could not read the uploaded file: {exc}")
+    else:
+        form = EmployeeBulkImportForm()
+
+    return render(request, "appEmp/employee_bulk_import.html", {
+        "form": form, "preview_rows": preview_rows, "configs": configs,
+        "has_errors": has_errors, "ready_count": ready_count,
+        "skip_count": skip_count, "warning_count": warning_count,
+    })
 
 @login_required
 def empList_view(request):
@@ -828,6 +1156,12 @@ def dashboard_view(request):
                 status="PENDING"
             ).count()
         )
+        # Document Review — pending verification
+        pending_document_reviews_count = (
+            empDocument.objects.filter(
+                is_verified=False
+            ).count()
+        )
 
         current_year = (
             today.year
@@ -853,6 +1187,7 @@ def dashboard_view(request):
             + pending_manager_noc_count
             + pending_finance_noc_count
             + ready_for_finalization_count
+            + pending_document_reviews_count
         )
 
         # -----------------------------------------------------
@@ -915,6 +1250,9 @@ def dashboard_view(request):
 
             "verification_stats":
                 verification_stats,
+
+            "pending_document_reviews_count":
+                pending_document_reviews_count,
 
             "attendance_summary":
                 attendance_summary,
@@ -1354,6 +1692,226 @@ def _get_employee_day_context(employee, target_date):
     }
 
 
+
+# @login_required
+# def checkin_checkout_view(request):
+#     profile = get_object_or_404(
+#         empProfile.objects.select_related(
+#             "shift",
+#             "work_schedule",
+#         ),
+#         user=request.user,
+#     )
+
+#     now = timezone.localtime()
+
+#     # --------------------------------------------------
+#     # Resolve attendance date
+#     # Handles night shifts crossing midnight.
+#     # --------------------------------------------------
+#     attendance_date = _get_attendance_date(
+#         profile,
+#         now,
+#     )
+
+#     # --------------------------------------------------
+#     # Resolve holiday / weekly off / leave
+#     # for the actual attendance date.
+#     # --------------------------------------------------
+#     day_context = _get_employee_day_context(
+#         profile,
+#         attendance_date,
+#     )
+
+#     holiday = day_context["holiday"]
+
+#     is_weekly_off = day_context[
+#         "is_weekly_off"
+#     ]
+
+#     approved_optional_holiday = day_context[
+#         "approved_optional_holiday"
+#     ]
+
+#     approved_leave = day_context[
+#         "approved_leave"
+#     ]
+
+#     # ==================================================
+#     # MANDATORY HOLIDAY
+#     # ==================================================
+
+#     if holiday:
+#         messages.info(
+#             request,
+#             (
+#                 f"{holiday.name} is a mandatory holiday. "
+#                 "Attendance is not required."
+#             ),
+#         )
+
+#         return redirect("dashboard")
+
+#     # ==================================================
+#     # WEEKLY OFF
+#     # ==================================================
+
+#     if is_weekly_off:
+#         messages.info(
+#             request,
+#             "This is your weekly off. Attendance is not required.",
+#         )
+
+#         return redirect("dashboard")
+
+#     # ==================================================
+#     # APPROVED OPTIONAL HOLIDAY
+#     # ==================================================
+
+#     if approved_optional_holiday:
+#         messages.info(
+#             request,
+#             (
+#                 "You have an approved optional holiday: "
+#                 f"{approved_optional_holiday.holiday.name}. "
+#                 "Attendance is not required."
+#             ),
+#         )
+
+#         return redirect(
+#             "dashboard"
+#         )
+
+#     # ==================================================
+#     # APPROVED FULL-DAY LEAVE
+#     # ==================================================
+
+#     if (
+#         approved_leave
+#         and approved_leave.duration_type == "FULL_DAY"
+#     ):
+#         messages.info(
+#             request,
+#             (
+#                 "You have approved "
+#                 f"{approved_leave.leave_type.name} "
+#                 "for this attendance date."
+#             ),
+#         )
+
+#         return redirect("dashboard")
+
+#     # ==================================================
+#     # GET / CREATE ATTENDANCE
+#     # ==================================================
+
+#     attendance, _ = Attendance.objects.get_or_create(
+#         employee=profile,
+#         date=attendance_date,
+#     )
+
+#     # ==================================================
+#     # CHECK IN
+#     # ==================================================
+
+#     if attendance.check_in is None:
+
+#         # ----------------------------------------------
+#         # LOCATION REQUIRED FOR CHECK-IN
+#         # ----------------------------------------------
+
+#         latitude = request.POST.get("latitude")
+#         longitude = request.POST.get("longitude")
+
+#         if not latitude or not longitude:
+#             messages.info(
+#                 request,
+#                 "Please allow location and refresh the page.",
+#             )
+
+#             return redirect("dashboard")
+
+#         try:
+#             latitude = float(latitude)
+#             longitude = float(longitude)
+#         except (TypeError, ValueError):
+#             messages.info(
+#                 request,
+#                 "Please allow location and refresh the page.",
+#             )
+
+#             return redirect("dashboard")
+
+#         attendance.check_in = now
+#         attendance.check_in_latitude = latitude
+#         attendance.check_in_longitude = longitude
+
+#         # ----------------------------------------------
+#         # HALF-DAY APPROVED LEAVE
+#         # ----------------------------------------------
+
+#         if (
+#             approved_leave
+#             and approved_leave.duration_type
+#             in [
+#                 "FIRST_HALF",
+#                 "SECOND_HALF",
+#             ]
+#         ):
+#             attendance.status = "HALF_DAY"
+
+#         # ----------------------------------------------
+#         # NORMAL WORKING DAY
+#         # ----------------------------------------------
+
+#         else:
+#             attendance.status = (
+#                 "LATE"
+#                 if _is_employee_late(
+#                     profile,
+#                     now,
+#                 )
+#                 else "PRESENT"
+#             )
+
+#         attendance.save()
+
+#         messages.success(
+#             request,
+#             (
+#                 f"Checked in at "
+#                 f"{now.strftime('%I:%M %p')}."
+#             ),
+#         )
+
+#     # ==================================================
+#     # CHECK OUT
+#     # ==================================================
+
+#     elif attendance.check_out is None:
+#         attendance.check_out = now
+#         attendance.save()
+
+#         messages.success(
+#             request,
+#             (
+#                 f"Checked out at "
+#                 f"{now.strftime('%I:%M %p')}."
+#             ),
+#         )
+
+#     # ==================================================
+#     # ALREADY COMPLETED
+#     # ==================================================
+
+#     else:
+#         messages.info(
+#             request,
+#             "You've already checked in and out for this shift.",
+#         )
+
+#     return redirect("dashboard")
+
 @login_required
 def checkin_checkout_view(request):
     profile = get_object_or_404(
@@ -1384,9 +1942,6 @@ def checkin_checkout_view(request):
         attendance_date,
     )
 
-    # holiday = day_context["holiday"]
-    # is_weekly_off = day_context["is_weekly_off"]
-    # approved_leave = day_context["approved_leave"]
     holiday = day_context["holiday"]
 
     is_weekly_off = day_context[
@@ -1429,8 +1984,8 @@ def checkin_checkout_view(request):
         return redirect("dashboard")
 
     # ==================================================
-# APPROVED OPTIONAL HOLIDAY
-# ==================================================
+    # APPROVED OPTIONAL HOLIDAY
+    # ==================================================
 
     if approved_optional_holiday:
         messages.info(
@@ -1479,7 +2034,36 @@ def checkin_checkout_view(request):
     # ==================================================
 
     if attendance.check_in is None:
+
+        # ----------------------------------------------
+        # LOCATION REQUIRED FOR CHECK-IN
+        # ----------------------------------------------
+
+        latitude = request.POST.get("latitude")
+        longitude = request.POST.get("longitude")
+
+        if not latitude or not longitude:
+            messages.info(
+                request,
+                "Please allow location and refresh the page.",
+            )
+
+            return redirect("dashboard")
+
+        try:
+            latitude = float(latitude)
+            longitude = float(longitude)
+        except (TypeError, ValueError):
+            messages.info(
+                request,
+                "Please allow location and refresh the page.",
+            )
+
+            return redirect("dashboard")
+
         attendance.check_in = now
+        attendance.check_in_latitude = latitude
+        attendance.check_in_longitude = longitude
 
         # ----------------------------------------------
         # HALF-DAY APPROVED LEAVE
@@ -1524,16 +2108,42 @@ def checkin_checkout_view(request):
     # ==================================================
 
     elif attendance.check_out is None:
+
+        # ----------------------------------------------
+        # LOCATION OPTIONAL FOR CHECK-OUT (SOFT CAPTURE)
+        # Never blocks checkout if location is missing.
+        # ----------------------------------------------
+
+        latitude = request.POST.get("latitude")
+        longitude = request.POST.get("longitude")
+
+        if latitude and longitude:
+            try:
+                attendance.check_out_latitude = float(latitude)
+                attendance.check_out_longitude = float(longitude)
+            except (TypeError, ValueError):
+                pass
+
         attendance.check_out = now
         attendance.save()
 
-        messages.success(
-            request,
-            (
-                f"Checked out at "
-                f"{now.strftime('%I:%M %p')}."
-            ),
-        )
+        if attendance.check_out_latitude is None or attendance.check_out_longitude is None:
+            messages.warning(
+                request,
+                (
+                    f"Checked out at "
+                    f"{now.strftime('%I:%M %p')} "
+                    "(location not shared)."
+                ),
+            )
+        else:
+            messages.success(
+                request,
+                (
+                    f"Checked out at "
+                    f"{now.strftime('%I:%M %p')}."
+                ),
+            )
 
     # ==================================================
     # ALREADY COMPLETED
@@ -4266,6 +4876,7 @@ def manager_clearance_review_view(request, uuid):
     "appEmp.review_finance_noc",
     raise_exception=True,
 )
+
 def finance_clearance_queue_view(request):
     pending_approvals = (
         ClearanceApproval.objects
@@ -4298,6 +4909,7 @@ def finance_clearance_queue_view(request):
     "appEmp.review_finance_noc",
     raise_exception=True,
 )
+
 def finance_clearance_review_view(request, uuid):
     approval = get_object_or_404(
         ClearanceApproval.objects.select_related(
@@ -4372,6 +4984,7 @@ def finance_clearance_review_view(request, uuid):
     "appEmp.finalize_employee_exit",
     raise_exception=True,
 )
+
 def ready_for_finalization_view(request):
     exit_requests = (
         EmployeeExitRequest.objects
@@ -4409,6 +5022,7 @@ def ready_for_finalization_view(request):
     "appEmp.finalize_employee_exit",
     raise_exception=True,
 )
+
 def finalize_employee_exit_view(request, uuid):
     exit_request = get_object_or_404(
         EmployeeExitRequest.objects.select_related(
@@ -5413,6 +6027,8 @@ def upload_document(request):
             doc = form.save(commit=False)
             doc.employee = form.cleaned_data["employee"] if can_upload_for_others else employee
             doc.save()
+            _add_compression_message(request, form)
+            return redirect("upload_document")
             return redirect("upload_document")
     else:
         form = FormClass()
@@ -5482,6 +6098,8 @@ def profile_document_upload(request, uuid):
             doc = form.save(commit=False)
             doc.employee = profile
             doc.save()
+            _add_compression_message(request, form)
+            messages.success(request, "Document uploaded successfully.")
             messages.success(request, "Document uploaded successfully.")
         else:
             for field, errors in form.errors.items():
@@ -5489,6 +6107,41 @@ def profile_document_upload(request, uuid):
                     messages.error(request, f"{field}: {error}")
 
     return redirect("editProfile", uuid=profile.uuid)
+
+
+@login_required
+def attendance_location_view(request, uuid):
+    if not user_has_permission(request.user, "manage_attendance"):
+        messages.error(
+            request,
+            "You don't have permission to do that."
+        )
+        return redirect("dashboard")
+
+    attendance = get_object_or_404(
+        Attendance.objects.select_related("employee__user"),
+        uuid=uuid,
+    )
+
+    has_location = (
+        attendance.check_in_latitude is not None
+        and attendance.check_in_longitude is not None
+    )
+
+    has_checkout_location = (
+        attendance.check_out_latitude is not None
+        and attendance.check_out_longitude is not None
+    )
+
+    return render(
+        request,
+        "appEmp/attendance_location.html",
+        {
+            "attendance": attendance,
+            "has_location": has_location,
+            "has_checkout_location": has_checkout_location,
+        },
+    )
 
 @csrf_exempt
 def whatsapp_webhook(request):

@@ -20,15 +20,15 @@
     --card: #FFFFFF;
     --border: #E6E8EC;
     /* Ensure all text headers inside the employee punch card are white */
-.sky-dashboard .employee-punch-card h2,
-.sky-dashboard .employee-punch-card p {
+        .sky-dashboard .employee-punch-card h2,
+        .sky-dashboard .employee-punch-card p {
     color: #ffffff !important;
 }
 
     font-family: 'Inter', -apple-system, sans-serif;
     color: var(--ink);
     background: var(--bg);
-    padding: 2.5rem 0 3.5rem;
+    padding: 1.25rem 0 1.5rem;  
     
 }
 
@@ -47,7 +47,7 @@
 .sky-header {
     border-top: 2px solid var(--navy);
     padding-top: 0.85rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -470,7 +470,7 @@
 }
 
 .attendance-weekday {
-    padding: 12px 8px;
+    padding: 6px 8px; 
     text-align: center;
     font-size: 12px;
     font-weight: 700;
@@ -796,7 +796,7 @@ a.sky-action-card:hover {
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
 }
 
 .attendance-filter-pill {
@@ -1005,4 +1005,98 @@ a.sky-action-card:hover {
 .employee-punch-card h2,
 .employee-punch-card p {
     color: #efecd8 !important;
+}
+.sky-alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+    border: 1px solid transparent;
+}
+
+.sky-alert-error {
+    background-color: #fdecea;
+    border-color: #f5c2c0;
+    color: #a31c1c;
+}
+
+.sky-alert-success {
+    background-color: #e9f7ef;
+    border-color: #b7e3c9;
+    color: #1e6b3c;
+}
+
+.sky-alert-info {
+    background-color: #eaf3fb;
+    border-color: #bcdcf5;
+    color: #1e332a;
+}
+
+.sky-alert-warning {
+    background-color: #fff8e6;
+    border-color: #f3dd9e;
+    color: #8a6d1a;
+}
+
+
+/* =========================================================
+   COMPACT CALENDAR VIEW ENFORCEMENT
+========================================================= */
+.attendance-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    border-top: 1px solid #e2e8f0;
+    border-left: 1px solid #e2e8f0;
+}
+
+.attendance-day {
+    min-height: 72px;
+    max-height: 90px;
+    padding: 6px;
+    background: #ffffff;
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    overflow-y: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.attendance-day-number {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 1px;
+}
+
+.attendance-day-status {
+    margin-top: 2px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.attendance-day-time {
+    margin-top: 1px;
+    font-size: 9px;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.attendance-exception-link,
+.attendance-request-pending {
+    margin-top: 2px;
+    padding: 2px 4px;
+    font-size: 9px;
+    font-weight: 600;
+    border-radius: 4px;
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Check-in Location | SkySource{% endblock %}
+
+
+{% block extra_css %}
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/dashboard.css' %}"
+>
+
+<link
+    rel="stylesheet"
+    href="{% static 'css/hr_dashboard.css' %}"
+>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="hr-dashboard-shell">
+
+    <div class="container hr-dashboard-container">
+
+        <section class="hr-welcome">
+
+            <div>
+
+                <span class="hr-kicker">
+                    ATTENDANCE / CHECK-IN LOCATION
+                </span>
+
+                <h1>
+
+                    {{ attendance.employee.user.get_full_name|default:attendance.employee.user.username }}
+
+                </h1>
+
+                <p>
+                    {{ attendance.date|date:"d M Y" }}
+                    &middot;
+                    <span class="attendance-status {{ attendance.status|lower }}">
+                        {{ attendance.get_status_display }}
+                    </span>
+                </p>
+
+            </div>
+
+
+            <div class="hr-header-side">
+
+                <a
+                    href="{% url 'dashboard' %}"
+                    class="hr-text-link"
+                >
+                    ← Back to dashboard
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <article class="hr-card hr-wide-card">
+
+            <div class="hr-card-header">
+
+                <div>
+
+                    <span class="hr-section-label">
+                        CHECK-IN
+                    </span>
+
+                    <h2>
+                        Location captured at check-in
+                    </h2>
+
+                </div>
+
+                {% if attendance.check_in %}
+
+                    <span class="hr-record-count">
+                        {{ attendance.check_in|time:"H:i" }}
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+            {% if has_location %}
+
+                <div class="location-map-wrapper" style="margin-top: 16px;">
+
+                    <iframe
+                        width="100%"
+                        height="420"
+                        style="border:0; border-radius: 10px;"
+                        loading="lazy"
+                        allowfullscreen
+                        referrerpolicy="no-referrer-when-downgrade"
+                        src="https://maps.google.com/maps?q={{ attendance.check_in_latitude }},{{ attendance.check_in_longitude }}&z=16&output=embed"
+                    >
+                    </iframe>
+
+                </div>
+
+
+                <div class="hr-compact-list" style="margin-top: 16px;">
+
+                    <div class="hr-compact-row">
+
+                        <div>
+
+                            <strong>
+                                Coordinates
+                            </strong>
+
+                            <span>
+                                {{ attendance.check_in_latitude }}, {{ attendance.check_in_longitude }}
+                            </span>
+
+                        </div>
+
+
+                        <a
+                            href="https://www.google.com/maps?q={{ attendance.check_in_latitude }},{{ attendance.check_in_longitude }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="hr-text-link"
+                        >
+                            Open in Google Maps →
+                        </a>
+
+                    </div>
+
+                </div>
+
+
+            {% else %}
+
+                <div class="hr-empty-state" style="margin-top: 16px;">
+                    No location was recorded for this check-in.
+                </div>
+
+            {% endif %}
+
+        </article>
+
+
+        <article class="hr-card hr-wide-card" style="margin-top: 24px;">
+
+            <div class="hr-card-header">
+
+                <div>
+
+                    <span class="hr-section-label">
+                        CHECK-OUT
+                    </span>
+
+                    <h2>
+                        Location captured at check-out
+                    </h2>
+
+                </div>
+
+                {% if attendance.check_out %}
+
+                    <span class="hr-record-count">
+                        {{ attendance.check_out|time:"H:i" }}
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+            {% if has_checkout_location %}
+
+                <div class="location-map-wrapper" style="margin-top: 16px;">
+
+                    <iframe
+                        width="100%"
+                        height="420"
+                        style="border:0; border-radius: 10px;"
+                        loading="lazy"
+                        allowfullscreen
+                        referrerpolicy="no-referrer-when-downgrade"
+                        src="https://maps.google.com/maps?q={{ attendance.check_out_latitude }},{{ attendance.check_out_longitude }}&z=16&output=embed"
+                    >
+                    </iframe>
+
+                </div>
+
+
+                <div class="hr-compact-list" style="margin-top: 16px;">
+
+                    <div class="hr-compact-row">
+
+                        <div>
+
+                            <strong>
+                                Coordinates
+                            </strong>
+
+                            <span>
+                                {{ attendance.check_out_latitude }}, {{ attendance.check_out_longitude }}
+                            </span>
+
+                        </div>
+
+
+                        <a
+                            href="https://www.google.com/maps?q={{ attendance.check_out_latitude }},{{ attendance.check_out_longitude }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="hr-text-link"
+                        >
+                            Open in Google Maps →
+                        </a>
+
+                    </div>
+
+                </div>
+
+
+            {% elif attendance.check_out %}
+
+                <div class="hr-empty-state" style="margin-top: 16px;">
+                    Checkout location was not shared by the employee.
+                </div>
+
+            {% else %}
+
+                <div class="hr-empty-state" style="margin-top: 16px;">
+                    Employee has not checked out yet.
+                </div>
+
+            {% endif %}
+
+        </article>
+
+    </div>
+
+</div>
+
+{% endblock %}

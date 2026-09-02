@@ -7,6 +7,10 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 import calendar
+import io
+from PIL import Image, UnidentifiedImageError
+from django.core.files.uploadedfile import InMemoryUploadedFile
+
 
 class EmailOTP(models.Model):
     email = models.EmailField(db_index=True)
@@ -43,6 +47,254 @@ def add_calendar_months(source_date, months):
     )
 
 
+
+# class empProfile(models.Model):
+#     uuid = models.UUIDField(
+#         default=uuid.uuid4,
+#         unique=True,
+#         editable=False
+#     )
+
+#     user = models.OneToOneField(
+#         User,
+#         on_delete=models.CASCADE
+#     )
+
+
+#     manager = models.ForeignKey(
+#         "self",
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         blank=True,
+#         related_name="team_members",
+#         help_text="Reporting manager or immediate superior of this employee."
+#     )
+
+#     designation = models.ForeignKey(
+#         "DesignationMaster",
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         blank=True,
+#         related_name="employees"
+#     )
+
+#     shift = models.ForeignKey(
+#         "ShiftMaster",
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         blank=True,
+#         related_name="employees"
+#     )
+#     work_schedule = models.ForeignKey(
+#     "WorkSchedule",
+#     on_delete=models.SET_NULL,
+#     null=True,
+#     blank=True,
+#     related_name="employees"
+# )
+
+#     is_default_manager = models.BooleanField(
+#         default=False,
+#         help_text=(
+#             "New employees will automatically report to this employee. "
+#             "Only one active employee can be the default manager."
+#         )
+#     )
+
+#     phone_number = models.CharField(
+#         max_length=15,
+#         null=True,
+#         blank=True
+#     )
+
+#     position = models.CharField(
+#         max_length=50,
+#         null=True,
+#         blank=True
+#     )
+
+#     date_hired = models.DateField(
+#         null=True,
+#         blank=True
+#     )
+
+#     leave_eligible_from = models.DateField(
+#     null=True,
+#     blank=True,
+#     help_text=(
+#         "Date from which the employee becomes eligible "
+#         "to use the leave facility."
+#         ),
+#     )
+
+#     address = models.TextField(
+#         null=True,
+#         blank=True
+#     )
+
+#     state = models.CharField(
+#         max_length=30,
+#         null=True,
+#         blank=True
+#     )
+
+#     zip_code = models.CharField(
+#         max_length=10,
+#         null=True,
+#         blank=True
+#     )
+
+
+#     is_address_verified = models.BooleanField(default=False)
+#     is_email_verified = models.BooleanField(default=False)
+#     is_phone_verified = models.BooleanField(default=False)
+#     is_background_check_completed = models.BooleanField(default=False)
+#     is_aadhar_verified = models.BooleanField(default=False)
+#     is_active = models.BooleanField(default=True)
+
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+#     class Meta:
+#         verbose_name = "Employee"
+#         verbose_name_plural = "Employees"
+#         ordering = ["user__first_name", "user__last_name"]
+#         permissions = [
+#         (
+#             "view_hr_dashboard",
+#             "Can view HR dashboard",
+#         ),
+#         (
+#             "manage_employees",
+#             "Can manage employees",
+#         ),
+#         (
+#             "manage_attendance",
+#             "Can manage attendance",
+#         ),
+#         (
+#             "review_leave",
+#             "Can review leave requests",
+#         ),
+#         (
+#             "manage_leave_balance",
+#             "Can manage leave balances",
+#         ),
+#         (
+#             "review_attendance_exception",
+#             "Can review attendance exceptions",
+#         ),
+#         (
+#             "manage_salary",
+#             "Can manage salary",
+#         ),
+
+#         # Clearance / NOC permissions
+#         (
+#             "view_all_clearance_requests",
+#             "Can view all clearance requests",
+#         ),
+#         (
+#             "apply_clearance_for_employee",
+#             "Can apply clearance for an employee",
+#         ),
+#         (
+#             "review_finance_noc",
+#             "Can review finance NOC requests",
+#         ),
+#         (
+#             "initiate_employee_exit",
+#             "Can initiate employee exit",
+#         ),
+#         (
+#             "finalize_employee_exit",
+#             "Can finalize employee exit",
+#         ),
+#     ]
+
+#     def clean(self):
+#         """
+#         Prevent an employee from being assigned as their own manager.
+#         """
+#         super().clean()
+
+#         if self.manager_id and self.manager_id == self.pk:
+#             raise ValidationError({
+#                 "manager": "An employee cannot be their own manager."
+#             })
+
+#     def save(self, *args, **kwargs):
+#         """
+#         Ensure only one employee is marked as the default manager.
+#         """
+#         if self.is_default_manager:
+#             empProfile.objects.filter(
+#                 is_default_manager=True
+#             ).exclude(
+#                 pk=self.pk
+#             ).update(
+#                 is_default_manager=False
+#             )
+
+#         if not self.work_schedule_id:
+#             default_schedule = WorkSchedule.objects.filter(
+#                 is_default=True,
+#                 is_active=True
+#             ).first()
+
+#             if default_schedule:
+#                 self.work_schedule = default_schedule
+
+#         super().save(*args, **kwargs)
+
+#     @property
+#     def default_leave_eligible_from(self):
+#         """
+#         Default company leave policy:
+#         employee becomes leave-eligible after
+#         completing 3 calendar months from date of joining.
+#         """
+#         if not self.date_hired:
+#             return None
+
+#         return add_calendar_months(
+#             self.date_hired,
+#             3,
+#         )
+
+#     @property
+#     def effective_leave_eligible_from(self):
+#         """
+#         HR-selected eligibility date takes priority.
+
+#         If HR has not provided an override,
+#         use the default 3-month probation rule.
+#         """
+#         if self.leave_eligible_from:
+#             return self.leave_eligible_from
+
+#         return self.default_leave_eligible_from
+
+#     @property
+#     def is_leave_eligible(self):
+#         """
+#         True once the employee reaches their
+#         effective leave eligibility date.
+#         """
+#         eligible_from = self.effective_leave_eligible_from
+
+#         if not eligible_from:
+#             return False
+
+#         return timezone.localdate() >= eligible_from
+
+#     def __str__(self):
+#         full_name = self.user.get_full_name().strip()
+
+#         if full_name:
+#             return full_name
+
+#         return self.user.username
 
 class empProfile(models.Model):
     uuid = models.UUIDField(
@@ -138,6 +390,65 @@ class empProfile(models.Model):
         max_length=10,
         null=True,
         blank=True
+    )
+
+    # ── Onboarding / bulk-import fields ─────────────────────────────
+    aadhar_no = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        unique=True,
+        help_text="12-digit Aadhar number."
+    )
+
+    pan_no = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+        help_text="PAN number, e.g. ABCDE1234F."
+    )
+
+    bank_name = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    bank_account_no = models.CharField(
+        max_length=30,
+        null=True,
+        blank=True
+    )
+
+    ifsc_no = models.CharField(
+        max_length=15,
+        null=True,
+        blank=True
+    )
+
+    uan_no = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        help_text="Universal Account Number (EPFO)."
+    )
+
+    esic_no = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True
+    )
+
+    avsec_training_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date of AVSEC training completion."
+    )
+
+    police_verification_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date of police verification."
     )
 
     is_address_verified = models.BooleanField(default=False)
@@ -290,6 +601,7 @@ class empProfile(models.Model):
             return full_name
 
         return self.user.username
+    
 
 ATTENDANCE_STATUS_CHOICES = (
     ('PRESENT', 'Present'),
@@ -302,6 +614,35 @@ ATTENDANCE_STATUS_CHOICES = (
 LATE_CUTOFF_TIME = time(10, 15)  # after this time, check-in counts as Late
 
 
+# class Attendance(models.Model):
+#     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+#     employee = models.ForeignKey(
+#         empProfile, on_delete=models.CASCADE, related_name="attendances"
+#     )
+#     date = models.DateField(default=timezone.localdate)
+#     check_in = models.DateTimeField(null=True, blank=True)
+#     check_in_latitude = models.FloatField(null=True, blank=True)
+#     check_in_longitude = models.FloatField(null=True, blank=True)
+#     check_out = models.DateTimeField(null=True, blank=True)
+#     status = models.CharField(
+#         max_length=10, choices=ATTENDANCE_STATUS_CHOICES, default='ABSENT'
+#     )
+#     marked_by = models.ForeignKey(
+#         User, on_delete=models.SET_NULL, null=True, blank=True,
+#         related_name="attendance_marked", help_text="Admin who manually edited this record, if any"
+#     )
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+#     class Meta:
+#         unique_together = ('employee', 'date')
+#         ordering = ['-date']
+#         verbose_name = "Attendance"
+#         verbose_name_plural = "Attendance Records"
+
+#     def __str__(self):
+#         return f"{self.employee} - {self.date} - {self.get_status_display()}"
+    
 class Attendance(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     employee = models.ForeignKey(
@@ -309,7 +650,11 @@ class Attendance(models.Model):
     )
     date = models.DateField(default=timezone.localdate)
     check_in = models.DateTimeField(null=True, blank=True)
+    check_in_latitude = models.FloatField(null=True, blank=True)
+    check_in_longitude = models.FloatField(null=True, blank=True)
     check_out = models.DateTimeField(null=True, blank=True)
+    check_out_latitude = models.FloatField(null=True, blank=True)
+    check_out_longitude = models.FloatField(null=True, blank=True)
     status = models.CharField(
         max_length=10, choices=ATTENDANCE_STATUS_CHOICES, default='ABSENT'
     )
@@ -1593,16 +1938,70 @@ def emp_document_path(instance, filename):
     return f"employee_documents/{instance.employee.uuid}/{filename}"
 
 
-MAX_DOCUMENT_SIZE_MB = 5
+ 
+MAX_DOCUMENT_SIZE_KB = 200
 ALLOWED_DOCUMENT_EXTENSIONS = ["pdf", "jpg", "jpeg", "png", "docx"]
-
-
+MAX_IMAGE_DIMENSION = 1600  # px, longest side
+ 
+ 
+def compress_image_if_needed(file, max_kb=MAX_DOCUMENT_SIZE_KB, max_dimension=MAX_IMAGE_DIMENSION):
+    """
+    Server-side safety net: if an uploaded JPG/PNG is over max_kb, re-encode
+    it at progressively lower quality until it fits (or we hit the floor).
+    Runs even if client-side JS compression was skipped/bypassed.
+    Returns the (possibly replaced) file unchanged for non-images or files
+    already under the limit.
+    """
+    name = getattr(file, "name", "") or ""
+    if not name.lower().endswith((".jpg", ".jpeg", ".png")):
+        return file  # PDFs / docx: nothing we can safely do here
+ 
+    if file.size <= max_kb * 1024:
+        return file  # already small enough
+ 
+    try:
+        file.seek(0)
+        img = Image.open(file)
+        img = img.convert("RGB")  # drop alpha/PNG palette so JPEG re-encode works
+    except UnidentifiedImageError:
+        return file  # not actually a valid image; let the extension/size validators reject it
+ 
+    # Downscale if oversized
+    img.thumbnail((max_dimension, max_dimension), Image.LANCZOS)
+ 
+    for quality in (80, 60, 40, 25, 15):
+        buffer = io.BytesIO()
+        img.save(buffer, format="JPEG", quality=quality, optimize=True)
+        if buffer.tell() <= max_kb * 1024:
+            break
+ 
+    buffer.seek(0)
+    new_name = name.rsplit(".", 1)[0] + ".jpg"
+    return InMemoryUploadedFile(
+        buffer,
+        field_name=getattr(file, "field_name", None),
+        name=new_name,
+        content_type="image/jpeg",
+        size=buffer.getbuffer().nbytes,
+        charset=None,
+    )
+ 
+ 
 def validate_document_size(file):
-    max_size_bytes = MAX_DOCUMENT_SIZE_MB * 1024 * 1024
+    max_size_bytes = MAX_DOCUMENT_SIZE_KB * 1024
     if file.size > max_size_bytes:
-        raise ValidationError(
-            f"File too large. Maximum allowed size is {MAX_DOCUMENT_SIZE_MB}MB."
+        is_image = file.name.lower().endswith((".jpg", ".jpeg", ".png"))
+        hint = (
+            " Please retake the photo in better light or crop closer to the document."
+            if is_image
+            else " Please re-save/export the file at a smaller size (e.g. reduce PDF resolution)."
         )
+        raise ValidationError(
+            f"File too large ({file.size / 1024:.0f}KB). "
+            f"Maximum allowed size is {MAX_DOCUMENT_SIZE_KB}KB.{hint}"
+        )
+
+
 
 
 class DocumentTypeMaster(models.Model):
@@ -1669,6 +2068,57 @@ class empDocument(models.Model):
 
     def __str__(self):
         return f"{self.employee} - {self.document_type.name}"
+    
+class EmployeeImportFieldConfig(models.Model):
+    TARGET_CHOICES = [
+        ("USER", "User Account"),
+        ("PROFILE", "Employee Profile"),
+    ]
+
+    DATA_TYPE_CHOICES = [
+        ("TEXT", "Text"),
+        ("FULL_NAME", "Full Name (splits into first/last)"),
+        ("EMAIL", "Email"),
+        ("DATE", "Date"),
+        ("PHONE", "Phone Number"),
+        ("REGEX", "Text (custom pattern)"),
+        ("DESIGNATION_FK", "Designation (lookup / create)"),
+    ]
+
+    field_key = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text="Internal field name, e.g. 'aadhar_no', 'email', 'full_name'.",
+    )
+    column_label = models.CharField(
+        max_length=100,
+        help_text="Exact header text expected in the uploaded sheet, e.g. 'Aadhar No.'",
+    )
+    display_name = models.CharField(
+        max_length=100,
+        help_text="Label shown in the import preview table.",
+    )
+    target_model = models.CharField(max_length=10, choices=TARGET_CHOICES)
+    data_type = models.CharField(max_length=20, choices=DATA_TYPE_CHOICES)
+    is_required = models.BooleanField(default=False)
+    validation_regex = models.CharField(
+        max_length=200, blank=True,
+        help_text="Only used when data_type = 'Text (custom pattern)'.",
+    )
+    validation_message = models.CharField(
+        max_length=200, blank=True,
+        help_text="Error shown when validation_regex doesn't match.",
+    )
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["order", "field_key"]
+        verbose_name = "Employee Import Field"
+        verbose_name_plural = "Employee Import Fields"
+
+    def __str__(self):
+        return f"{self.column_label} → {self.field_key}"
     
 
 class WhatsAppTicket(models.Model):

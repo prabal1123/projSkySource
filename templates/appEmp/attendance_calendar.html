@@ -385,7 +385,7 @@
                                         {% elif day.is_weekly_off %}
 
                                             <div class="attendance-day-time">
-                                                Non-working day
+                                                Non-working
                                             </div>
 
 
@@ -418,13 +418,13 @@
                                             {% if day.approved_leave.duration_type == "FIRST_HALF" %}
 
                                                 <div class="attendance-day-time">
-                                                    First Half
+                                                    1st Half
                                                 </div>
 
                                             {% elif day.approved_leave.duration_type == "SECOND_HALF" %}
 
                                                 <div class="attendance-day-time">
-                                                    Second Half
+                                                    2nd Half
                                                 </div>
 
                                             {% endif %}
@@ -441,8 +441,7 @@
                                             {% if day.attendance.check_in %}
 
                                                 <div class="attendance-day-time">
-                                                    In:
-                                                    {{ day.attendance.check_in|date:"h:i A" }}
+                                                    In: {{ day.attendance.check_in|date:"h:i A" }}
                                                 </div>
 
                                             {% endif %}
@@ -452,8 +451,7 @@
                                             {% if day.attendance.check_out %}
 
                                                 <div class="attendance-day-time">
-                                                    Out:
-                                                    {{ day.attendance.check_out|date:"h:i A" }}
+                                                    Out: {{ day.attendance.check_out|date:"h:i A" }}
                                                 </div>
 
                                             {% endif %}
@@ -463,7 +461,7 @@
                                             {% if day.pending_exception %}
 
                                                 <div class="attendance-request-pending">
-                                                    Request Pending
+                                                    Pending
                                                 </div>
 
 
@@ -474,7 +472,7 @@
                                                     href="{% url 'raiseAttendanceException' day.attendance.uuid %}"
                                                     class="attendance-exception-link"
                                                 >
-                                                    Raise Exception
+                                                    Exception
                                                 </a>
 
                                             {% endif %}
@@ -487,7 +485,7 @@
                                         {% else %}
 
                                             <div class="attendance-day-time">
-                                                No attendance recorded
+                                                No record
                                             </div>
 
                                         {% endif %}
