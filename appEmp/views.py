@@ -82,7 +82,8 @@ from .models import (
     WorkSchedule,
     OptionalHolidayRequest,
     empDocument,
-    DocumentTypeMaster
+    DocumentTypeMaster,
+    DesignationMaster
 )
 
 import csv
