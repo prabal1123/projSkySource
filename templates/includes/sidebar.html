@@ -1,7 +1,4 @@
-<aside
-    class="hr-sidebar"
-    id="hrSidebar"
->
+<aside class="hr-sidebar" id="hrSidebar">
 
     <!-- ========================================= -->
     <!-- BRAND -->
@@ -49,21 +46,9 @@
                 General
             </div>
 
-
-            <a
-                href="{% url 'dashboard' %}"
-                class="hr-sidebar-link
-                {% if request.resolver_match.url_name == 'dashboard' %}
-                    active
-                {% endif %}"
-            >
-
+            <a href="{% url 'dashboard' %}" class="hr-sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                 <i class="bi bi-grid-1x2"></i>
-
-                <span>
-                    Dashboard
-                </span>
-
+                <span>Dashboard</span>
             </a>
 
         </div>
@@ -85,7 +70,7 @@
 
                 <button
                     class="hr-sidebar-link hr-sidebar-toggle
-                    {% if request.resolver_match.url_name == 'register' or request.resolver_match.url_name == 'employeeList' %}
+                    {% if request.resolver_match.url_name == 'register' or request.resolver_match.url_name == 'employeeList' or request.resolver_match.url_name == 'verificationStats' %}
                         active-parent
                     {% endif %}"
                     type="button"
@@ -95,13 +80,8 @@
                 >
 
                     <span class="hr-sidebar-link-main">
-
                         <i class="bi bi-people"></i>
-
-                        <span>
-                            Employees
-                        </span>
-
+                        <span>Employees</span>
                     </span>
 
                     <i class="bi bi-chevron-down hr-sidebar-chevron"></i>
@@ -111,7 +91,7 @@
 
                 <div
                     class="collapse hr-sidebar-submenu
-                    {% if request.resolver_match.url_name == 'register' or request.resolver_match.url_name == 'employeeList' %}
+                    {% if request.resolver_match.url_name == 'register' or request.resolver_match.url_name == 'employeeList' or request.resolver_match.url_name == 'verificationStats' %}
                         show
                     {% endif %}"
                     id="employeeMenu"
@@ -121,37 +101,13 @@
                         Employee Management
                     </div>
 
+                    <a href="{% url 'register' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'register' %}active{% endif %}">Add Employee</a>
 
-                    <a
-                        href="{% url 'register' %}"
-                        class="hr-sidebar-sub-link
-                        {% if request.resolver_match.url_name == 'register' %}
-                            active
-                        {% endif %}"
-                    >
-                        Add Employee
-                    </a>
+                    <a href="{% url 'employeeList' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'employeeList' %}active{% endif %}">View Employees</a>
 
+                    <a href="{% url 'employeeBulkImport' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'employeeBulkImport' %}active{% endif %}">Bulk Import</a>
 
-                    <a
-                        href="{% url 'employeeList' %}"
-                        class="hr-sidebar-sub-link
-                        {% if request.resolver_match.url_name == 'employeeList' %}
-                            active
-                        {% endif %}"
-                    >
-                        View Employees
-                    </a>
-
-<a
-    href="{% url 'employeeBulkImport' %}"
-    class="hr-sidebar-sub-link
-    {% if request.resolver_match.url_name == 'employeeBulkImport' %}
-        active
-    {% endif %}"
->
-    Bulk Import
-</a>
+                    <a href="{% url 'verificationStats' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'verificationStats' %}active{% endif %}">Verification Status</a>
 
                 </div>
 
@@ -186,13 +142,8 @@
                 >
 
                     <span class="hr-sidebar-link-main">
-
                         <i class="bi bi-clock-history"></i>
-
-                        <span>
-                            Attendance
-                        </span>
-
+                        <span>Attendance</span>
                     </span>
 
                     <i class="bi bi-chevron-down hr-sidebar-chevron"></i>
@@ -215,16 +166,7 @@
                             My Attendance
                         </div>
 
-
-                        <a
-                            href="{% url 'attendanceCalendarSelf' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'attendanceCalendarSelf' %}
-                                active
-                            {% endif %}"
-                        >
-                            Attendance Calendar
-                        </a>
+                        <a href="{% url 'attendanceCalendarSelf' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'attendanceCalendarSelf' %}active{% endif %}">Attendance Calendar</a>
 
                     {% endif %}
 
@@ -235,16 +177,7 @@
                             Attendance Review
                         </div>
 
-
-                        <a
-                            href="{% url 'pendingAttendanceExceptions' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'pendingAttendanceExceptions' %}
-                                active
-                            {% endif %}"
-                        >
-                            Attendance Exceptions
-                        </a>
+                        <a href="{% url 'pendingAttendanceExceptions' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'pendingAttendanceExceptions' %}active{% endif %}">Attendance Exceptions</a>
 
                     {% endif %}
 
@@ -281,13 +214,8 @@
                 >
 
                     <span class="hr-sidebar-link-main">
-
                         <i class="bi bi-file-earmark-text"></i>
-
-                        <span>
-                            Documents
-                        </span>
-
+                        <span>Documents</span>
                     </span>
 
                     <i class="bi bi-chevron-down hr-sidebar-chevron"></i>
@@ -310,16 +238,7 @@
                             My Documents
                         </div>
 
-
-                        <a
-                            href="{% url 'upload_document' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'upload_document' %}
-                                active
-                            {% endif %}"
-                        >
-                            My Documents
-                        </a>
+                        <a href="{% url 'upload_document' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'upload_document' %}active{% endif %}">My Documents</a>
 
                     {% endif %}
 
@@ -331,20 +250,30 @@
                             HR Review
                         </div>
 
-
-                        <a
-                            href="{% url 'hr_document_list' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'hr_document_list' %}
-                                active
-                            {% endif %}"
-                        >
-                            Document Review
-                        </a>
+                        <a href="{% url 'hr_document_list' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'hr_document_list' %}active{% endif %}">Document Review</a>
 
                     {% endif %}
 
                 </div>
+
+            </div>
+
+        {% endif %}
+
+
+
+        <!-- ===================================== -->
+        <!-- BCAS PASSES -->
+        <!-- ===================================== -->
+
+        {% if can_manage_employees %}
+
+            <div class="hr-sidebar-section">
+
+                <a href="{% url 'bcasPassDashboard' %}" class="hr-sidebar-link {% if request.resolver_match.url_name == 'bcasPassDashboard' %}active{% endif %}">
+                    <i class="bi bi-shield-check"></i>
+                    <span>BCAS Passes</span>
+                </a>
 
             </div>
 
@@ -372,13 +301,8 @@
                 >
 
                     <span class="hr-sidebar-link-main">
-
                         <i class="bi bi-calendar2-check"></i>
-
-                        <span>
-                            Leaves
-                        </span>
-
+                        <span>Leaves</span>
                     </span>
 
                     <i class="bi bi-chevron-down hr-sidebar-chevron"></i>
@@ -401,27 +325,9 @@
                             My Leaves
                         </div>
 
+                        <a href="{% url 'applyLeave' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'applyLeave' %}active{% endif %}">Apply Leave</a>
 
-                        <a
-                            href="{% url 'applyLeave' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'applyLeave' %}
-                                active
-                            {% endif %}"
-                        >
-                            Apply Leave
-                        </a>
-
-
-                        <a
-                            href="{% url 'myLeaveRequests' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'myLeaveRequests' %}
-                                active
-                            {% endif %}"
-                        >
-                            My Leave Requests
-                        </a>
+                        <a href="{% url 'myLeaveRequests' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'myLeaveRequests' %}active{% endif %}">My Leave Requests</a>
 
                     {% endif %}
 
@@ -433,27 +339,9 @@
                             Leave Review
                         </div>
 
+                        <a href="{% url 'pendingLeaveRequests' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'pendingLeaveRequests' %}active{% endif %}">Pending Leave Requests</a>
 
-                        <a
-                            href="{% url 'pendingLeaveRequests' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'pendingLeaveRequests' %}
-                                active
-                            {% endif %}"
-                        >
-                            Pending Leave Requests
-                        </a>
-
-
-                        <a
-                            href="{% url 'allLeaveRequests' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'allLeaveRequests' %}
-                                active
-                            {% endif %}"
-                        >
-                            All Leave Requests
-                        </a>
+                        <a href="{% url 'allLeaveRequests' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'allLeaveRequests' %}active{% endif %}">All Leave Requests</a>
 
                     {% endif %}
 
@@ -465,16 +353,7 @@
                             Leave Administration
                         </div>
 
-
-                        <a
-                            href="{% url 'leaveBalanceList' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'leaveBalanceList' %}
-                                active
-                            {% endif %}"
-                        >
-                            Leave Balances
-                        </a>
+                        <a href="{% url 'leaveBalanceList' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'leaveBalanceList' %}active{% endif %}">Leave Balances</a>
 
                     {% endif %}
 
@@ -506,13 +385,8 @@
                 >
 
                     <span class="hr-sidebar-link-main">
-
                         <i class="bi bi-calendar-event"></i>
-
-                        <span>
-                            Holidays
-                        </span>
-
+                        <span>Holidays</span>
                     </span>
 
                     <i class="bi bi-chevron-down hr-sidebar-chevron"></i>
@@ -535,16 +409,7 @@
                             My Holidays
                         </div>
 
-
-                        <a
-                            href="{% url 'optionalHolidayApply' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'optionalHolidayApply' %}
-                                active
-                            {% endif %}"
-                        >
-                            Optional Holidays
-                        </a>
+                        <a href="{% url 'optionalHolidayApply' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'optionalHolidayApply' %}active{% endif %}">Optional Holidays</a>
 
                     {% endif %}
 
@@ -556,16 +421,7 @@
                             Holiday Requests
                         </div>
 
-
-                        <a
-                            href="{% url 'pendingOptionalHolidayRequests' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'pendingOptionalHolidayRequests' %}
-                                active
-                            {% endif %}"
-                        >
-                            Pending Optional Requests
-                        </a>
+                        <a href="{% url 'pendingOptionalHolidayRequests' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'pendingOptionalHolidayRequests' %}active{% endif %}">Pending Optional Requests</a>
 
                     {% endif %}
 
@@ -577,65 +433,20 @@
                             Holiday Management
                         </div>
 
+                        <a href="{% url 'holidayList' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'holidayList' %}active{% endif %}">Holiday List</a>
 
-                        <a
-                            href="{% url 'holidayList' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'holidayList' %}
-                                active
-                            {% endif %}"
-                        >
-                            Holiday List
-                        </a>
+                        <a href="{% url 'holidayCalendar' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'holidayCalendar' %}active{% endif %}">Monthly Calendar</a>
 
+                        <a href="{% url 'holidayYear' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'holidayYear' %}active{% endif %}">Year Calendar</a>
 
-                        <a
-                            href="{% url 'holidayCalendar' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'holidayCalendar' %}
-                                active
-                            {% endif %}"
-                        >
-                            Monthly Calendar
-                        </a>
-
-
-                        <a
-                            href="{% url 'holidayYear' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'holidayYear' %}
-                                active
-                            {% endif %}"
-                        >
-                            Year Calendar
-                        </a>
-
-
-                        <a
-                            href="{% url 'holidayBulkUpload' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'holidayBulkUpload' %}
-                                active
-                            {% endif %}"
-                        >
-                            Bulk Holiday Upload
-                        </a>
+                        <a href="{% url 'holidayBulkUpload' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'holidayBulkUpload' %}active{% endif %}">Bulk Holiday Upload</a>
 
 
                         <div class="hr-sidebar-subheading">
                             Work Schedule
                         </div>
 
-
-                        <a
-                            href="{% url 'workScheduleList' %}"
-                            class="hr-sidebar-sub-link
-                            {% if request.resolver_match.url_name == 'workScheduleList' %}
-                                active
-                            {% endif %}"
-                        >
-                            Work Schedules
-                        </a>
+                        <a href="{% url 'workScheduleList' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'workScheduleList' %}active{% endif %}">Work Schedules</a>
 
                     {% endif %}
 
@@ -669,13 +480,8 @@
                 >
 
                     <span class="hr-sidebar-link-main">
-
                         <i class="bi bi-box-arrow-right"></i>
-
-                        <span>
-                            Exit &amp; Clearance
-                        </span>
-
+                        <span>Exit &amp; Clearance</span>
                     </span>
 
                     <i class="bi bi-chevron-down hr-sidebar-chevron"></i>
@@ -683,10 +489,7 @@
                 </button>
 
 
-                <div
-                    class="collapse hr-sidebar-submenu"
-                    id="exitMenu"
-                >
+                <div class="collapse hr-sidebar-submenu" id="exitMenu">
 
 
                     {% if has_employee_profile %}
@@ -695,21 +498,9 @@
                             My Exit
                         </div>
 
+                        <a href="{% url 'submitResignation' %}" class="hr-sidebar-sub-link">Submit Resignation</a>
 
-                        <a
-                            href="{% url 'submitResignation' %}"
-                            class="hr-sidebar-sub-link"
-                        >
-                            Submit Resignation
-                        </a>
-
-
-                        <a
-                            href="{% url 'myResignations' %}"
-                            class="hr-sidebar-sub-link"
-                        >
-                            My Resignations
-                        </a>
+                        <a href="{% url 'myResignations' %}" class="hr-sidebar-sub-link">My Resignations</a>
 
                     {% endif %}
 
@@ -721,13 +512,7 @@
                             Manager
                         </div>
 
-
-                        <a
-                            href="{% url 'managerClearanceQueue' %}"
-                            class="hr-sidebar-sub-link"
-                        >
-                            Pending Manager NOCs
-                        </a>
+                        <a href="{% url 'managerClearanceQueue' %}" class="hr-sidebar-sub-link">Pending Manager NOCs</a>
 
                     {% endif %}
 
@@ -739,13 +524,7 @@
                             Finance
                         </div>
 
-
-                        <a
-                            href="{% url 'financeClearanceQueue' %}"
-                            class="hr-sidebar-sub-link"
-                        >
-                            Pending Finance NOCs
-                        </a>
+                        <a href="{% url 'financeClearanceQueue' %}" class="hr-sidebar-sub-link">Pending Finance NOCs</a>
 
                     {% endif %}
 
@@ -760,44 +539,23 @@
 
                         {% if can_view_all_clearance_requests %}
 
-                            <a
-                                href="{% url 'pendingResignations' %}"
-                                class="hr-sidebar-sub-link"
-                            >
-                                Pending Resignations
-                            </a>
+                            <a href="{% url 'pendingResignations' %}" class="hr-sidebar-sub-link">Pending Resignations</a>
 
-
-                            <a
-                                href="{% url 'allExitRequests' %}"
-                                class="hr-sidebar-sub-link"
-                            >
-                                All Exit Requests
-                            </a>
+                            <a href="{% url 'allExitRequests' %}" class="hr-sidebar-sub-link">All Exit Requests</a>
 
                         {% endif %}
 
 
                         {% if can_initiate_employee_exit %}
 
-                            <a
-                                href="{% url 'initiateTermination' %}"
-                                class="hr-sidebar-sub-link"
-                            >
-                                Initiate Termination
-                            </a>
+                            <a href="{% url 'initiateTermination' %}" class="hr-sidebar-sub-link">Initiate Termination</a>
 
                         {% endif %}
 
 
                         {% if can_finalize_employee_exit %}
 
-                            <a
-                                href="{% url 'readyForFinalization' %}"
-                                class="hr-sidebar-sub-link"
-                            >
-                                Ready for Finalization
-                            </a>
+                            <a href="{% url 'readyForFinalization' %}" class="hr-sidebar-sub-link">Ready for Finalization</a>
 
                         {% endif %}
 
@@ -824,39 +582,16 @@
 
             {% if has_employee_profile %}
 
-                <a
-                    href="{% url 'myProfile' %}"
-                    class="hr-sidebar-link
-                    {% if request.resolver_match.url_name == 'myProfile' %}
-                        active
-                    {% endif %}"
-                >
-
+                <a href="{% url 'myProfile' %}" class="hr-sidebar-link {% if request.resolver_match.url_name == 'myProfile' %}active{% endif %}">
                     <i class="bi bi-person"></i>
-
-                    <span>
-                        My Profile
-                    </span>
-
+                    <span>My Profile</span>
                 </a>
 
             {% endif %}
 
-
-            <a
-                href="{% url 'password_change' %}"
-                class="hr-sidebar-link
-                {% if request.resolver_match.url_name == 'password_change' %}
-                    active
-                {% endif %}"
-            >
-
+            <a href="{% url 'password_change' %}" class="hr-sidebar-link {% if request.resolver_match.url_name == 'password_change' %}active{% endif %}">
                 <i class="bi bi-shield-lock"></i>
-
-                <span>
-                    Change Password
-                </span>
-
+                <span>Change Password</span>
             </a>
 
         </div>
@@ -874,45 +609,22 @@
         <div class="hr-sidebar-user">
 
             <div class="hr-sidebar-avatar">
-
                 {{ user.first_name|default:user.username|slice:":1"|upper }}
-
             </div>
 
-
             <div class="hr-sidebar-user-info">
-
-                <strong>
-                    {{ user.first_name|default:user.username }}
-                </strong>
-
-                <span>
-                    {{ user.username }}
-                </span>
-
+                <strong>{{ user.first_name|default:user.username }}</strong>
+                <span>{{ user.username }}</span>
             </div>
 
         </div>
 
-
-        <form
-            method="post"
-            action="{% url 'logout' %}"
-        >
-
+        <form method="post" action="{% url 'logout' %}">
             {% csrf_token %}
-
-            <button
-                type="submit"
-                class="hr-logout-btn"
-            >
-
+            <button type="submit" class="hr-logout-btn">
                 <i class="bi bi-box-arrow-left"></i>
-
                 Logout
-
             </button>
-
         </form>
 
     </div>

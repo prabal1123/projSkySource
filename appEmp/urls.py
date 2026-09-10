@@ -5,6 +5,8 @@ from . import views
 from .views import (
     empProfile_view,
     empList_view,
+    verification_quick_update_view,
+    verificationStats_view,
     profileDetail_view,
     dashboard_view,
     checkin_checkout_view,
@@ -21,6 +23,7 @@ from .views import (
     leave_balance_edit_view,
     pending_attendance_exceptions_view, 
     review_attendance_exception_view,
+
 )
 
 
@@ -41,6 +44,24 @@ urlpatterns = [
         "empList/",
         empList_view,
         name="employeeList",
+    ),
+        path(
+        "empList/",
+        empList_view,
+        name="employeeList",
+    ),
+
+    path(
+        "verification-stats/",
+        verificationStats_view,
+        name="verificationStats",
+    ),
+
+
+    path(
+        "verification-stats/<uuid:uuid>/update/",
+        verification_quick_update_view,
+        name="verificationQuickUpdate",
     ),
 
     path(
@@ -65,6 +86,27 @@ urlpatterns = [
         update_attendance_view,
         name="editAttendance",
     ),
+
+path(
+    "bcas/",
+    views.bcas_pass_dashboard_view,
+    name="bcasPassDashboard",
+),
+path(
+    "bcas/issue/",
+    views.bcas_pass_issue_view,
+    name="bcasPassIssue",
+),
+path(
+    "bcas/<uuid:uuid>/status/",
+    views.bcas_pass_status_update_view,
+    name="bcasPassStatusUpdate",
+),
+path(
+    "bcas/export/",
+    views.bcas_pass_export_csv_view,
+    name="bcasPassExport",
+),
 
     path(
         "attendance/<uuid:uuid>/location/",
@@ -101,7 +143,7 @@ path(
         raise_attendance_exception_view,
         name="raiseAttendanceException",
     ),
-
+path("hr/documents/<int:doc_id>/reject/", views.hr_reject_document, name="hr_reject_document"),
     path(
         "leave/apply/",
         apply_leave_view,

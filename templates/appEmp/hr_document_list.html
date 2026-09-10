@@ -5,6 +5,58 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+    .doc-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .doc-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: opacity 0.15s ease;
+    }
+
+    .doc-btn:hover {
+        opacity: 0.85;
+    }
+
+    .doc-btn-verify {
+        background: #2f855a;
+        border-color: #2f855a;
+        color: #fff;
+    }
+
+    .doc-btn-reject {
+        background: #fff;
+        border-color: #d16d4e;
+        color: #d16d4e;
+    }
+
+    .doc-reject-reason {
+        margin-top: 6px;
+        font-size: 0.78rem;
+        color: #7a7a7a;
+        line-height: 1.3;
+    }
+
+    .doc-file-cell a {
+        font-weight: 600;
+    }
+
+    .sky-pill.absent[title] {
+        cursor: help;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -27,7 +79,6 @@
         {% endif %}
 
         <div class="attendance-filter-bar">
-
             <a href="?" class="attendance-filter-pill filter-all {% if not selected_type and not selected_status %}active{% endif %}">
                 All
             </a>
@@ -38,11 +89,9 @@
                     {{ dtype.name }}
                 </a>
             {% endfor %}
-
         </div>
 
         <div class="attendance-filter-bar">
-
             <a href="?is_verified=false{% if selected_type %}&document_type={{ selected_type }}{% endif %}"
                class="attendance-filter-pill legend-pending {% if selected_status == 'false' %}active{% endif %}">
                 Pending
@@ -53,6 +102,10 @@
                 Verified
             </a>
 
+            <a href="?is_rejected=true{% if selected_type %}&document_type={{ selected_type }}{% endif %}"
+               class="attendance-filter-pill legend-absent {% if selected_status == 'rejected' %}active{% endif %}">
+                Rejected
+            </a>
         </div>
 
         <div class="sky-panel">
@@ -72,7 +125,7 @@
                                 <th>Uploaded</th>
                                 <th>Status</th>
                                 <th>File</th>
-                                <th></th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -88,22 +141,44 @@
                                 <td>
                                     {% if doc.is_verified %}
                                         <span class="sky-pill verified">Verified</span>
+                                    {% elif doc.is_rejected %}
+                                        <span class="sky-pill absent" title="{{ doc.rejection_reason|default:'' }}">
+                                            Rejected
+                                        </span>
+                                        {% if doc.rejection_reason %}
+                                            <div class="doc-reject-reason">{{ doc.rejection_reason }}</div>
+                                        {% endif %}
                                     {% else %}
                                         <span class="sky-pill pending">Pending</span>
                                     {% endif %}
                                 </td>
-                                <td>
+                                <td class="doc-file-cell">
                                     <a href="{{ doc.file.url }}" target="_blank" class="sky-edit-link">View</a>
                                 </td>
                                 <td>
-                                    {% if not doc.is_verified %}
-                                        <form method="post" action="{% url 'hr_verify_document' doc.id %}">
-                                            {% csrf_token %}
-                                            <button type="submit" class="sky-header-btn">
-                                                Verify
-                                            </button>
-                                        </form>
-                                    {% endif %}
+                                    <div class="doc-actions">
+
+                                        {% if not doc.is_verified %}
+                                            <form method="post" action="{% url 'hr_verify_document' doc.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="doc-btn doc-btn-verify">Verify</button>
+                                            </form>
+                                        {% endif %}
+
+                                        {% if not doc.is_rejected %}
+                                            <form
+                                                method="post"
+                                                action="{% url 'hr_reject_document' doc.id %}"
+                                                class="doc-reject-form"
+                                                onsubmit="return prepareRejectForm(this);"
+                                            >
+                                                {% csrf_token %}
+                                                <input type="hidden" name="rejection_reason" value="">
+                                                <button type="submit" class="doc-btn doc-btn-reject">Reject</button>
+                                            </form>
+                                        {% endif %}
+
+                                    </div>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -118,4 +193,19 @@
 
     </div>
 </div>
+
+<script>
+    function prepareRejectForm(form) {
+        const reason = prompt('Reason for rejecting this document (optional):', '');
+        if (reason === null) {
+            // User cancelled the prompt
+            return false;
+        }
+        if (!confirm('Reject this document? The employee will need to re-upload it.')) {
+            return false;
+        }
+        form.querySelector('input[name="rejection_reason"]').value = reason;
+        return true;
+    }
+</script>
 {% endblock %}

@@ -3,7 +3,7 @@ from .models import empProfile, Attendance , ShiftMaster, DesignationMaster,Atte
 from .models import Holiday,WorkSchedule
 from .models import DocumentTypeMaster, empDocument,WhatsAppTicket
 from .models import EmployeeImportFieldConfig
-
+from .models import WhatsAppOTP, Airport, BCASPass
 # admin.site.register(empProfile)
 @admin.register(empProfile)
 class EmployeeAdmin(admin.ModelAdmin):
@@ -32,6 +32,13 @@ class EmployeeAdmin(admin.ModelAdmin):
     )
 
 
+@admin.register(WhatsAppOTP)
+class WhatsAppOTPAdmin(admin.ModelAdmin):
+    list_display = ("phone_number", "code", "used", "created_at")
+    list_filter = ("used",)
+    search_fields = ("phone_number",)
+    readonly_fields = ("created_at",)
+
 @admin.register(EmployeeImportFieldConfig)
 class EmployeeImportFieldConfigAdmin(admin.ModelAdmin):
     list_display = (
@@ -41,7 +48,7 @@ class EmployeeImportFieldConfigAdmin(admin.ModelAdmin):
     list_display_links = ("field_key",)
     list_editable = ("column_label", "is_required", "is_active", "order")
     ordering = ("order",)
-    
+
 
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):
@@ -387,6 +394,35 @@ class empDocumentAdmin(admin.ModelAdmin):
     list_display = ("employee", "document_type", "uploaded_at", "is_verified")
     list_filter = ("document_type", "is_verified")
     search_fields = ("employee__user__first_name", "employee__user__last_name")
+    
+
+@admin.register(Airport)
+class AirportAdmin(admin.ModelAdmin):
+    list_display = ("name", "code", "state", "is_active")
+    list_filter = ("state", "is_active")
+    search_fields = ("name", "code", "state")
+    list_editable = ("is_active",)
+    ordering = ("state", "name")
+
+
+@admin.register(BCASPass)
+class BCASPassAdmin(admin.ModelAdmin):
+    list_display = (
+        "employee", "pass_type", "airport", "issue_date",
+        "expiry_date", "status", "manual_status", "created_by",
+    )
+    list_filter = ("pass_type", "manual_status", "airport__state", "airport")
+    search_fields = (
+        "employee__user__first_name",
+        "employee__user__last_name",
+        "issuing_authority",
+    )
+    autocomplete_fields = ("employee", "airport")
+    readonly_fields = ("uuid", "created_at", "updated_at")
+
+    @admin.display(description="Status")
+    def status(self, obj):
+        return obj.status
     
 
 @admin.register(WhatsAppTicket)

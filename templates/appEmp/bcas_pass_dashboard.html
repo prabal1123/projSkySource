@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}BCAS Pass Management{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Bureau of Civil Aviation Security</span>
+                <h1>BCAS Pass Management</h1>
+            </div>
+
+            <div style="display: flex; gap: 0.6rem;">
+                <a href="{% url 'bcasPassExport' %}?pass_type={{ selected_pass_type }}&status={{ selected_status }}&state={{ selected_state }}&search={{ search }}"
+                   class="sky-cancel-link"
+                   style="text-decoration: none; padding: 0.55rem 1.2rem; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;">
+                    Export CSV
+                </a>
+
+                <button type="button" class="sky-punch-btn in" data-bs-toggle="modal" data-bs-target="#issuePassModal"
+                        style="padding: 0.55rem 1.4rem; font-size: 0.9rem;">
+                    + Issue Pass
+                </button>
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="sky-auth-error-banner">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Stat cards -->
+        <div class="sky-stat-row">
+
+            <div class="sky-stat is-teal">
+                <div class="sky-stat-value">{{ stat_counts.total }}</div>
+                <div class="sky-stat-label">Total Passes</div>
+            </div>
+
+            <div class="sky-stat is-teal">
+                <div class="sky-stat-value">{{ stat_counts.active }}</div>
+                <div class="sky-stat-label">Active</div>
+            </div>
+
+            <div class="sky-stat is-amber">
+                <div class="sky-stat-value">{{ stat_counts.expiring_30d }}</div>
+                <div class="sky-stat-label">Expiring in 30d</div>
+            </div>
+
+            <div class="sky-stat is-amber">
+                <div class="sky-stat-value">{{ stat_counts.police_pending }}</div>
+                <div class="sky-stat-label">Police Verif. Pending</div>
+            </div>
+
+            <div class="sky-stat is-rose">
+                <div class="sky-stat-value">{{ stat_counts.expired }}</div>
+                <div class="sky-stat-label">Expired</div>
+            </div>
+
+            <div class="sky-stat is-rose">
+                <div class="sky-stat-value">{{ stat_counts.suspended }}</div>
+                <div class="sky-stat-label">Suspended</div>
+            </div>
+
+        </div>
+
+        <!-- Tabs -->
+        <div class="sky-filter-tabs">
+            <a href="#" class="sky-filter-tab active" data-bs-toggle="tab" data-bs-target="#passRecordsTab">Pass Records</a>
+            <a href="#" class="sky-filter-tab" data-bs-toggle="tab" data-bs-target="#stateSummaryTab">State-wise Summary</a>
+        </div>
+
+        <div class="tab-content">
+        <div class="tab-pane fade show active" id="passRecordsTab">
+
+        <!-- Filters -->
+        <form method="get" class="sky-panel" style="padding: 1rem 1.25rem; margin-bottom: 1rem;">
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+
+                <select name="state" class="form-control" style="max-width: 180px;" onchange="this.form.submit()">
+                    <option value="">All States</option>
+                    {% for state in states %}
+                        <option value="{{ state }}" {% if state == selected_state %}selected{% endif %}>{{ state }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="pass_type" class="form-control" style="max-width: 160px;" onchange="this.form.submit()">
+                    <option value="">All Types</option>
+                    {% for value, label in pass_type_choices %}
+                        <option value="{{ value }}" {% if value == selected_pass_type %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="status" class="form-control" style="max-width: 160px;" onchange="this.form.submit()">
+                    <option value="">All Status</option>
+                    <option value="ACTIVE" {% if selected_status == "ACTIVE" %}selected{% endif %}>Active</option>
+                    <option value="EXPIRED" {% if selected_status == "EXPIRED" %}selected{% endif %}>Expired</option>
+                    <option value="PENDING" {% if selected_status == "PENDING" %}selected{% endif %}>Pending</option>
+                    <option value="SUSPENDED" {% if selected_status == "SUSPENDED" %}selected{% endif %}>Suspended</option>
+                    <option value="SURRENDERED" {% if selected_status == "SURRENDERED" %}selected{% endif %}>Surrendered</option>
+                </select>
+
+                <input type="text" name="search" value="{{ search }}" placeholder="Search employee name..."
+                       class="form-control" style="max-width: 220px;">
+
+                <button type="submit" class="sky-header-btn" style="padding: 0.5rem 1.1rem;">Filter</button>
+
+                {% if selected_pass_type or selected_status or selected_state or search %}
+                    <a href="{% url 'bcasPassDashboard' %}" class="sky-cancel-link">Clear</a>
+                {% endif %}
+
+            </div>
+        </form>
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+                <h6>Pass Records</h6>
+                <span class="sky-count">{{ passes|length }} record(s)</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="sky-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Type</th>
+                            <th>Airport</th>
+                            <th>Issue Date</th>
+                            <th>Expiry Date</th>
+                            <th>Police Verif.</th>
+                            <th>Status</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for bcas_pass in passes %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'editProfile' bcas_pass.employee.uuid %}" style="text-decoration: none; color: inherit; font-weight: 500;">
+                                        {{ bcas_pass.employee }}
+                                    </a>
+                                </td>
+
+                                <td>{{ bcas_pass.get_pass_type_display }}</td>
+
+                                <td class="sky-time">{{ bcas_pass.airport.code }} — {{ bcas_pass.airport.state }}</td>
+
+                                <td class="sky-time">{{ bcas_pass.issue_date }}</td>
+
+                                <td class="sky-time">{{ bcas_pass.expiry_date }}</td>
+
+                                <td>
+                                    {% if bcas_pass.police_verification_pending %}
+                                        <span class="sky-pill late">Pending</span>
+                                    {% else %}
+                                        <span class="sky-pill present">Verified</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if bcas_pass.status == "ACTIVE" %}
+                                        <span class="sky-pill present">Active</span>
+                                    {% elif bcas_pass.status == "EXPIRED" %}
+                                        <span class="sky-pill absent">Expired</span>
+                                    {% elif bcas_pass.status == "PENDING" %}
+                                        <span class="sky-pill late">Pending</span>
+                                    {% elif bcas_pass.status == "SUSPENDED" %}
+                                        <span class="sky-pill absent">Suspended</span>
+                                    {% elif bcas_pass.status == "SURRENDERED" %}
+                                        <span class="sky-pill absent">Surrendered</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-end">
+                                    <button type="button" class="sky-edit-link" data-bs-toggle="modal" data-bs-target="#statusModal-{{ bcas_pass.uuid }}">
+                                        Manage
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <!-- Status update modal -->
+                            <div class="modal fade" id="statusModal-{{ bcas_pass.uuid }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+
+                                        <form method="post" action="{% url 'bcasPassStatusUpdate' bcas_pass.uuid %}">
+                                            {% csrf_token %}
+
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">{{ bcas_pass.employee }} — {{ bcas_pass.get_pass_type_display }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+
+                                            <div class="modal-body">
+
+                                                {% if bcas_pass.manual_status %}
+                                                    <p class="sky-help-text">Current status: <strong>{{ bcas_pass.get_manual_status_display }}</strong></p>
+                                                    <button type="submit" name="action" value="reactivate" class="sky-header-btn" style="width: 100%; margin-bottom: 1rem;">
+                                                        Reactivate Pass
+                                                    </button>
+                                                {% else %}
+                                                    <label class="sky-help-text" style="display:block; margin-bottom: 0.4rem;">Set Status</label>
+                                                    <select name="manual_status" class="form-control" style="margin-bottom: 1rem;">
+                                                        <option value="SUSPENDED">Suspended</option>
+                                                        <option value="SURRENDERED">Surrendered</option>
+                                                    </select>
+
+                                                    <label class="sky-help-text" style="display:block; margin-bottom: 0.4rem;">Remarks</label>
+                                                    <textarea name="remarks" class="form-control" rows="3"></textarea>
+                                                {% endif %}
+
+                                            </div>
+
+                                            <div class="modal-footer">
+                                                <button type="button" class="sky-cancel-link" data-bs-dismiss="modal">Cancel</button>
+                                                {% if not bcas_pass.manual_status %}
+                                                    <button type="submit" class="sky-header-btn">Save</button>
+                                                {% endif %}
+                                            </div>
+                                        </form>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="sky-empty">No BCAS passes found.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+        </div>
+
+        <div class="tab-pane fade" id="stateSummaryTab">
+
+            <div class="sky-panel">
+                <div class="sky-panel-head">
+                    <h6>State-wise Summary</h6>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="sky-table">
+                        <thead>
+                            <tr>
+                                <th>State</th>
+                                <th>Total Passes</th>
+                                <th>Active Passes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for state, counts in state_summary.items %}
+                                <tr>
+                                    <td>{{ state }}</td>
+                                    <td class="sky-time">{{ counts.total }}</td>
+                                    <td class="sky-time">{{ counts.active }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3" class="sky-empty">No data available.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Issue New Pass Modal -->
+<div class="modal fade" id="issuePassModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <form method="post" action="{% url 'bcasPassIssue' %}">
+                {% csrf_token %}
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Issue New BCAS Pass</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <label class="sky-help-text" style="display:block; margin-bottom: 0.4rem;">Employee</label>
+                    {{ form.employee }}
+
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <div style="flex: 1;">
+                            <label class="sky-help-text" style="display:block; margin-bottom: 0.4rem;">Pass Type</label>
+                            {{ form.pass_type }}
+                        </div>
+                        <div style="flex: 1;">
+                            <label class="sky-help-text" style="display:block; margin-bottom: 0.4rem;">Airport</label>
+                            {{ form.airport }}
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <div style="flex: 1;">
+                            <label class="sky-help-text" style="display:block; margin-bottom: 0.4rem;">Issue Date</label>
+                            {{ form.issue_date }}
+                        </div>
+                        <div style="flex: 1;">
+                            <label class="sky-help-text" style="display:block; margin-bottom: 0.4rem;">Expiry Date</label>
+                            {{ form.expiry_date }}
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <label class="sky-help-text" style="display:block; margin-bottom: 0.4rem;">Access Zones (comma-separated)</label>
+                        {{ form.access_zones }}
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <label class="sky-help-text" style="display:block; margin-bottom: 0.4rem;">Issuing Authority</label>
+                        {{ form.issuing_authority }}
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <label class="sky-help-text" style="display:block; margin-bottom: 0.4rem;">Remarks</label>
+                        {{ form.remarks }}
+                    </div>
+
+                    {% if form.errors %}
+                        <div class="sky-auth-error-banner" style="margin-top: 1rem;">
+                            Please correct the errors above.
+                        </div>
+                    {% endif %}
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="sky-cancel-link" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="sky-header-btn">Issue BCAS Pass</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

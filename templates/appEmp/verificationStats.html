@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% load static %}
+{% load dict_extras %}
+
+{% block title %}Verification Status{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Organization</span>
+                <h1>Verification Status</h1>
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="sky-auth-error-banner">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Summary stat cards -->
+        <div class="sky-stat-row">
+
+            <div class="sky-stat is-teal">
+                <div class="sky-stat-value">
+                    {{ fully_verified_count }}/{{ total }}
+                </div>
+                <div class="sky-stat-label">
+                    Fully Verified
+                </div>
+            </div>
+
+            {% for card in stat_cards %}
+                <div class="sky-stat {% if card.percent < 50 %}is-rose{% elif card.percent < 100 %}is-amber{% else %}is-teal{% endif %}">
+                    <div class="sky-stat-value">
+                        {{ card.percent }}%
+                    </div>
+                    <div class="sky-stat-label">
+                        {{ card.label }} ({{ card.verified_count }}/{{ card.total }})
+                    </div>
+                </div>
+            {% endfor %}
+
+        </div>
+
+        <!-- Filter tabs -->
+        <div class="sky-filter-tabs">
+            <a href="?status=all" class="sky-filter-tab {% if filter_status == 'all' %}active{% endif %}">All Employees</a>
+            <a href="?status=incomplete" class="sky-filter-tab {% if filter_status == 'incomplete' %}active{% endif %}">Incomplete Verification</a>
+            <a href="?status=complete" class="sky-filter-tab {% if filter_status == 'complete' %}active{% endif %}">Fully Verified</a>
+        </div>
+
+        <div class="sky-panel">
+
+            <div class="sky-panel-head">
+                <h6>Employees</h6>
+                <span class="sky-count">
+                    {{ rows|length }} record(s)
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="sky-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            {% for field_name, label in verification_fields %}
+                                <th>{{ label }}</th>
+                            {% endfor %}
+                            <th class="text-end">Status</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row in rows %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'editProfile' row.profile.uuid %}" style="text-decoration: none; color: inherit; font-weight: 500;">{% if row.profile.user.first_name or row.profile.user.last_name %}{{ row.profile.user.first_name }} {{ row.profile.user.last_name }}{% else %}{{ row.profile.user.email }}{% endif %}</a>
+                                </td>
+
+                                {% for field_name, label in verification_fields %}
+                                    <td>
+                                        {% if row.flags|dict_get:field_name %}
+                                            <span class="sky-pill present">Yes</span>
+                                        {% else %}
+                                            <span class="sky-pill absent">No</span>
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+
+                                <td class="text-end">
+                                    {% if row.is_fully_verified %}
+                                        <span class="sky-pill present">Complete</span>
+                                    {% else %}
+                                        <span class="sky-pill late">Pending</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-end">
+                                    <button type="button" class="sky-edit-link" data-bs-toggle="modal" data-bs-target="#verifyModal-{{ forloop.counter }}">
+                                        Verify
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <!-- Quick-verify modal for this employee -->
+                            <div class="modal fade" id="verifyModal-{{ forloop.counter }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+
+                                        <form method="post" action="{% url 'verificationQuickUpdate' row.profile.uuid %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">
+                                                    {% if row.profile.user.first_name or row.profile.user.last_name %}{{ row.profile.user.first_name }} {{ row.profile.user.last_name }}{% else %}{{ row.profile.user.email }}{% endif %}
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+
+                                            <div class="modal-body">
+                                                <p class="sky-help-text" style="margin-bottom: 1rem;">
+                                                    Toggle each item once it's been checked and confirmed.
+                                                </p>
+
+                                                {% for field_name, label in verification_fields %}
+                                                    <label class="sky-check" style="display: block; margin-bottom: 0.75rem;">
+                                                        <input type="checkbox" name="{{ field_name }}" {% if row.flags|dict_get:field_name %}checked{% endif %}>
+                                                        <span>{{ label }}</span>
+                                                    </label>
+                                                {% endfor %}
+                                            </div>
+
+                                            <div class="modal-footer">
+                                                <button type="button" class="sky-cancel-link" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="sky-header-btn">Save Changes</button>
+                                            </div>
+                                        </form>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                        {% empty %}
+                            <tr>
+                                <td colspan="{{ verification_fields|length|add:3 }}" class="sky-empty">
+                                    No employees match this filter.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

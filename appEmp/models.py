@@ -21,6 +21,21 @@ class EmailOTP(models.Model):
     def is_valid(self):
         not_expired = (timezone.now() - self.created_at).seconds < 300  # 5 min
         return not_expired and not self.used
+
+class WhatsAppOTP(models.Model):
+    phone_number = models.CharField(max_length=20)
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used = models.BooleanField(default=False)
+
+    def is_valid(self):
+        if self.used:
+            return False
+        expiry = self.created_at + datetime.timedelta(minutes=5)
+        return timezone.now() <= expiry
+
+    def __str__(self):
+        return f"{self.phone_number} - {self.code}"
     
 
 def add_calendar_months(source_date, months):
@@ -47,254 +62,6 @@ def add_calendar_months(source_date, months):
     )
 
 
-
-# class empProfile(models.Model):
-#     uuid = models.UUIDField(
-#         default=uuid.uuid4,
-#         unique=True,
-#         editable=False
-#     )
-
-#     user = models.OneToOneField(
-#         User,
-#         on_delete=models.CASCADE
-#     )
-
-
-#     manager = models.ForeignKey(
-#         "self",
-#         on_delete=models.SET_NULL,
-#         null=True,
-#         blank=True,
-#         related_name="team_members",
-#         help_text="Reporting manager or immediate superior of this employee."
-#     )
-
-#     designation = models.ForeignKey(
-#         "DesignationMaster",
-#         on_delete=models.SET_NULL,
-#         null=True,
-#         blank=True,
-#         related_name="employees"
-#     )
-
-#     shift = models.ForeignKey(
-#         "ShiftMaster",
-#         on_delete=models.SET_NULL,
-#         null=True,
-#         blank=True,
-#         related_name="employees"
-#     )
-#     work_schedule = models.ForeignKey(
-#     "WorkSchedule",
-#     on_delete=models.SET_NULL,
-#     null=True,
-#     blank=True,
-#     related_name="employees"
-# )
-
-#     is_default_manager = models.BooleanField(
-#         default=False,
-#         help_text=(
-#             "New employees will automatically report to this employee. "
-#             "Only one active employee can be the default manager."
-#         )
-#     )
-
-#     phone_number = models.CharField(
-#         max_length=15,
-#         null=True,
-#         blank=True
-#     )
-
-#     position = models.CharField(
-#         max_length=50,
-#         null=True,
-#         blank=True
-#     )
-
-#     date_hired = models.DateField(
-#         null=True,
-#         blank=True
-#     )
-
-#     leave_eligible_from = models.DateField(
-#     null=True,
-#     blank=True,
-#     help_text=(
-#         "Date from which the employee becomes eligible "
-#         "to use the leave facility."
-#         ),
-#     )
-
-#     address = models.TextField(
-#         null=True,
-#         blank=True
-#     )
-
-#     state = models.CharField(
-#         max_length=30,
-#         null=True,
-#         blank=True
-#     )
-
-#     zip_code = models.CharField(
-#         max_length=10,
-#         null=True,
-#         blank=True
-#     )
-
-
-#     is_address_verified = models.BooleanField(default=False)
-#     is_email_verified = models.BooleanField(default=False)
-#     is_phone_verified = models.BooleanField(default=False)
-#     is_background_check_completed = models.BooleanField(default=False)
-#     is_aadhar_verified = models.BooleanField(default=False)
-#     is_active = models.BooleanField(default=True)
-
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-
-#     class Meta:
-#         verbose_name = "Employee"
-#         verbose_name_plural = "Employees"
-#         ordering = ["user__first_name", "user__last_name"]
-#         permissions = [
-#         (
-#             "view_hr_dashboard",
-#             "Can view HR dashboard",
-#         ),
-#         (
-#             "manage_employees",
-#             "Can manage employees",
-#         ),
-#         (
-#             "manage_attendance",
-#             "Can manage attendance",
-#         ),
-#         (
-#             "review_leave",
-#             "Can review leave requests",
-#         ),
-#         (
-#             "manage_leave_balance",
-#             "Can manage leave balances",
-#         ),
-#         (
-#             "review_attendance_exception",
-#             "Can review attendance exceptions",
-#         ),
-#         (
-#             "manage_salary",
-#             "Can manage salary",
-#         ),
-
-#         # Clearance / NOC permissions
-#         (
-#             "view_all_clearance_requests",
-#             "Can view all clearance requests",
-#         ),
-#         (
-#             "apply_clearance_for_employee",
-#             "Can apply clearance for an employee",
-#         ),
-#         (
-#             "review_finance_noc",
-#             "Can review finance NOC requests",
-#         ),
-#         (
-#             "initiate_employee_exit",
-#             "Can initiate employee exit",
-#         ),
-#         (
-#             "finalize_employee_exit",
-#             "Can finalize employee exit",
-#         ),
-#     ]
-
-#     def clean(self):
-#         """
-#         Prevent an employee from being assigned as their own manager.
-#         """
-#         super().clean()
-
-#         if self.manager_id and self.manager_id == self.pk:
-#             raise ValidationError({
-#                 "manager": "An employee cannot be their own manager."
-#             })
-
-#     def save(self, *args, **kwargs):
-#         """
-#         Ensure only one employee is marked as the default manager.
-#         """
-#         if self.is_default_manager:
-#             empProfile.objects.filter(
-#                 is_default_manager=True
-#             ).exclude(
-#                 pk=self.pk
-#             ).update(
-#                 is_default_manager=False
-#             )
-
-#         if not self.work_schedule_id:
-#             default_schedule = WorkSchedule.objects.filter(
-#                 is_default=True,
-#                 is_active=True
-#             ).first()
-
-#             if default_schedule:
-#                 self.work_schedule = default_schedule
-
-#         super().save(*args, **kwargs)
-
-#     @property
-#     def default_leave_eligible_from(self):
-#         """
-#         Default company leave policy:
-#         employee becomes leave-eligible after
-#         completing 3 calendar months from date of joining.
-#         """
-#         if not self.date_hired:
-#             return None
-
-#         return add_calendar_months(
-#             self.date_hired,
-#             3,
-#         )
-
-#     @property
-#     def effective_leave_eligible_from(self):
-#         """
-#         HR-selected eligibility date takes priority.
-
-#         If HR has not provided an override,
-#         use the default 3-month probation rule.
-#         """
-#         if self.leave_eligible_from:
-#             return self.leave_eligible_from
-
-#         return self.default_leave_eligible_from
-
-#     @property
-#     def is_leave_eligible(self):
-#         """
-#         True once the employee reaches their
-#         effective leave eligibility date.
-#         """
-#         eligible_from = self.effective_leave_eligible_from
-
-#         if not eligible_from:
-#             return False
-
-#         return timezone.localdate() >= eligible_from
-
-#     def __str__(self):
-#         full_name = self.user.get_full_name().strip()
-
-#         if full_name:
-#             return full_name
-
-#         return self.user.username
 
 class empProfile(models.Model):
     uuid = models.UUIDField(
@@ -613,36 +380,7 @@ ATTENDANCE_STATUS_CHOICES = (
 
 LATE_CUTOFF_TIME = time(10, 15)  # after this time, check-in counts as Late
 
-
-# class Attendance(models.Model):
-#     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-#     employee = models.ForeignKey(
-#         empProfile, on_delete=models.CASCADE, related_name="attendances"
-#     )
-#     date = models.DateField(default=timezone.localdate)
-#     check_in = models.DateTimeField(null=True, blank=True)
-#     check_in_latitude = models.FloatField(null=True, blank=True)
-#     check_in_longitude = models.FloatField(null=True, blank=True)
-#     check_out = models.DateTimeField(null=True, blank=True)
-#     status = models.CharField(
-#         max_length=10, choices=ATTENDANCE_STATUS_CHOICES, default='ABSENT'
-#     )
-#     marked_by = models.ForeignKey(
-#         User, on_delete=models.SET_NULL, null=True, blank=True,
-#         related_name="attendance_marked", help_text="Admin who manually edited this record, if any"
-#     )
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-
-#     class Meta:
-#         unique_together = ('employee', 'date')
-#         ordering = ['-date']
-#         verbose_name = "Attendance"
-#         verbose_name_plural = "Attendance Records"
-
-#     def __str__(self):
-#         return f"{self.employee} - {self.date} - {self.get_status_display()}"
-    
+   
 class Attendance(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     employee = models.ForeignKey(
@@ -2061,6 +1799,31 @@ class empDocument(models.Model):
         help_text="Whether HR has verified this document."
     )
 
+    # ── New: rejection support ──────────────────────────
+    is_rejected = models.BooleanField(
+        default=False,
+        help_text="Whether HR has rejected this document."
+    )
+
+    rejection_reason = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Why HR rejected this document (shown to the employee)."
+    )
+
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="documents_reviewed",
+    )
+
+    reviewed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
     class Meta:
         ordering = ["-uploaded_at"]
         verbose_name = "Employee Document"
@@ -2068,7 +1831,7 @@ class empDocument(models.Model):
 
     def __str__(self):
         return f"{self.employee} - {self.document_type.name}"
-    
+        
 class EmployeeImportFieldConfig(models.Model):
     TARGET_CHOICES = [
         ("USER", "User Account"),
@@ -2120,7 +1883,66 @@ class EmployeeImportFieldConfig(models.Model):
     def __str__(self):
         return f"{self.column_label} → {self.field_key}"
     
+class Airport(models.Model):
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=10, unique=True)
+    state = models.CharField(max_length=50)
+    is_active = models.BooleanField(default=True)
 
+    class Meta:
+        ordering = ["state", "name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
+PASS_TYPE_CHOICES = (
+    ("AVSEC", "AVSEC"), ("AOCC", "AOCC"), ("RAP", "RAP"),
+    ("VEP", "VEP"), ("VISITOR", "Visitor"), ("CONTRACTOR", "Contractor"),
+)
+MANUAL_STATUS_CHOICES = (("SUSPENDED", "Suspended"), ("SURRENDERED", "Surrendered"))
+
+
+class BCASPass(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    employee = models.ForeignKey(empProfile, on_delete=models.CASCADE, related_name="bcas_passes")
+    pass_type = models.CharField(max_length=15, choices=PASS_TYPE_CHOICES)
+    airport = models.ForeignKey(Airport, on_delete=models.PROTECT, related_name="bcas_passes")
+    issue_date = models.DateField()
+    expiry_date = models.DateField()
+    access_zones = models.CharField(max_length=255, blank=True)
+    issuing_authority = models.CharField(max_length=150, blank=True)
+    remarks = models.TextField(blank=True)
+    manual_status = models.CharField(max_length=15, choices=MANUAL_STATUS_CHOICES, null=True, blank=True)
+    created_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    @property
+    def status(self):
+        if self.manual_status:
+            return self.manual_status
+        today = timezone.localdate()
+        if self.expiry_date < today:
+            return "EXPIRED"
+        if self.issue_date > today:
+            return "PENDING"
+        return "ACTIVE"
+
+    @property
+    def is_expiring_soon(self):
+        return self.status == "ACTIVE" and (self.expiry_date - timezone.localdate()).days <= 30
+
+    @property
+    def police_verification_pending(self):
+        return self.employee.police_verification_date is None
+
+    def __str__(self):
+        return f"{self.employee} — {self.get_pass_type_display()} ({self.airport.code})"
+    
 class WhatsAppTicket(models.Model):
 
     CATEGORY_CHOICES = [

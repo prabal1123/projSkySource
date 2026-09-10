@@ -223,6 +223,37 @@
 .sky-pill.absent   { background: var(--rose-soft);  color: var(--rose); }
 .sky-pill.leave    { background: var(--slate-soft); color: var(--slate); }
 
+/* Filter tabs (e.g. verification status filters) */
+.sky-filter-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.sky-filter-tab {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.4rem 1rem;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.sky-filter-tab:hover {
+    color: var(--ink);
+    border-color: var(--slate);
+}
+
+.sky-filter-tab.active {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: #fff;
+}
+
 .sky-edit-link {
     font-size: 0.78rem;
     color: var(--ink-soft);

@@ -28,13 +28,31 @@
 >
 
 <style>
-    /* Bigger Quick Actions buttons (size only), overriding the
-       min-height/padding in hr_dashboard.css's "QUICK ACTIONS — COMPACT" block.
-       Icon and text sizes are left untouched. */
 
     .hr-quick-grid a {
         min-height: 112px;
         padding: 18px 16px;
+    }
+
+
+        .hr-row-split {
+        grid-column: span 12;
+        display: grid;
+        grid-template-columns: 7fr 5fr;
+        align-items: start;
+        gap: 18px;
+    }
+
+    .hr-attendance-col {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .hr-row-split > .hr-actions-panel {
+        min-width: 0;
+        grid-column: unset;
     }
 </style>
 
@@ -263,12 +281,19 @@
 
 
                 <!-- =================================================
-                     ATTENDANCE OVERVIEW
+                     ATTENDANCE + PENDING HR WORK ROW
+                     (fixed 7:5 flex split — see .hr-row-split /
+                     .hr-attendance-col in extra_css above)
                 ================================================== -->
 
-                <div
-                    style="grid-column: span 7; display: flex; flex-direction: column; gap: 18px; align-self: start;"
-                >
+                <div class="hr-row-split">
+
+                <div class="hr-attendance-col">
+
+
+                <!-- =================================================
+                     ATTENDANCE OVERVIEW
+                ================================================== -->
 
                 <article class="hr-card hr-attendance-card">
 
@@ -814,6 +839,8 @@
                     </div>
 
                 </article>
+
+                </div>
 
 
 

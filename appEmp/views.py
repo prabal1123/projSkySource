@@ -85,7 +85,9 @@ from .models import (
     DocumentTypeMaster,
     DesignationMaster
 )
+from django.core.exceptions import PermissionDenied
 
+from django.contrib import messages
 import csv
 import io
 from appEmp.whatsapp_router import find_employee_by_phone
@@ -112,6 +114,11 @@ from .models import EmployeeImportFieldConfig
 from .forms import EmployeeBulkImportForm
 
 from django.views.decorators.cache import never_cache
+from .models import Airport, BCASPass
+from .forms import BCASPassForm, BCASPassStatusForm
+from django.db.models import Q
+import csv
+
 
 def _add_compression_message(request, form):
     info = getattr(form, "compression_info", None)
@@ -121,63 +128,6 @@ def _add_compression_message(request, form):
             f"Image compressed from {info['original_kb']:.0f}KB to "
             f"{info['compressed_kb']:.0f}KB to meet the 200KB limit."
         )
-
-
-# def _parse_date_cell(raw):
-#     if raw in (None, ""):
-#         return None, None
-#     if isinstance(raw, datetime):
-#         return raw.date(), None
-#     if isinstance(raw, date):
-#         return raw, None
-#     for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y"):
-#         try:
-#             return datetime.strptime(str(raw).strip(), fmt).date(), None
-#         except ValueError:
-#             continue
-#     return None, f"Unrecognized date: {raw!r}"
-
-
-# def _clean_import_value(config, raw_value):
-#     if config.data_type == "DATE":
-#         parsed, err = _parse_date_cell(raw_value)
-#         if err:
-#             return None, err
-#         if config.is_required and parsed is None:
-#             return None, f"{config.display_name} is required."
-#         return parsed, None
-
-#     value = "" if raw_value is None else str(raw_value).strip()
-
-#     if config.is_required and not value:
-#         return None, f"{config.display_name} is required."
-
-#     if not value:
-#         return None, None
-
-#     if config.data_type in ("TEXT", "PHONE"):
-#         return value, None
-
-#     if config.data_type == "FULL_NAME":
-#         parts = value.split(" ", 1)
-#         return {"first_name": parts[0], "last_name": parts[1] if len(parts) > 1 else ""}, None
-
-#     if config.data_type == "EMAIL":
-#         cleaned = value.lower()
-#         if "@" not in cleaned:
-#             return None, f"{config.display_name} is not a valid email."
-#         return cleaned, None
-
-#     if config.data_type == "REGEX":
-#         test_value = value.upper() if config.field_key == "pan_no" else value
-#         if config.validation_regex and not re.match(config.validation_regex, test_value):
-#             return None, config.validation_message or f"{config.display_name} format is invalid."
-#         return test_value, None
-
-#     if config.data_type == "DESIGNATION_FK":
-#         return value, None
-
-#     return value, None
 
 DATE_TOKEN_RE = re.compile(r"\d{1,2}[./-]\d{1,2}[./-]\d{4}|\d{4}[./-]\d{1,2}[./-]\d{1,2}")
 
@@ -476,81 +426,126 @@ def empList_view(request):
         {"objects": objects},
     )
 
+# Fields to exclude from "verification" stats even though they're
+# is_-prefixed booleans on empProfile (employment status flags,
+# not verification checks).
+VERIFICATION_FIELD_EXCLUDE = {"is_active", "is_default_manager"}
 
-# @login_required
-# def profileDetail_view(request, uuid):
-#     logged_in_profile = get_object_or_404(
-#         empProfile,
-#         user=request.user
-#     )
 
-#     employee = get_object_or_404(
-#         empProfile.objects.select_related(
-#             "user",
-#             "manager__user",
-#             "designation",
-#             "shift",
-#         ),
-#         uuid=uuid,
-#     )
+def _get_verification_fields():
+    """
+    Dynamically discovers verification-status boolean fields on
+    empProfile, so adding a new field like `is_pan_verified` to the
+    model automatically shows up here — no code change needed.
+    """
+    fields = []
+    for field in empProfile._meta.get_fields():
+        if getattr(field, "get_internal_type", None) is None:
+            continue
+        if field.get_internal_type() != "BooleanField":
+            continue
+        if not field.name.startswith("is_"):
+            continue
+        if field.name in VERIFICATION_FIELD_EXCLUDE:
+            continue
 
-#     # is_admin = user_has_permission(request.user, "manage_employees")
-#     is_admin = user_has_permission(request.user, "manage_employees")
-#     is_direct_manager = employee.manager_id == logged_in_profile.id
+        label = field.name[3:].replace("_", " ").title()
+        fields.append((field.name, label))
 
-#     if not is_admin and not is_direct_manager:
-#         messages.error(
-#             request,
-#             "You don't have permission to edit this employee profile."
-#         )
-#         return redirect("dashboard")
+    return fields
 
-#     if request.method == "POST":
-#         form = ProfileFormAdmin(
-#             request.POST,
-#             instance=employee
-#         )
 
-#         if form.is_valid():
-#             form.save()
+@login_required
+def verificationStats_view(request):
+    if not user_has_permission(request.user, "manage_employees"):
+        messages.error(request, "You don't have permission to view this page.")
+        return redirect("dashboard")
 
-#             messages.success(
-#                 request,
-#                 "Profile updated successfully."
-#             )
+    verification_fields = _get_verification_fields()
 
-#             return redirect(
-#                 "editProfile",
-#                 uuid=employee.uuid
-#             )
-#     else:
-#         form = ProfileFormAdmin(
-#             instance=employee
-#         )
+    profiles = empProfile.objects.filter(is_active=True).select_related("user")
+    total = profiles.count()
 
-#     target_salary = employee.salary_records.filter(
-#         is_active=True
-#     ).first()
+    stat_cards = []
+    for field_name, label in verification_fields:
+        verified_count = profiles.filter(**{field_name: True}).count()
+        percent = round((verified_count / total) * 100) if total else 0
+        stat_cards.append({
+            "label": label,
+            "verified_count": verified_count,
+            "total": total,
+            "percent": percent,
+        })
 
-#     return render(
-#         request,
-#         "appEmp/profile.html",
-#         {
-#             "employee": employee,
-#             "profile": employee,
-#             "form": form,
-#             "salary": target_salary,
-#             # "can_edit_salary": is_admin,
-#             "can_edit_salary": user_has_permission(request.user,"manage_salary"),
-#             "can_edit_profile": True,
-#             "salary_form": SalaryForm(
-#                 instance=target_salary
-#             ),
-#             "target_uuid": employee.uuid,
-#             "current_year": timezone.now().year,
-#             "current_month": timezone.now().month,
-#         },
-#     )
+    filter_status = request.GET.get("status", "all")  # all | incomplete | complete
+
+    rows = []
+    for profile in profiles.order_by("user__first_name", "user__last_name"):
+        flags = {field_name: getattr(profile, field_name) for field_name, _ in verification_fields}
+        is_fully_verified = all(flags.values())
+
+        if filter_status == "incomplete" and is_fully_verified:
+            continue
+        if filter_status == "complete" and not is_fully_verified:
+            continue
+
+        rows.append({
+            "profile": profile,
+            "flags": flags,
+            "is_fully_verified": is_fully_verified,
+        })
+
+    fully_verified_count = sum(
+        1 for p in profiles
+        if all(getattr(p, f) for f, _ in verification_fields)
+    )
+
+    return render(
+        request,
+        "appEmp/verificationStats.html",
+        {
+            "stat_cards": stat_cards,
+            "rows": rows,
+            "total": total,
+            "fully_verified_count": fully_verified_count,
+            "filter_status": filter_status,
+            "verification_fields": verification_fields,
+        },
+    )
+
+@login_required
+def verification_quick_update_view(request, uuid):
+    if not user_has_permission(request.user, "manage_employees"):
+        messages.error(request, "You don't have permission to update verification status.")
+        return redirect("dashboard")
+
+    if request.method != "POST":
+        raise PermissionDenied("Verification updates must be submitted securely.")
+
+    profile = get_object_or_404(empProfile, uuid=uuid)
+    verification_fields = _get_verification_fields()
+
+    changed_fields = []
+    for field_name, _ in verification_fields:
+        new_value = field_name in request.POST
+        if getattr(profile, field_name) != new_value:
+            setattr(profile, field_name, new_value)
+            changed_fields.append(field_name)
+
+    if changed_fields:
+        profile.save(update_fields=changed_fields + ["updated_at"])
+        messages.success(
+            request,
+            f"Verification status updated for {profile.user.get_full_name() or profile.user.username}."
+        )
+    else:
+        messages.info(request, "No changes were made.")
+
+    next_url = request.POST.get("next")
+    if next_url and next_url.startswith("/"):
+        return redirect(next_url)
+
+    return redirect("verificationStats")
 
 @login_required
 def profileDetail_view(request, uuid):
@@ -1445,7 +1440,7 @@ def dashboard_view(request):
 
 
 
-def _get_attendance_date(employee, current_datetime):    
+def _get_attendance_date(employee, current_datetime):
     local_datetime = timezone.localtime(
         current_datetime
     )
@@ -1517,79 +1512,6 @@ def _is_employee_late(employee, check_in_datetime):
 
     return local_check_in > late_cutoff
 
-
-# def _get_employee_day_context(employee, target_date):
-#     """
-#     Resolve the employee's work status for a specific date.
-
-#     Priority:
-#     1. Mandatory Holiday
-#     2. Weekly Off
-#     3. Approved Leave
-#     4. Normal Working Day
-
-#     Optional holidays do not automatically count as off.
-#     """
-
-#     # --------------------------------------------------
-#     # MANDATORY HOLIDAY
-#     # --------------------------------------------------
-
-#     holiday = Holiday.objects.filter(
-#         date=target_date,
-#         holiday_type="MANDATORY",
-#         is_active=True,
-#     ).first()
-
-#     # --------------------------------------------------
-#     # WORK SCHEDULE / WEEKLY OFF
-#     # --------------------------------------------------
-
-#     work_schedule = employee.work_schedule
-
-#     if not work_schedule:
-#         work_schedule = (
-#             WorkSchedule.objects
-#             .filter(
-#                 is_default=True,
-#                 is_active=True,
-#             )
-#             .first()
-#         )
-
-#     is_weekly_off = False
-
-#     if work_schedule:
-#         is_weekly_off = not (
-#             work_schedule.is_working_day(
-#                 target_date
-#             )
-#         )
-
-#     # --------------------------------------------------
-#     # APPROVED LEAVE
-#     # --------------------------------------------------
-
-#     approved_leave = (
-#         LeaveRequest.objects
-#         .filter(
-#             employee=employee,
-#             status="APPROVED",
-#             start_date__lte=target_date,
-#             end_date__gte=target_date,
-#         )
-#         .select_related(
-#             "leave_type"
-#         )
-#         .first()
-#     )
-
-#     return {
-#         "holiday": holiday,
-#         "work_schedule": work_schedule,
-#         "is_weekly_off": is_weekly_off,
-#         "approved_leave": approved_leave,
-#     }
 
 def _get_employee_day_context(employee, target_date):
     """
@@ -1692,229 +1614,9 @@ def _get_employee_day_context(employee, target_date):
         "approved_leave": approved_leave,
     }
 
-
-
-# @login_required
-# def checkin_checkout_view(request):
-#     profile = get_object_or_404(
-#         empProfile.objects.select_related(
-#             "shift",
-#             "work_schedule",
-#         ),
-#         user=request.user,
-#     )
-
-#     now = timezone.localtime()
-
-#     # --------------------------------------------------
-#     # Resolve attendance date
-#     # Handles night shifts crossing midnight.
-#     # --------------------------------------------------
-#     attendance_date = _get_attendance_date(
-#         profile,
-#         now,
-#     )
-
-#     # --------------------------------------------------
-#     # Resolve holiday / weekly off / leave
-#     # for the actual attendance date.
-#     # --------------------------------------------------
-#     day_context = _get_employee_day_context(
-#         profile,
-#         attendance_date,
-#     )
-
-#     holiday = day_context["holiday"]
-
-#     is_weekly_off = day_context[
-#         "is_weekly_off"
-#     ]
-
-#     approved_optional_holiday = day_context[
-#         "approved_optional_holiday"
-#     ]
-
-#     approved_leave = day_context[
-#         "approved_leave"
-#     ]
-
-#     # ==================================================
-#     # MANDATORY HOLIDAY
-#     # ==================================================
-
-#     if holiday:
-#         messages.info(
-#             request,
-#             (
-#                 f"{holiday.name} is a mandatory holiday. "
-#                 "Attendance is not required."
-#             ),
-#         )
-
-#         return redirect("dashboard")
-
-#     # ==================================================
-#     # WEEKLY OFF
-#     # ==================================================
-
-#     if is_weekly_off:
-#         messages.info(
-#             request,
-#             "This is your weekly off. Attendance is not required.",
-#         )
-
-#         return redirect("dashboard")
-
-#     # ==================================================
-#     # APPROVED OPTIONAL HOLIDAY
-#     # ==================================================
-
-#     if approved_optional_holiday:
-#         messages.info(
-#             request,
-#             (
-#                 "You have an approved optional holiday: "
-#                 f"{approved_optional_holiday.holiday.name}. "
-#                 "Attendance is not required."
-#             ),
-#         )
-
-#         return redirect(
-#             "dashboard"
-#         )
-
-#     # ==================================================
-#     # APPROVED FULL-DAY LEAVE
-#     # ==================================================
-
-#     if (
-#         approved_leave
-#         and approved_leave.duration_type == "FULL_DAY"
-#     ):
-#         messages.info(
-#             request,
-#             (
-#                 "You have approved "
-#                 f"{approved_leave.leave_type.name} "
-#                 "for this attendance date."
-#             ),
-#         )
-
-#         return redirect("dashboard")
-
-#     # ==================================================
-#     # GET / CREATE ATTENDANCE
-#     # ==================================================
-
-#     attendance, _ = Attendance.objects.get_or_create(
-#         employee=profile,
-#         date=attendance_date,
-#     )
-
-#     # ==================================================
-#     # CHECK IN
-#     # ==================================================
-
-#     if attendance.check_in is None:
-
-#         # ----------------------------------------------
-#         # LOCATION REQUIRED FOR CHECK-IN
-#         # ----------------------------------------------
-
-#         latitude = request.POST.get("latitude")
-#         longitude = request.POST.get("longitude")
-
-#         if not latitude or not longitude:
-#             messages.info(
-#                 request,
-#                 "Please allow location and refresh the page.",
-#             )
-
-#             return redirect("dashboard")
-
-#         try:
-#             latitude = float(latitude)
-#             longitude = float(longitude)
-#         except (TypeError, ValueError):
-#             messages.info(
-#                 request,
-#                 "Please allow location and refresh the page.",
-#             )
-
-#             return redirect("dashboard")
-
-#         attendance.check_in = now
-#         attendance.check_in_latitude = latitude
-#         attendance.check_in_longitude = longitude
-
-#         # ----------------------------------------------
-#         # HALF-DAY APPROVED LEAVE
-#         # ----------------------------------------------
-
-#         if (
-#             approved_leave
-#             and approved_leave.duration_type
-#             in [
-#                 "FIRST_HALF",
-#                 "SECOND_HALF",
-#             ]
-#         ):
-#             attendance.status = "HALF_DAY"
-
-#         # ----------------------------------------------
-#         # NORMAL WORKING DAY
-#         # ----------------------------------------------
-
-#         else:
-#             attendance.status = (
-#                 "LATE"
-#                 if _is_employee_late(
-#                     profile,
-#                     now,
-#                 )
-#                 else "PRESENT"
-#             )
-
-#         attendance.save()
-
-#         messages.success(
-#             request,
-#             (
-#                 f"Checked in at "
-#                 f"{now.strftime('%I:%M %p')}."
-#             ),
-#         )
-
-#     # ==================================================
-#     # CHECK OUT
-#     # ==================================================
-
-#     elif attendance.check_out is None:
-#         attendance.check_out = now
-#         attendance.save()
-
-#         messages.success(
-#             request,
-#             (
-#                 f"Checked out at "
-#                 f"{now.strftime('%I:%M %p')}."
-#             ),
-#         )
-
-#     # ==================================================
-#     # ALREADY COMPLETED
-#     # ==================================================
-
-#     else:
-#         messages.info(
-#             request,
-#             "You've already checked in and out for this shift.",
-#         )
-
-#     return redirect("dashboard")
-
 @login_required
 def checkin_checkout_view(request):
+    
     profile = get_object_or_404(
         empProfile.objects.select_related(
             "shift",
@@ -5244,8 +4946,8 @@ def holiday_list_view(request):
         context,
     )
 
-
 @login_required
+@permission_required("appEmp.manage_employees", raise_exception=True) 
 def holiday_create_view(request):
     if request.method == "POST":
         form = HolidayForm(request.POST)
@@ -5276,6 +4978,7 @@ def holiday_create_view(request):
 
 
 @login_required
+@permission_required("appEmp.manage_employees", raise_exception=True) 
 def holiday_edit_view(request, uuid):
     holiday = get_object_or_404(
         Holiday,
@@ -5345,6 +5048,7 @@ def holiday_year_view(request):
     )
 
 @login_required
+@permission_required("appEmp.manage_employees", raise_exception=True) 
 def holiday_bulk_upload_view(request):
     preview_rows = []
     has_errors = False
@@ -5786,6 +5490,7 @@ def work_schedule_list_view(request):
     )
 
 @login_required
+@permission_required("appEmp.manage_employees", raise_exception=True) 
 def work_schedule_create_view(request):
     if request.method == "POST":
         form = WorkScheduleForm(request.POST)
@@ -5813,6 +5518,7 @@ def work_schedule_create_view(request):
     )
 
 @login_required
+@permission_required("appEmp.manage_employees", raise_exception=True) 
 def work_schedule_edit_view(request, uuid):
     schedule = get_object_or_404(
         WorkSchedule,
@@ -6075,13 +5781,34 @@ def hr_verify_document(request, doc_id):
 
     if request.method == "POST":
         document.is_verified = True
+        document.is_rejected = False
+        document.rejection_reason = None
+        document.reviewed_by = request.user
+        document.reviewed_at = timezone.now()
         document.save()
+
+        messages.success(request, "Document verified successfully.")
 
     return redirect("hr_document_list")
 
-from django.core.exceptions import PermissionDenied
 
-from django.contrib import messages
+@login_required
+@permission_required("appEmp.manage_employees", raise_exception=True)
+def hr_reject_document(request, doc_id):
+    document = get_object_or_404(empDocument, id=doc_id)
+
+    if request.method == "POST":
+        document.is_verified = False
+        document.is_rejected = True
+        document.rejection_reason = request.POST.get("rejection_reason", "").strip() or None
+        document.reviewed_by = request.user
+        document.reviewed_at = timezone.now()
+        document.save()
+
+        messages.info(request, "Document rejected.")
+
+    return redirect("hr_document_list")
+
 
 @login_required
 def profile_document_upload(request, uuid):
@@ -6218,4 +5945,191 @@ def whatsapp_webhook(request):
             pass
 
         return JsonResponse({'status': 'ok'}, status=200)
-    
+
+def _bcas_pass_status_counts(passes_qs):
+    """
+    Computes stat-card counts in Python since status is a derived
+    property, not a DB field. Cheap enough for typical pass volumes;
+    revisit with DB-level annotation if this ever needs to scale up.
+    """
+    counts = {
+        "total": 0, "active": 0, "expiring_30d": 0,
+        "police_pending": 0, "expired": 0, "suspended": 0,
+    }
+    for bcas_pass in passes_qs:
+        counts["total"] += 1
+        status = bcas_pass.status
+        if status == "ACTIVE":
+            counts["active"] += 1
+            if bcas_pass.is_expiring_soon:
+                counts["expiring_30d"] += 1
+        elif status == "EXPIRED":
+            counts["expired"] += 1
+        elif status == "SUSPENDED":
+            counts["suspended"] += 1
+        if bcas_pass.police_verification_pending:
+            counts["police_pending"] += 1
+    return counts
+
+
+@login_required
+def bcas_pass_dashboard_view(request):
+    if not user_has_permission(request.user, "manage_employees"):
+        messages.error(request, "You don't have permission to view BCAS passes.")
+        return redirect("dashboard")
+
+    passes = (
+        BCASPass.objects
+        .select_related("employee__user", "airport")
+        .all()
+    )
+
+    # ── Filters ──────────────────────────────────────────────
+    pass_type = request.GET.get("pass_type", "")
+    status_filter = request.GET.get("status", "")
+    state_filter = request.GET.get("state", "")
+    search = request.GET.get("search", "").strip()
+
+    if pass_type:
+        passes = passes.filter(pass_type=pass_type)
+
+    if state_filter:
+        passes = passes.filter(airport__state=state_filter)
+
+    if search:
+        passes = passes.filter(
+            Q(employee__user__first_name__icontains=search)
+            | Q(employee__user__last_name__icontains=search)
+            | Q(uuid__icontains=search)
+        )
+
+    # Compute counts BEFORE the status filter, so cards reflect the
+    # full filtered-by-other-fields set, not the status-narrowed set.
+    stat_counts = _bcas_pass_status_counts(passes)
+
+    if status_filter:
+        passes = [p for p in passes if p.status == status_filter]
+    else:
+        passes = list(passes)
+
+    passes.sort(key=lambda p: p.created_at, reverse=True)
+
+    states = (
+        Airport.objects
+        .filter(is_active=True)
+        .values_list("state", flat=True)
+        .distinct()
+        .order_by("state")
+    )
+
+    # ── State-wise summary ──────────────────────────────────
+    state_summary = {}
+    for bcas_pass in BCASPass.objects.select_related("airport"):
+        state = bcas_pass.airport.state
+        state_summary.setdefault(state, {"total": 0, "active": 0})
+        state_summary[state]["total"] += 1
+        if bcas_pass.status == "ACTIVE":
+            state_summary[state]["active"] += 1
+
+    return render(
+        request,
+        "appEmp/bcas_pass_dashboard.html",
+        {
+            "passes": passes,
+            "stat_counts": stat_counts,
+            "states": states,
+            "state_summary": state_summary,
+            "pass_type_choices": BCASPass._meta.get_field("pass_type").choices,
+            "selected_pass_type": pass_type,
+            "selected_status": status_filter,
+            "selected_state": state_filter,
+            "search": search,
+            "form": BCASPassForm(),
+        },
+    )
+
+
+@login_required
+def bcas_pass_issue_view(request):
+    if not user_has_permission(request.user, "manage_employees"):
+        messages.error(request, "You don't have permission to issue BCAS passes.")
+        return redirect("dashboard")
+
+    if request.method == "POST":
+        form = BCASPassForm(request.POST)
+        if form.is_valid():
+            bcas_pass = form.save(commit=False)
+            bcas_pass.created_by = request.user
+            bcas_pass.save()
+            messages.success(
+                request,
+                f"BCAS pass issued for {bcas_pass.employee}."
+            )
+        else:
+            messages.error(request, "Please correct the errors in the form.")
+
+    return redirect("bcasPassDashboard")
+
+
+@login_required
+def bcas_pass_status_update_view(request, uuid):
+    if not user_has_permission(request.user, "manage_employees"):
+        messages.error(request, "You don't have permission to update BCAS passes.")
+        return redirect("dashboard")
+
+    bcas_pass = get_object_or_404(BCASPass, uuid=uuid)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "reactivate":
+            bcas_pass.manual_status = None
+            bcas_pass.save(update_fields=["manual_status", "updated_at"])
+            messages.success(request, f"Pass reactivated for {bcas_pass.employee}.")
+        else:
+            form = BCASPassStatusForm(request.POST, instance=bcas_pass)
+            if form.is_valid():
+                form.save()
+                messages.success(
+                    request,
+                    f"Pass status updated for {bcas_pass.employee}."
+                )
+            else:
+                messages.error(request, "Please correct the errors in the form.")
+
+    return redirect("bcasPassDashboard")
+
+
+@login_required
+def bcas_pass_export_csv_view(request):
+    if not user_has_permission(request.user, "manage_employees"):
+        messages.error(request, "You don't have permission to export BCAS passes.")
+        return redirect("dashboard")
+
+    passes = BCASPass.objects.select_related("employee__user", "airport").all()
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="bcas_passes.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        "Employee", "Pass Type", "Airport", "State", "Issue Date",
+        "Expiry Date", "Access Zones", "Issuing Authority", "Status",
+        "Police Verification Pending",
+    ])
+
+    for bcas_pass in passes:
+        writer.writerow([
+            str(bcas_pass.employee),
+            bcas_pass.get_pass_type_display(),
+            bcas_pass.airport.name,
+            bcas_pass.airport.state,
+            bcas_pass.issue_date,
+            bcas_pass.expiry_date,
+            bcas_pass.access_zones,
+            bcas_pass.issuing_authority,
+            bcas_pass.status,
+            "Yes" if bcas_pass.police_verification_pending else "No",
+        ])
+
+    return response

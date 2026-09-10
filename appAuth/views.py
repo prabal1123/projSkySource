@@ -15,7 +15,9 @@ from appEmp.models import empProfile, EmailOTP
 from .utils import send_azure_otp
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
-
+from appEmp.models import empProfile, EmailOTP, WhatsAppOTP
+from appEmp.whatsapp_utils import send_whatsapp_otp
+from .forms import LoginForm, registerEmp, RequestOTPForm, VerifyOTPForm, RequestWhatsAppOTPForm
 
 def get_client_ip(request):
     """
@@ -154,58 +156,6 @@ def verify_otp_view(request):
     return render(request, "appAuth/verify_otp.html", {"form": form, "email": email})
 
 
-# def register_view(request):
-#     requester_profile = empProfile.objects.filter(user=request.user).first()
-
-#     if not requester_profile or not (
-#         request.user.is_superuser
-#         or request.user.has_perm("appEmp.manage_employees")
-#     ):
-#         messages.error(request, "You don't have permission to add employees.")
-#         return redirect("dashboard")
-#     form = registerEmp(request.POST or None)
-
-#     if request.method == "POST" and form.is_valid():
-#         first_name = form.cleaned_data["first_name"]
-#         last_name = form.cleaned_data["last_name"]
-#         email = form.cleaned_data["email"]
-#         username = form.cleaned_data["username"]
-#         password = form.cleaned_data["password"]
-
-#         if User.objects.filter(username=username).exists():
-#             messages.error(request, "That username is already taken.")
-
-#             return render(
-#                 request,
-#                 "appAuth/register.html",
-#                 {"form": form},
-#             )
-
-#         user = User.objects.create_user(
-#             username=username,
-#             email=email,
-#             password=password,
-#             first_name=first_name,
-#             last_name=last_name,
-#         )
-
-#         emp_profile = empProfile.objects.filter(user=user).first()
-
-#         if emp_profile is None:
-#             messages.error(
-#                 request,
-#                 "Account created, but employee profile could not be found.",
-#             )
-#             return redirect("login")
-
-#         return redirect("editProfile", uuid=emp_profile.uuid)
-
-#     return render(
-#         request,
-#         "appAuth/register.html",
-#         {"form": form},
-#     )
-
 def register_view(request):
     requester_profile = empProfile.objects.filter(user=request.user).first()
 
@@ -262,15 +212,81 @@ def logout_view(request):
     logout(request)
     return redirect("login")
 
-# @never_cache
-# @login_required
-# def dashboard_view(request):
-#     if not request.user.is_authenticated:
+
+
+# def login_view(request):
+#     """
+#     Step 1: employee enters their WhatsApp number. If an empProfile exists
+#     with that number, an OTP is generated and sent via WhatsApp.
+#     """
+#     form = RequestWhatsAppOTPForm(request.POST or None)
+
+#     if request.method == "POST" and form.is_valid():
+#         phone_number = form.cleaned_data["phone_number"].strip()
+
+#         profile = empProfile.objects.filter(phone_number=phone_number).first()
+
+#         if not profile:
+#             messages.error(request, "This number is not registered. Contact HR/Admin to get access.")
+#             return render(request, "appAuth/login.html", {"form": form})
+
+#         otp = f"{random.randint(100000, 999999)}"
+#         WhatsAppOTP.objects.create(phone_number=phone_number, code=otp)
+
+#         status_code, response_data = send_whatsapp_otp(f"91{phone_number}", otp)
+
+#         if status_code != 200:
+#             messages.error(request, "Failed to send code. Please try again shortly.")
+#             return render(request, "appAuth/login.html", {"form": form})
+
+#         request.session["pending_login_phone"] = phone_number
+#         return redirect("verify_otp")
+
+#     return render(request, "appAuth/login.html", {"form": form})
+
+
+# def verify_otp_view(request):
+#     """
+#     Step 2: employee enters the OTP they received on WhatsApp.
+#     """
+#     phone_number = request.session.get("pending_login_phone")
+#     if not phone_number:
+#         messages.error(request, "Please enter your WhatsApp number first.")
 #         return redirect("login")
 
-#     return render(
-#         request,
-#         "dashboard.html",
-#         {"user": request.user},
-#     )
+#     form = VerifyOTPForm(request.POST or None)
 
+#     if request.method == "POST" and form.is_valid():
+#         code = form.cleaned_data["otp"]
+
+#         otp_obj = (
+#             WhatsAppOTP.objects.filter(phone_number=phone_number, code=code)
+#             .order_by("-created_at")
+#             .first()
+#         )
+
+#         if not otp_obj or not otp_obj.is_valid():
+#             messages.error(request, "Invalid or expired code.")
+#             return render(request, "appAuth/verify_otp.html", {"form": form, "phone_number": phone_number})
+
+#         profile = empProfile.objects.filter(phone_number=phone_number).first()
+#         if not profile:
+#             messages.error(request, "No employee account found for this number.")
+#             return redirect("login")
+
+#         otp_obj.used = True
+#         otp_obj.save()
+
+#         login(request, profile.user, backend="django.contrib.auth.backends.ModelBackend")
+
+#         ActivityLog.objects.create(
+#             user=profile.user,
+#             action="User logged in via WhatsApp OTP",
+#             ip_address=get_client_ip(request),
+#             user_agent=request.META.get("HTTP_USER_AGENT") or "Unknown",
+#         )
+
+#         del request.session["pending_login_phone"]
+#         return redirect("dashboard")
+
+#     return render(request, "appAuth/verify_otp.html", {"form": form, "phone_number": phone_number})

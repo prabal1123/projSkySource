@@ -1999,9 +1999,9 @@ span {
 
     line-height: 1.25;
 }
-   .hr-attendance-card {
-       align-self: start;
-   }
+/* .hr-attendance-card {
+    align-self: start;
+} */
 .hr-action-row div span {
     margin-top: 4px;
 
@@ -2153,4 +2153,23 @@ span {
     box-shadow:
         0 0 0 3px
         rgba(6, 59, 45, 0.07);
+}
+.hr-row-split {
+    grid-column: span 12;
+    display: grid;
+    grid-template-columns: 7fr 5fr;
+    align-items: start;
+    gap: 18px;
+}
+
+.hr-attendance-col {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.hr-row-split > .hr-actions-panel {
+    min-width: 0;
+    grid-column: unset;
 }

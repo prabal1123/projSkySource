@@ -98,7 +98,7 @@ from django import forms
 from django.contrib.auth.models import Group
 from django.db.models import Q
 from .models import empDocument, DocumentTypeMaster, empProfile
-
+from .models import Airport, BCASPass, PASS_TYPE_CHOICES, MANUAL_STATUS_CHOICES
 
 
 class EmployeeForm(forms.ModelForm):
@@ -1544,6 +1544,90 @@ class EmployeeBulkImportForm(forms.Form):
         widget=forms.ClearableFileInput(attrs={"class": "form-control"}),
     )
 
+class BCASPassForm(forms.ModelForm):
+    class Meta:
+        model = BCASPass
+        fields = [
+            "employee",
+            "pass_type",
+            "airport",
+            "issue_date",
+            "expiry_date",
+            "access_zones",
+            "issuing_authority",
+            "remarks",
+        ]
+
+        widgets = {
+            "issue_date": forms.DateInput(
+                attrs={"type": "date", "class": "form-control"}
+            ),
+            "expiry_date": forms.DateInput(
+                attrs={"type": "date", "class": "form-control"}
+            ),
+            "access_zones": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "e.g. APRON, TERMINAL, ATC, CARGO",
+                }
+            ),
+            "issuing_authority": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "e.g. BCAS Regional Office, Ahmedabad",
+                }
+            ),
+            "remarks": forms.Textarea(
+                attrs={"class": "form-control", "rows": 3}
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["employee"].queryset = (
+            empProfile.objects
+            .filter(is_active=True)
+            .select_related("user")
+            .order_by("user__first_name", "user__last_name")
+        )
+
+        self.fields["airport"].queryset = (
+            Airport.objects
+            .filter(is_active=True)
+            .order_by("state", "name")
+        )
+
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs["class"] = "form-check-input"
+            else:
+                field.widget.attrs.setdefault("class", "form-control")
+
+    def clean(self):
+        cleaned_data = super().clean()
+        issue_date = cleaned_data.get("issue_date")
+        expiry_date = cleaned_data.get("expiry_date")
+
+        if issue_date and expiry_date and expiry_date < issue_date:
+            self.add_error(
+                "expiry_date",
+                "Expiry date cannot be before the issue date."
+            )
+
+        return cleaned_data
+
+class BCASPassStatusForm(forms.ModelForm):
+    """Used for Suspend / Surrender / Reactivate actions."""
+    class Meta:
+        model = BCASPass
+        fields = ["manual_status", "remarks"]
+
+        widgets = {
+            "manual_status": forms.Select(attrs={"class": "form-control"}),
+            "remarks": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+        }
+        
 class HrDocumentUploadForm(empDocumentForm):
     employee = forms.ModelChoiceField(
         queryset=empProfile.objects.select_related("user").order_by("user__first_name", "user__last_name"),
