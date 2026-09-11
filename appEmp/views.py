@@ -83,7 +83,8 @@ from .models import (
     OptionalHolidayRequest,
     empDocument,
     DocumentTypeMaster,
-    DesignationMaster
+    DesignationMaster,
+    ShiftMaster
 )
 from django.core.exceptions import PermissionDenied
 
@@ -406,13 +407,53 @@ def employee_bulk_import_view(request):
         "skip_count": skip_count, "warning_count": warning_count,
     })
 
-@login_required
+def _filtered_emp_queryset(request):
+    """
+    Shared search/filter logic for the employee list — used by both
+    the on-screen list view and the PDF export, so they always stay
+    in sync.
+    """
+    search_query = request.GET.get("q", "").strip()
+    designation_id = request.GET.get("designation", "").strip()
+    shift_id = request.GET.get("shift", "").strip()
+    status = request.GET.get("status", "").strip()  # "active" | "inactive" | ""
+
+    objects = empProfile.objects.all()
+
+    if search_query:
+        objects = objects.filter(
+            Q(user__first_name__icontains=search_query)
+            | Q(user__last_name__icontains=search_query)
+            | Q(phone_number__icontains=search_query)
+        )
+
+    if designation_id:
+        objects = objects.filter(designation_id=designation_id)
+
+    if shift_id:
+        objects = objects.filter(shift_id=shift_id)
+
+    if status == "active":
+        objects = objects.filter(is_active=True)
+    elif status == "inactive":
+        objects = objects.filter(is_active=False)
+
+    filters = {
+        "search_query": search_query,
+        "designation_id": designation_id,
+        "shift_id": shift_id,
+        "status": status,
+    }
+    return objects, filters
+
 def empList_view(request):
     if not user_has_permission(request.user, "manage_employees"):
         messages.error(request, "You don't have permission to view employees.")
         return redirect("dashboard")
 
-    objects = empProfile.objects.values(
+    objects, filters = _filtered_emp_queryset(request)
+
+    objects = objects.values(
         "id",
         "user__first_name",
         "user__last_name",
@@ -420,12 +461,89 @@ def empList_view(request):
         "uuid",
     )
 
+    designations = DesignationMaster.objects.filter(is_active=True).order_by("name")
+    shifts = ShiftMaster.objects.all().order_by("name")
+
     return render(
         request,
         "appEmp/empList.html",
-        {"objects": objects},
+        {
+            "objects": objects,
+            "search_query": filters["search_query"],
+            "designations": designations,
+            "shifts": shifts,
+            "selected_designation": filters["designation_id"],
+            "selected_shift": filters["shift_id"],
+            "selected_status": filters["status"],
+        },
     )
 
+
+@login_required
+def empList_pdf_view(request):
+    if not user_has_permission(request.user, "manage_employees"):
+        messages.error(request, "You don't have permission to view employees.")
+        return redirect("dashboard")
+
+    objects, _ = _filtered_emp_queryset(request)
+    objects = objects.select_related("designation", "shift").order_by(
+        "user__first_name", "user__last_name"
+    )
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        topMargin=15 * mm, bottomMargin=15 * mm,
+        leftMargin=12 * mm, rightMargin=12 * mm,
+    )
+    styles = getSampleStyleSheet()
+    elements = []
+
+    NAVY = colors.HexColor('#0F172A')
+    GRID = colors.HexColor('#CBD5E1')
+
+    title_style = ParagraphStyle('ListTitle', parent=styles['Heading1'], textColor=NAVY, spaceAfter=2)
+    elements.append(Paragraph("Employee List", title_style))
+    elements.append(
+        Paragraph(
+            f"Generated on {timezone.now().strftime('%d %b %Y, %I:%M %p')} "
+            f"&mdash; {objects.count()} record(s)",
+            styles['Normal'],
+        )
+    )
+    elements.append(Spacer(1, 6 * mm))
+
+    data = [['ID', 'Name', 'Phone Number', 'Designation', 'Status']]
+    for profile in objects:
+        name = profile.user.get_full_name() or profile.user.username
+        data.append([
+            str(profile.id),
+            name,
+            profile.phone_number or '—',
+            profile.designation.name if profile.designation else '—',
+            'Active' if profile.is_active else 'Inactive',
+        ])
+
+    table = Table(data, colWidths=[15 * mm, 55 * mm, 35 * mm, 50 * mm, 25 * mm], repeatRows=1)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('GRID', (0, 0), (-1, -1), 0.5, GRID),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8FAFC')]),
+    ]))
+    elements.append(table)
+
+    doc.build(elements)
+    buffer.seek(0)
+
+    response = HttpResponse(buffer, content_type='application/pdf')
+    filename = f"employee_list_{timezone.now().strftime('%Y%m%d_%H%M')}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
 # Fields to exclude from "verification" stats even though they're
 # is_-prefixed booleans on empProfile (employment status flags,
 # not verification checks).

@@ -5,6 +5,7 @@ from . import views
 from .views import (
     empProfile_view,
     empList_view,
+    empList_pdf_view,
     verification_quick_update_view,
     verificationStats_view,
     profileDetail_view,
@@ -102,6 +103,11 @@ path(
     views.bcas_pass_status_update_view,
     name="bcasPassStatusUpdate",
 ),
+    path(
+        "empList/pdf/",
+        empList_pdf_view,
+        name="employeeListPdf",
+    ),
 path(
     "bcas/export/",
     views.bcas_pass_export_csv_view,

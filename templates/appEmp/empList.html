@@ -5,6 +5,232 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+    *, *::before, *::after {
+        box-sizing: border-box;
+    }
+
+    .sky-dashboard {
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    .sky-dashboard .container {
+        width: 100%;
+        max-width: 1320px;
+        padding-left: 15px;
+        padding-right: 15px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .sky-panel {
+        width: 100%;
+        min-width: 0;
+        background: #fff;
+        border: 1px solid var(--border, #e6e8ec);
+        border-radius: 6px;
+    }
+
+    /* Filters Layout */
+    .sky-emp-filters {
+        padding: 0.85rem 1.25rem;
+        border-bottom: 1px solid var(--border, #e6e8ec);
+    }
+
+    .sky-filter-row-main {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .sky-filter-row-actions {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 0.75rem;
+    }
+
+    .sky-filter-export-group {
+        margin-left: auto;
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    /* Table & Actions */
+    .table-responsive {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        display: block;
+        margin: 0;
+        position: relative;
+    }
+
+    .sky-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 480px;
+    }
+
+    .sky-table th, 
+    .sky-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border, #e6e8ec);
+        vertical-align: middle;
+    }
+
+    .sky-table tbody tr:hover {
+        background: #fcfdfd;
+    }
+
+    .sky-table th.col-sno, 
+    .sky-table td.col-sno {
+        width: 60px;
+        text-align: center;
+    }
+
+    .sky-table th.col-name, 
+    .sky-table td.col-name {
+        min-width: 160px;
+    }
+
+    .sky-table th.col-phone, 
+    .sky-table td.col-phone {
+        min-width: 120px;
+    }
+
+    /* Sticky Action Column */
+    .sky-table th.col-action,
+    .sky-table td.col-action {
+        position: sticky;
+        right: 0;
+        background: #ffffff;
+        width: 130px;
+        text-align: right;
+        box-shadow: -6px 0 10px -4px rgba(0, 0, 0, 0.05);
+        z-index: 2;
+    }
+
+    .sky-table tbody tr:hover td.col-action {
+        background: #fcfdfd;
+    }
+
+    .sky-table thead th.col-action {
+        background: #ffffff;
+        z-index: 3;
+    }
+
+    .sky-employee-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .sky-action-divider {
+        color: #cbd5e1;
+    }
+
+    .sky-edit-link {
+        font-size: 0.78rem;
+        color: var(--ink-soft, #5b6b85);
+        text-decoration: none;
+        border: 1px solid var(--border, #e6e8ec);
+        padding: 0.25rem 0.55rem;
+        border-radius: 4px;
+        transition: all 0.15s ease;
+    }
+
+    .sky-edit-link:hover {
+        border-color: var(--teal, #0f9e96);
+        color: var(--teal, #0f9e96);
+    }
+
+    /* Mobile Adjustments */
+    @media (max-width: 768px) {
+        .sky-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.85rem;
+        }
+
+        .sky-header a.sky-punch-btn {
+            width: 100%;
+            text-align: center;
+        }
+
+        .sky-filter-row-main input,
+        .sky-filter-row-main select {
+            width: 100%;
+            max-width: 100% !important;
+        }
+
+        .sky-filter-export-group {
+            margin-left: 0;
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        .sky-table th, 
+        .sky-table td {
+            padding: 0.6rem 0.65rem;
+            font-size: 0.82rem;
+        }
+
+        .sky-table th.col-sno,
+        .sky-table td.col-sno {
+            width: 45px;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+
+        .sky-table th.col-action,
+        .sky-table td.col-action {
+            width: 115px;
+            padding-right: 0.75rem;
+        }
+
+        .sky-edit-link {
+            padding: 0.2rem 0.45rem;
+            font-size: 0.74rem;
+        }
+    }
+
+    /* Print Styles */
+    @media print {
+        .hr-sidebar,
+        .hr-sidebar-overlay,
+        .hr-topbar,
+        .sky-header a,
+        .sky-emp-filters,
+        .sky-employee-actions,
+        footer {
+            display: none !important;
+        }
+
+        .sky-table th.col-action,
+        .sky-table td.col-action {
+            display: none !important;
+        }
+
+        body, .sky-dashboard, .container {
+            background: #fff !important;
+            margin: 0;
+            padding: 0;
+        }
+
+        .sky-panel {
+            box-shadow: none !important;
+            border: none !important;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -20,12 +246,7 @@
             <a
                 href="{% url 'register' %}"
                 class="sky-punch-btn in"
-                style="
-                    text-decoration: none;
-                    display: inline-block;
-                    padding: 0.55rem 1.4rem;
-                    font-size: 0.9rem;
-                "
+                style="text-decoration: none; display: inline-block; padding: 0.55rem 1.4rem; font-size: 0.9rem;"
             >
                 + Add Employee
             </a>
@@ -39,60 +260,122 @@
                 </span>
             </div>
 
+            <form method="get" class="sky-emp-filters">
+                <div class="sky-filter-row-main">
+                    <input
+                        type="text"
+                        name="q"
+                        value="{{ search_query }}"
+                        placeholder="Search by name or phone..."
+                        class="form-control"
+                        style="max-width: 280px;"
+                    >
+
+                    <select name="designation" class="form-select" style="max-width: 200px;">
+                        <option value="">All Designations</option>
+                        {% for d in designations %}
+                            <option value="{{ d.id }}" {% if selected_designation == d.id|stringformat:"s" %}selected{% endif %}>
+                                {{ d.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <select name="shift" class="form-select" style="max-width: 200px;">
+                        <option value="">All Shifts</option>
+                        {% for s in shifts %}
+                            <option value="{{ s.id }}" {% if selected_shift == s.id|stringformat:"s" %}selected{% endif %}>
+                                {{ s.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <select name="status" class="form-select" style="max-width: 160px;">
+                        <option value="">All Status</option>
+                        <option value="active" {% if selected_status == "active" %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if selected_status == "inactive" %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+
+                <div class="sky-filter-row-actions">
+                    <button type="submit" class="sky-punch-btn in" style="padding: 0.5rem 1.2rem; font-size: 0.85rem;">
+                        Apply
+                    </button>
+
+                    {% if search_query or selected_designation or selected_shift or selected_status %}
+                        <a href="{% url 'employeeList' %}" style="font-size: 0.85rem; color: var(--ink-soft); text-decoration: underline;">
+                            Clear
+                        </a>
+                    {% endif %}
+
+                    <div class="sky-filter-export-group">
+                        <button
+                            type="button"
+                            class="sky-punch-btn"
+                            style="padding: 0.5rem 1.1rem; font-size: 0.85rem; background: #fff; color: var(--ink, #222); border: 1px solid #ccc;"
+                            onclick="window.print()"
+                        >
+                            Print
+                        </button>
+
+                        <a
+                            href="{% url 'employeeListPdf' %}?{{ request.GET.urlencode }}"
+                            class="sky-punch-btn in"
+                            style="padding: 0.5rem 1.1rem; font-size: 0.85rem; text-decoration: none; display: inline-block;"
+                        >
+                            Download PDF
+                        </a>
+                    </div>
+                </div>
+            </form>
+
             <div class="table-responsive">
                 <table class="sky-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Phone Number</th>
-                            <th class="text-end">Action</th>
+                            <th class="col-sno">#</th>
+                            <th class="col-name">Name</th>
+                            <th class="col-phone">Phone Number</th>
+                            <th class="col-action">Action</th>
                         </tr>
                     </thead>
 
                     <tbody>
                         {% for obj in objects %}
                             <tr>
-                                <td class="sky-time">
-                                    {{ obj.id }}
-                                </td>
-
-                                <td>
-                                    {% if obj.user__first_name or obj.user__last_name %}
-                                        {{ obj.user__last_name }},
-                                        {{ obj.user__first_name }}
+                                <td class="sky-time col-sno">
+                                    {% if page_obj %}
+                                        {{ page_obj.start_index|add:forloop.counter0 }}
                                     {% else %}
-                                        Employee #{{ obj.id }}
+                                        {{ forloop.counter }}
                                     {% endif %}
                                 </td>
 
-                                <td class="sky-time">
+                                <td class="col-name">
+                                    {% if obj.user__first_name or obj.user__last_name %}
+                                        {{ obj.user__last_name }}, {{ obj.user__first_name }}
+                                    {% else %}
+                                        Employee #{{ forloop.counter }}
+                                    {% endif %}
+                                </td>
+
+                                <td class="sky-time col-phone">
                                     {{ obj.phone_number|default:"—" }}
                                 </td>
 
-                                <td class="text-end">
+                                <td class="col-action">
                                     <div class="sky-employee-actions">
-                                        <a
-                                            href="{% url 'editProfile' obj.uuid %}"
-                                            class="sky-edit-link"
-                                        >
+                                        <a href="{% url 'editProfile' obj.uuid %}" class="sky-edit-link">
                                             Edit
                                         </a>
 
-                                        <span class="sky-action-divider">
-                                            |
-                                        </span>
+                                        <span class="sky-action-divider">|</span>
 
-                                        <a
-                                            href="{% url 'attendanceCalendarAdmin' obj.uuid %}"
-                                            class="sky-edit-link"
-                                        >
+                                        <a href="{% url 'attendanceCalendarAdmin' obj.uuid %}" class="sky-edit-link">
                                             Calendar
                                         </a>
                                     </div>
                                 </td>
                             </tr>
-
                         {% empty %}
                             <tr>
                                 <td colspan="4" class="sky-empty">
