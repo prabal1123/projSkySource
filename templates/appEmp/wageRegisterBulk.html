@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Wage Register — {{ wage_month|date:"F Y" }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container-fluid">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Payroll / Wage Register</span>
+                <h1>Wage Register — {{ wage_month|date:"F Y" }}</h1>
+            </div>
+        </div>
+
+        <div class="sky-stat-row wage-summary-row">
+            <div class="sky-stat">
+                <div class="sky-stat-value">{{ rows|length }}</div>
+                <div class="sky-stat-label">Employees</div>
+            </div>
+            <div class="sky-stat is-teal">
+                <div class="sky-stat-value sky-mono">₹{{ totals.gross|floatformat:2 }}</div>
+                <div class="sky-stat-label">Total Gross</div>
+            </div>
+            <div class="sky-stat is-rose">
+                <div class="sky-stat-value sky-mono">₹{{ totals.deductions|floatformat:2 }}</div>
+                <div class="sky-stat-label">Total Deductions</div>
+            </div>
+            <div class="sky-stat is-amber">
+                <div class="sky-stat-value sky-mono">₹{{ totals.net|floatformat:2 }}</div>
+                <div class="sky-stat-label">Total Net Payment</div>
+            </div>
+        </div>
+
+        <div class="sky-panel">
+            <div class="sky-panel-head">
+                <h6>Register</h6>
+                <span class="sky-count">Editable fields fall back to automatic values when left blank</span>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                {{ formset.management_form }}
+
+                <div class="wage-ledger-outer">
+                    <span class="wage-ledger-scroll-cue">Scroll for payment details →</span>
+                    <div class="wage-ledger-wrap">
+                        <table class="wage-ledger">
+                            <thead>
+                                <tr class="wage-ledger-group-row">
+                                    <th rowspan="2" class="wage-ledger-sticky-col">Employee</th>
+                                    <th colspan="3">Attendance</th>
+                                    <th colspan="5">Wages</th>
+                                    <th colspan="2">Statutory Deductions</th>
+                                    <th colspan="2">Payment</th>
+                                </tr>
+                                <tr>
+                                    <th>Nat'l Holidays</th>
+                                    <th>Days Worked</th>
+                                    <th>OT (hrs)</th>
+                                    <th>Rate</th>
+                                    <th>Total Days</th>
+                                    <th>Wages (Days)</th>
+                                    <th>Bonus</th>
+                                    <th class="wage-ledger-emphasis">Gross Total</th>
+                                    <th>EPF</th>
+                                    <th>ESIC</th>
+                                    <th>Mode</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for row in rows %}
+                                    {% with form=row.form salary=row.salary preview=row.preview %}
+                                    <tr>
+                                        <td class="wage-ledger-sticky-col">
+                                            <div class="wage-ledger-employee">
+                                                <span class="wage-ledger-avatar">
+                                                    {{ salary.employee.user.first_name|first|upper }}{{ salary.employee.user.last_name|first|upper }}
+                                                </span>
+                                                <div>
+                                                    <div class="wage-ledger-name">
+                                                        {{ salary.employee.user.get_full_name|default:salary.employee.user.username }}
+                                                    </div>
+                                                    <div class="wage-ledger-role">
+                                                        {{ salary.employee.designation|default:"—" }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {{ form.salary_id }}
+                                        </td>
+
+                                        <td class="wage-ledger-input">{{ form.national_holidays_in_month }}</td>
+
+                                        <td class="wage-ledger-input">
+                                            {{ form.days_worked_override }}
+                                            <span class="wage-ledger-auto-badge">auto {{ preview.days_worked }}</span>
+                                        </td>
+
+                                        <td class="wage-ledger-input">
+                                            {{ form.ot_hours_override }}
+                                            <span class="wage-ledger-auto-badge">auto {{ preview.operational_ot_hours }}</span>
+                                        </td>
+
+                                        <td class="wage-ledger-input">
+                                            {{ form.rate_override }}
+                                            <span class="wage-ledger-auto-badge">auto ₹{{ preview.rate_of_wages|intcomma }}</span>
+                                        </td>
+
+                                        <td class="wage-ledger-computed sky-mono">{{ preview.total_days }}</td>
+                                        <td class="wage-ledger-computed sky-mono">₹{{ preview.total_wages_workday_nh|intcomma }}</td>
+                                        <td class="wage-ledger-computed sky-mono">₹{{ preview.bonus|intcomma }}</td>
+                                        <td class="wage-ledger-computed wage-ledger-emphasis sky-mono">₹{{ preview.gross_total|intcomma }}</td>
+
+                                        <td class="wage-ledger-computed sky-mono">₹{{ preview.epf_employee|intcomma }}</td>
+                                        <td class="wage-ledger-computed sky-mono">₹{{ preview.esic|intcomma }}</td>
+
+                                        <td class="wage-ledger-input">{{ form.mode_of_payment }}</td>
+                                        <td class="wage-ledger-input">{{ form.payment_date }}</td>
+                                    </tr>
+
+                                    {% if form.errors %}
+                                    <tr class="wage-ledger-error-row">
+                                        <td colspan="13">{{ form.errors }}</td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endwith %}
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="13" class="sky-empty">
+                                            No active daily-wage employees found.
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+
+                            {% if rows %}
+                            <tfoot>
+                                <tr>
+                                    <td class="wage-ledger-sticky-col">Total</td>
+                                    <td colspan="7"></td>
+                                    <td class="sky-mono wage-ledger-emphasis">{{ totals.gross|floatformat:2 }}</td>
+                                    <td colspan="2" class="sky-mono">{{ totals.deductions|floatformat:2 }}</td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tfoot>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+
+                {% if rows %}
+                <div class="wage-ledger-savebar">
+                    <span class="wage-ledger-savebar-hint">
+                        Saves all {{ rows|length }} rows for {{ wage_month|date:"F Y" }} together
+                    </span>
+                    <button type="submit" class="btn btn-primary">
+                        Save Wage Register
+                    </button>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

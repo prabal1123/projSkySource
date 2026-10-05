@@ -992,7 +992,7 @@ a:hover {
 .hr-content {
     flex: 1;
 
-    padding: 28px 0 36px;
+    padding: 12px 0 36px; /* Reduced top padding to pull everything up */
 
     background: var(--bg);
 }
@@ -2208,11 +2208,9 @@ a:hover {
     overflow: hidden;
 }
 
-.hr-sidebar-brand,
-.hr-topbar {
-    min-height: 95px;
+.hr-sidebar-brand {
+    min-height: auto;
 }
-
 
 /* ==========================================================
    MOBILE

@@ -24,6 +24,8 @@ from .views import (
     leave_balance_edit_view,
     pending_attendance_exceptions_view, 
     review_attendance_exception_view,
+    
+
 
 )
 
@@ -107,6 +109,11 @@ path(
         "empList/pdf/",
         empList_pdf_view,
         name="employeeListPdf",
+    ),
+        path(
+        "wageRegister/<int:year>/<int:month>/",
+        views.wage_register_bulk_view,
+        name="wageRegisterBulk",
     ),
 path(
     "bcas/export/",

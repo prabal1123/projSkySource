@@ -10,7 +10,7 @@ import calendar
 import io
 from PIL import Image, UnidentifiedImageError
 from django.core.files.uploadedfile import InMemoryUploadedFile
-
+from datetime import timedelta, date
 
 class EmailOTP(models.Model):
     email = models.EmailField(db_index=True)
@@ -489,6 +489,105 @@ class AttendanceException(models.Model):
         )
 
 
+# class Salary(models.Model):
+#     """
+#     One row per salary revision. Only one row per employee has is_active=True
+#     at any time — that's the 'current' salary. Keeping history instead of
+#     overwriting means you can later show raise history / generate slips for
+#     past months using the salary that was active then, if you want.
+#     """
+#     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+#     employee = models.ForeignKey(
+#         empProfile,
+#         on_delete=models.CASCADE,
+#         related_name='salary_records',
+#     )
+#     basic_salary = models.DecimalField(max_digits=12, decimal_places=2)
+#     hra = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+#     pf = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # employee contribution — deducted, not added
+
+#     effective_date = models.DateField(default=timezone.now)
+#     is_active = models.BooleanField(default=True)
+
+#     created_by = models.ForeignKey(
+#         User,
+#         null=True, blank=True,
+#         on_delete=models.SET_NULL,
+#         related_name='salaries_created',
+#     )
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+#     class Meta:
+#         ordering = ['-effective_date', '-created_at']
+
+#     def __str__(self):
+#         return f"{self.employee.user.get_full_name() or self.employee.user.username} — {self.effective_date}"
+
+#     def save(self, *args, **kwargs):
+#         # Enforce "only one active record per employee" at save time.
+#         if self.is_active:
+#             Salary.objects.filter(
+#                 employee=self.employee, is_active=True
+#             ).exclude(pk=self.pk).update(is_active=False)
+#         super().save(*args, **kwargs)
+
+#     # ── Derived figures ────────────────────────────────────────────────
+#     @property
+#     def gross_monthly(self):
+#         return self.basic_salary + self.hra
+
+#     @property
+#     def ctc_monthly(self):
+#         """CTC = Basic + HRA only. PF is an employee deduction, NOT added to CTC."""
+#         return self.basic_salary + self.hra
+
+#     @property
+#     def ctc_annual(self):
+#         return self.ctc_monthly * 12
+
+#     def calculate_annual_tax(self):
+#         """
+#         SIMPLIFIED illustrative slab calc (India, new-regime-style slabs) +
+#         4% health & education cess, applied on annual gross (Basic + HRA).
+#         This is NOT a substitute for a real payroll/tax engine — confirm
+#         actual slabs and exemptions with your finance team before this
+#         feeds real payslips.
+#         """
+#         annual_taxable = self.gross_monthly * 12
+#         if annual_taxable < 0:
+#             annual_taxable = Decimal('0')
+
+#         slabs = [
+#             (Decimal('300000'), Decimal('0.00')),
+#             (Decimal('600000'), Decimal('0.05')),
+#             (Decimal('900000'), Decimal('0.10')),
+#             (Decimal('1200000'), Decimal('0.15')),
+#             (Decimal('1500000'), Decimal('0.20')),
+#             (Decimal('Infinity'), Decimal('0.30')),
+#         ]
+
+#         tax = Decimal('0')
+#         lower = Decimal('0')
+#         for upper, rate in slabs:
+#             if annual_taxable > lower:
+#                 taxable_in_band = min(annual_taxable, upper) - lower
+#                 tax += taxable_in_band * rate
+#                 lower = upper
+#             else:
+#                 break
+
+#         tax += tax * Decimal('0.04')  # cess
+#         return tax.quantize(Decimal('0.01'))
+
+#     def calculate_monthly_tds(self):
+#         return (self.calculate_annual_tax() / Decimal('12')).quantize(Decimal('0.01'))
+
+#     @property
+#     def net_monthly_pay(self):
+#         """Net Pay = Gross (Basic + HRA) minus PF (employee contribution) minus TDS."""
+#         return self.gross_monthly - self.pf - self.calculate_monthly_tds()
+
 class Salary(models.Model):
     """
     One row per salary revision. Only one row per employee has is_active=True
@@ -505,6 +604,23 @@ class Salary(models.Model):
     basic_salary = models.DecimalField(max_digits=12, decimal_places=2)
     hra = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     pf = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # employee contribution — deducted, not added
+
+    # ── Wage-basis fields (for daily-wage register support) ────────────
+    WAGE_TYPE_CHOICES = (
+        ('MONTHLY', 'Monthly / CTC'),
+        ('DAILY', 'Daily Wage'),
+    )
+    wage_type = models.CharField(
+        max_length=10,
+        choices=WAGE_TYPE_CHOICES,
+        default='MONTHLY',
+        help_text="MONTHLY = existing CTC/TDS flow. DAILY = wage-register (Bonus/EPF/ESIC) flow.",
+    )
+    daily_rate = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        help_text="Only used when wage_type=DAILY. If blank, derived from basic_salary / days in month.",
+    )
+    # ─────────────────────────────────────────────────────────────────
 
     effective_date = models.DateField(default=timezone.now)
     is_active = models.BooleanField(default=True)
@@ -545,6 +661,20 @@ class Salary(models.Model):
     @property
     def ctc_annual(self):
         return self.ctc_monthly * 12
+
+    # ── Daily-rate helper for the wage register ─────────────────────────
+    def get_daily_rate(self, days_in_month):
+        """
+        Returns the per-day wage rate to use for wage-register calculations.
+        - If wage_type=DAILY and daily_rate is set, use it directly.
+        - Otherwise, derive it from basic_salary spread across days_in_month.
+        """
+        if self.wage_type == 'DAILY' and self.daily_rate:
+            return self.daily_rate
+        if days_in_month <= 0:
+            raise ValidationError("days_in_month must be positive to derive a daily rate.")
+        return (self.basic_salary / Decimal(days_in_month)).quantize(Decimal('0.01'))
+    # ─────────────────────────────────────────────────────────────────
 
     def calculate_annual_tax(self):
         """
@@ -587,6 +717,212 @@ class Salary(models.Model):
     def net_monthly_pay(self):
         """Net Pay = Gross (Basic + HRA) minus PF (employee contribution) minus TDS."""
         return self.gross_monthly - self.pf - self.calculate_monthly_tds()
+
+
+class WageRegisterEntry(models.Model):
+    """
+    One row per employee per wage-month. Consumes Salary for rate/wage-type,
+    Attendance for days worked and OT, Holiday for national holidays.
+    All formula columns (H–R in the source register) are @property methods —
+    never stored, always computed live from the fields below.
+    """
+    OT_UNIT_CHOICES = (('HOURS', 'Hours'), ('DAYS', 'Day-equivalent'))
+
+    EPF_WAGE_CEILING = Decimal('15000')
+    ESIC_WAGE_CEILING = Decimal('21000')
+    BONUS_WAGE_CEILING = Decimal('21000')
+
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    salary = models.ForeignKey(Salary, on_delete=models.PROTECT, related_name='wage_entries')
+    wage_month = models.DateField(help_text="Any date within the wage month; day is ignored.")
+
+    # ── Rate override ────────────────────────────────────────────────
+    rate_override = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        help_text="Leave blank to use Salary.get_daily_rate(). Set to override for this month only."
+    )
+
+    # ── Form entry ──────────────────────────────────────────────────
+    national_holidays_in_month = models.PositiveSmallIntegerField(
+        default=0, help_text="Pre-fill from Holiday model; editable."
+    )
+
+    days_worked_override = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True)
+
+    ot_hours_override = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True,
+        help_text="Leave blank to auto-calculate from Attendance vs Shift hours."
+    )
+
+    # Mode of payment / date — set later via mark_as_paid(), not at creation
+    mode_of_payment = models.CharField(max_length=100, blank=True)
+    payment_date = models.DateField(null=True, blank=True)
+
+    created_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('salary', 'wage_month')
+        ordering = ['-wage_month']
+
+    def __str__(self):
+        return f"{self.salary.employee} — {self.wage_month:%b %Y}"
+
+    # ── Month boundaries ─────────────────────────────────────────────
+    @property
+    def month_start(self):
+        return self.wage_month.replace(day=1)
+
+    @property
+    def month_end(self):
+        next_month = (self.month_start + timedelta(days=32)).replace(day=1)
+        return next_month - timedelta(days=1)
+
+    @property
+    def days_in_month(self):
+        return self.month_end.day
+
+    # ── Days worked (auto from Attendance, override allowed) ───────────
+    def compute_days_worked(self):
+        return Attendance.objects.filter(
+            employee=self.salary.employee,
+            date__gte=self.month_start, date__lte=self.month_end,
+            status='PRESENT',
+        ).count()
+
+    @property
+    def days_worked(self):
+        if self.days_worked_override is not None:
+            return self.days_worked_override
+        return Decimal(self.compute_days_worked())
+
+    # ── OT (auto from Attendance vs Shift, override allowed) ───────────
+    def compute_ot_hours(self):
+        employee = self.salary.employee
+        shift = employee.shift
+        if not shift:
+            return Decimal('0')
+
+        start_dt = shift.start_time
+        end_dt = shift.end_time
+        expected_seconds = (
+            (24 * 3600 - (start_dt.hour * 3600 + start_dt.minute * 60) + (end_dt.hour * 3600 + end_dt.minute * 60))
+            if shift.is_night_shift else
+            ((end_dt.hour * 3600 + end_dt.minute * 60) - (start_dt.hour * 3600 + start_dt.minute * 60))
+        )
+        if expected_seconds <= 0:
+            return Decimal('0')
+        expected_hours = Decimal(expected_seconds) / Decimal(3600)
+
+        total_ot = Decimal('0')
+        records = Attendance.objects.filter(
+            employee=employee,
+            date__gte=self.month_start, date__lte=self.month_end,
+            status='PRESENT',
+            check_in__isnull=False, check_out__isnull=False,
+        )
+        for rec in records:
+            worked_hours = Decimal((rec.check_out - rec.check_in).total_seconds()) / Decimal(3600)
+            if worked_hours > expected_hours:
+                total_ot += (worked_hours - expected_hours)
+        return total_ot.quantize(Decimal('0.01'))
+
+    @property
+    def operational_ot_hours(self):
+        if self.ot_hours_override is not None:
+            return self.ot_hours_override
+        return self.compute_ot_hours()
+
+    @property
+    def ot_hours_per_day(self):
+        shift = self.salary.employee.shift
+        if not shift:
+            return Decimal('8.00')
+        start_dt, end_dt = shift.start_time, shift.end_time
+        seconds = (
+            (24 * 3600 - (start_dt.hour * 3600 + start_dt.minute * 60) + (end_dt.hour * 3600 + end_dt.minute * 60))
+            if shift.is_night_shift else
+            ((end_dt.hour * 3600 + end_dt.minute * 60) - (start_dt.hour * 3600 + start_dt.minute * 60))
+        )
+        return (Decimal(seconds) / Decimal(3600)) if seconds > 0 else Decimal('8.00')
+
+    @property
+    def ot_in_days(self):
+        return self.operational_ot_hours / self.ot_hours_per_day
+
+    # ── Rate ────────────────────────────────────────────────────────
+    @property
+    def rate_of_wages(self):
+        if self.rate_override is not None:
+            return self.rate_override
+        return self.salary.get_daily_rate(self.days_in_month)
+
+    # ── Register columns (formula names match your sheet) ─────────────
+    @property
+    def total_operational_ot(self):          # D×G = H
+        return (self.rate_of_wages * self.ot_in_days).quantize(Decimal('0.01'))
+
+    @property
+    def national_holiday_wage(self):          # D×NH = I
+        return (self.rate_of_wages * self.national_holidays_in_month).quantize(Decimal('0.01'))
+
+    @property
+    def total_days(self):                     # NH+F+G = J
+        return self.national_holidays_in_month + self.days_worked + self.ot_in_days
+
+    @property
+    def total_wages_workday(self):            # D×F = K
+        return (self.rate_of_wages * self.days_worked).quantize(Decimal('0.01'))
+
+    @property
+    def total_wages_workday_nh(self):         # D×J = L
+        return (self.rate_of_wages * self.total_days).quantize(Decimal('0.01'))
+
+    @property
+    def bonus(self):                          # 8.33% on capped ₹21,000, pro-rated by days worked
+        capped_monthly = min(self.rate_of_wages * self.days_in_month, self.BONUS_WAGE_CEILING)
+        pro_rated = capped_monthly * (self.days_worked / Decimal(self.days_in_month))
+        return (pro_rated * Decimal('0.0833')).quantize(Decimal('0.01'))
+
+    @property
+    def gross_total(self):                    # L+M = N
+        return self.total_wages_workday_nh + self.bonus
+
+    @property
+    def epf_wage_base(self):
+        return min(self.total_wages_workday, self.EPF_WAGE_CEILING)
+
+    @property
+    def epf_employee(self):                   # min(K,15000)×12% = O
+        return (self.epf_wage_base * Decimal('0.12')).quantize(Decimal('0.01'))
+
+    @property
+    def epf_employer(self):                   # min(K,15000)×13% — display only, not deducted
+        return (self.epf_wage_base * Decimal('0.13')).quantize(Decimal('0.01'))
+
+    @property
+    def esic_wage_base(self):
+        return min(self.total_wages_workday, self.ESIC_WAGE_CEILING)
+
+    @property
+    def esic(self):                           # min(K,21000)×0.75% = P
+        return (self.esic_wage_base * Decimal('0.0075')).quantize(Decimal('0.01'))
+
+    @property
+    def total_deduction(self):                # O+P = Q
+        return self.epf_employee + self.esic
+
+    @property
+    def net_payment(self):                    # N-Q = R
+        return self.gross_total - self.total_deduction
+
+    # ── Mark paid (system-updates mode/date, per your sheet) ───────────
+    def mark_as_paid(self, mode, paid_on=None):
+        self.mode_of_payment = mode
+        self.payment_date = paid_on or date.today()
+        self.save(update_fields=['mode_of_payment', 'payment_date', 'updated_at'])
+
 
 class WorkSchedule(models.Model):
     """
@@ -739,28 +1075,6 @@ class DesignationMaster(models.Model):
         return self.name
 
 
-# class RoleMaster(models.Model):
-#     """
-#     Standalone role lookup table. Not yet wired into empProfile or permission
-#     checks — this phase just creates the model per current requirements.
-#     """
-#     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-#     name = models.CharField(max_length=100, unique=True)
-#     description = models.TextField(null=True, blank=True)
-#     is_active = models.BooleanField(default=True)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-
-#     class Meta:
-#         verbose_name = "Role"
-#         verbose_name_plural = "Roles"
-#         ordering = ['name']
-
-#     def __str__(self):
-#         return self.name
-
-# ── Leave Module: Phase 1 ──────────────────────────────────────────────
-
 class LeaveTypeMaster(models.Model):
     """
     Defines leave types configured by HR.
@@ -842,7 +1156,7 @@ class LeaveTypeMaster(models.Model):
     def __str__(self):
         return f"{self.name} ({self.code})"
 
-# ── Leave Module: Phase 2 ──────────────────────────────────────────────
+
 
 class LeaveBalance(models.Model):
     """

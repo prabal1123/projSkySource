@@ -4,8 +4,10 @@ from .models import Holiday,WorkSchedule
 from .models import DocumentTypeMaster, empDocument,WhatsAppTicket
 from .models import EmployeeImportFieldConfig
 from .models import WhatsAppOTP, Airport, BCASPass
+from .models import Salary, WageRegisterEntry
 # admin.site.register(empProfile)
 @admin.register(empProfile)
+
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = (
         "user",
@@ -430,3 +432,53 @@ class WhatsAppTicketAdmin(admin.ModelAdmin):
     list_display = ('id', 'sender_name', 'sender_wa_id', 'category', 'status', 'created_at')
     list_filter = ('category', 'status')
     search_fields = ('sender_name', 'sender_wa_id', 'message_body')
+
+@admin.register(Salary)
+class SalaryAdmin(admin.ModelAdmin):
+    list_display = ('employee', 'wage_type', 'basic_salary', 'hra', 'daily_rate', 'effective_date', 'is_active')
+    list_filter = ('wage_type', 'is_active')
+    search_fields = ('employee__user__first_name', 'employee__user__last_name')
+
+
+@admin.register(WageRegisterEntry)
+class WageRegisterEntryAdmin(admin.ModelAdmin):
+    list_display = (
+        'salary', 'wage_month', 'days_worked', 'operational_ot_hours',
+        'national_holidays_in_month', 'gross_total', 'net_payment', 'payment_date',
+    )
+    list_filter = ('wage_month',)
+    search_fields = ('salary__employee__user__first_name', 'salary__employee__user__last_name')
+
+    readonly_fields = (
+        'days_worked', 'operational_ot_hours', 'ot_hours_per_day', 'rate_of_wages',
+        'total_operational_ot', 'national_holiday_wage', 'total_days',
+        'total_wages_workday', 'total_wages_workday_nh', 'bonus', 'gross_total',
+        'epf_employee', 'epf_employer', 'esic', 'total_deduction', 'net_payment',
+    )
+
+    fieldsets = (
+        (None, {
+            'fields': ('salary', 'wage_month')
+        }),
+        ('Inputs (editable)', {
+            'fields': (
+                'rate_override', 'national_holidays_in_month',
+                'days_worked_override', 'ot_hours_override',
+            )
+        }),
+        ('Computed — Days & OT', {
+            'fields': ('days_worked', 'operational_ot_hours', 'ot_hours_per_day', 'rate_of_wages')
+        }),
+        ('Computed — Wages', {
+            'fields': (
+                'total_operational_ot', 'national_holiday_wage', 'total_days',
+                'total_wages_workday', 'total_wages_workday_nh', 'bonus', 'gross_total',
+            )
+        }),
+        ('Computed — Deductions & Net', {
+            'fields': ('epf_employee', 'epf_employer', 'esic', 'total_deduction', 'net_payment')
+        }),
+        ('Payment (set after processing)', {
+            'fields': ('mode_of_payment', 'payment_date')
+        }),
+    )

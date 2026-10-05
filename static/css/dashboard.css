@@ -1131,3 +1131,165 @@ a.sky-action-card:hover {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+/* ============================================
+   Wage Register ledger — dense payroll table
+   ============================================ */
+
+.wage-summary-row { margin-bottom: 1.25rem; }
+
+.wage-ledger-outer { position: relative; }
+
+.wage-ledger-scroll-cue {
+    position: absolute;
+    top: -1.6rem;
+    right: 0;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.wage-ledger-wrap {
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+}
+
+.wage-ledger {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.83rem;
+    min-width: 1280px;
+}
+
+.wage-ledger thead th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+    background: var(--slate-soft);
+    padding: 0.5rem 0.85rem;
+    text-align: right;
+    white-space: nowrap;
+}
+.wage-ledger thead th:first-child { text-align: left; }
+
+.wage-ledger-group-row th {
+    color: var(--navy);
+    font-weight: 700;
+    text-align: center;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0.6rem 0.85rem 0.3rem;
+}
+
+.wage-ledger thead tr:last-child th {
+    border-bottom: 2px solid var(--navy);
+}
+
+.wage-ledger tbody td {
+    padding: 0.55rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.wage-ledger tbody tr:nth-child(even) { background: #FBFBFC; }
+.wage-ledger tbody tr:hover { background: var(--teal-soft); }
+
+.wage-ledger-sticky-col {
+    position: sticky;
+    left: 0;
+    background: inherit;
+    z-index: 2;
+    box-shadow: 1px 0 0 var(--border);
+}
+.wage-ledger tbody tr:nth-child(odd) .wage-ledger-sticky-col { background: var(--card); }
+
+.wage-ledger-employee { display: flex; align-items: center; gap: 0.6rem; }
+
+.wage-ledger-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+
+.wage-ledger-name { font-weight: 600; color: var(--ink); font-size: 0.86rem; }
+.wage-ledger-role { font-size: 0.72rem; color: var(--ink-soft); }
+
+/* Editable cells */
+.wage-ledger-input { text-align: right; }
+
+.wage-ledger-input input {
+    width: 76px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    text-align: right;
+    padding: 0.32rem 0.5rem;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 4px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+.wage-ledger-input input[type="text"],
+.wage-ledger-input input[type="date"] { text-align: left; width: 118px; }
+
+.wage-ledger-input input:hover { border-color: var(--slate); }
+.wage-ledger-input input:focus {
+    outline: none;
+    border-color: var(--teal);
+    background: var(--card);
+    box-shadow: 0 0 0 3px var(--teal-soft);
+}
+
+.wage-ledger-auto-badge {
+    display: block;
+    font-size: 0.63rem;
+    color: var(--ink-soft);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 0.15rem;
+    opacity: 0.75;
+}
+
+/* Computed cells */
+.wage-ledger-computed { text-align: right; color: var(--ink); }
+
+.wage-ledger-emphasis { color: var(--navy); font-weight: 700; font-size: 0.9rem; }
+
+.wage-ledger tfoot td {
+    padding: 0.7rem 0.85rem;
+    border-top: 2px solid var(--navy);
+    font-weight: 700;
+    color: var(--navy);
+    text-align: right;
+}
+.wage-ledger tfoot .wage-ledger-sticky-col { text-align: left; background: var(--card); }
+
+.wage-ledger-error-row td {
+    background: var(--rose-soft);
+    color: var(--rose);
+    font-size: 0.78rem;
+}
+
+.wage-ledger-savebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border);
+    background: var(--card);
+    position: sticky;
+    bottom: 0;
+}
+
+.wage-ledger-savebar-hint { font-size: 0.8rem; color: var(--ink-soft); }
+
+@media (max-width: 720px) {
+    .wage-ledger { min-width: 1100px; }
+}

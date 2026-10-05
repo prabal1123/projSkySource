@@ -9,7 +9,7 @@ def send_azure_otp(target_email, otp_code):
             "senderAddress": os.getenv("AZURE_EMAIL_SENDER"),
             "recipients": {"to": [{"address": target_email}]},
             "content": {
-                "subject": "Your SkySource HRMS Login Code",
+                "subject": "Your NumaHR Login Code",
                 "plainText": f"Your OTP is {otp_code}. It expires in 5 minutes.",
                 "html": f"<html><body><h1>Your code is {otp_code}</h1><p>Expires in 5 minutes.</p></body></html>",
             },

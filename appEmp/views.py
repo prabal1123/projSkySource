@@ -17,6 +17,7 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
+from .forms import WageRegisterFormSet
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -32,6 +33,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from .models import EmailOTP
 from django.db import transaction
+from decimal import Decimal
 
 from .forms import (
     AttendanceExceptionForm,
@@ -74,6 +76,7 @@ from .models import (
     LeaveRequest,
     LeaveTypeMaster,
     Salary,
+    WageRegisterEntry, 
     empProfile,
     ClearanceRequest,
     EmployeeExitRequest,
@@ -6251,3 +6254,95 @@ def bcas_pass_export_csv_view(request):
         ])
 
     return response
+
+def _mandatory_holiday_count(year, month):
+    month_start = date(year, month, 1)
+    month_end = date(year, month, calendar.monthrange(year, month)[1])
+    return Holiday.objects.filter(
+        is_active=True, holiday_type="MANDATORY",
+        date__gte=month_start, date__lte=month_end,
+    ).count()
+
+
+@login_required
+def wage_register_bulk_view(request, year, month):
+    if not user_has_permission(request.user, "manage_salary"):
+        messages.error(request, "You don't have permission to do this.")
+        return redirect("dashboard")
+
+    wage_month = date(year, month, 1)
+    daily_wage_salaries = Salary.objects.filter(
+        is_active=True, wage_type="DAILY"
+    ).select_related("employee", "employee__user")
+
+    existing_entries = {
+        e.salary_id: e
+        for e in WageRegisterEntry.objects.filter(
+            salary__in=daily_wage_salaries, wage_month=wage_month
+        )
+    }
+
+    if request.method == "POST":
+        formset = WageRegisterFormSet(request.POST)
+        if formset.is_valid():
+            with transaction.atomic():
+                for form in formset:
+                    cd = form.cleaned_data
+                    salary = get_object_or_404(Salary, pk=cd["salary_id"])
+                    WageRegisterEntry.objects.update_or_create(
+                        salary=salary,
+                        wage_month=wage_month,
+                        defaults={
+                            "rate_override": cd.get("rate_override"),
+                            "national_holidays_in_month": cd.get("national_holidays_in_month") or 0,
+                            "days_worked_override": cd.get("days_worked_override"),
+                            "ot_hours_override": cd.get("ot_hours_override"),
+                            "mode_of_payment": cd.get("mode_of_payment") or "",
+                            "payment_date": cd.get("payment_date"),
+                            "created_by": request.user,
+                        },
+                    )
+            messages.success(
+                request, f"Wage register saved for {wage_month.strftime('%B %Y')}."
+            )
+            return redirect("wageRegisterBulk", year=year, month=month)
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        default_nh = _mandatory_holiday_count(year, month)
+        initial = []
+        for salary in daily_wage_salaries:
+            existing = existing_entries.get(salary.pk)
+            initial.append({
+                "salary_id": salary.pk,
+                "rate_override": existing.rate_override if existing else None,
+                "national_holidays_in_month": (
+                    existing.national_holidays_in_month if existing else default_nh
+                ),
+                "days_worked_override": existing.days_worked_override if existing else None,
+                "ot_hours_override": existing.ot_hours_override if existing else None,
+                "mode_of_payment": existing.mode_of_payment if existing else "",
+                "payment_date": existing.payment_date if existing else None,
+            })
+        formset = WageRegisterFormSet(initial=initial)
+
+    rows = []
+    for form, salary in zip(formset, daily_wage_salaries):
+        existing = existing_entries.get(salary.pk)
+        preview = existing or WageRegisterEntry(salary=salary, wage_month=wage_month)
+        rows.append({"form": form, "salary": salary, "preview": preview})
+
+    totals = {
+        "gross": sum((r["preview"].gross_total for r in rows), Decimal("0")),
+        "deductions": sum((r["preview"].total_deduction for r in rows), Decimal("0")),
+        "net": sum((r["preview"].net_payment for r in rows), Decimal("0")),
+    }
+
+    return render(request, "appEmp/wageRegisterBulk.html", {
+        "formset": formset,
+        "rows": rows,
+        "wage_month": wage_month,
+        "year": year,
+        "month": month,
+        "totals": totals,
+    })

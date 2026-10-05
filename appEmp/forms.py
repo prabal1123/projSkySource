@@ -93,6 +93,7 @@ from .models import (
     empDocument, DocumentTypeMaster,
     compress_image_if_needed
 )
+from django.forms import formset_factory
 from django import forms
 
 from django.contrib.auth.models import Group
@@ -1627,6 +1628,41 @@ class BCASPassStatusForm(forms.ModelForm):
             "manual_status": forms.Select(attrs={"class": "form-control"}),
             "remarks": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         }
+
+class WageRegisterEntryRowForm(forms.Form):
+    """One row in the bulk monthly wage-register run. Every field except
+    salary_id is optional — leaving a field blank means 'use the auto-
+    calculated value', matching WageRegisterEntry's own override logic."""
+    salary_id = forms.IntegerField(widget=forms.HiddenInput)
+
+    rate_override = forms.DecimalField(
+        required=False, max_digits=10, decimal_places=2,
+        widget=forms.NumberInput(attrs={"step": "0.01", "min": "0", "class": "form-control form-control-sm"}),
+    )
+    national_holidays_in_month = forms.IntegerField(
+        required=False, min_value=0,
+        widget=forms.NumberInput(attrs={"class": "form-control form-control-sm"}),
+    )
+    days_worked_override = forms.DecimalField(
+        required=False, max_digits=5, decimal_places=1,
+        widget=forms.NumberInput(attrs={"step": "0.5", "min": "0", "class": "form-control form-control-sm"}),
+    )
+    ot_hours_override = forms.DecimalField(
+        required=False, max_digits=6, decimal_places=2,
+        widget=forms.NumberInput(attrs={"step": "0.01", "min": "0", "class": "form-control form-control-sm"}),
+    )
+    mode_of_payment = forms.CharField(
+        required=False, max_length=100,
+        widget=forms.TextInput(attrs={"class": "form-control form-control-sm"}),
+    )
+    payment_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-control form-control-sm"}),
+    )
+
+
+WageRegisterFormSet = formset_factory(WageRegisterEntryRowForm, extra=0)
+
         
 class HrDocumentUploadForm(empDocumentForm):
     employee = forms.ModelChoiceField(

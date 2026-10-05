@@ -31,7 +31,7 @@
     min-height: calc(100vh - 70px);
     width: 100%;
     overflow-x: hidden;
-    padding: 42px 0 80px;
+    padding: 0 0 80px;
     background: linear-gradient(180deg, #f8f9f7 0, #f4f5f2 100%);
     font-family: "Inter", sans-serif;
     color: var(--hr-text);
