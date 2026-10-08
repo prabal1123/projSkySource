@@ -1,0 +1,582 @@
+212:def _find_header_row(rows, configs):
+213-    required_labels = {c.column_label.strip().lower() for c in configs if c.is_required}
+214-    for i, row in enumerate(rows[:5]):
+215-        cells = {str(c).strip().lower() for c in row if c is not None}
+216-        if required_labels and required_labels.issubset(cells):
+217-            return i, [str(c).strip() if c is not None else "" for c in row]
+218-    return None, None
+219-
+220-
+221-def user_has_permission(user, permission_codename):
+222-    return (
+223-        user.is_superuser
+224-        or user.has_perm(f"appEmp.{permission_codename}")
+225-    )
+226-
+227-
+228-def user_has_hr_access(user):
+229-    return user_has_permission(user, "view_hr_dashboard")
+230-
+231-
+232-def can_review_leave(user):
+233-    return user_has_permission(user, "review_leave")
+234-
+235-
+236-def can_review_attendance_exception(user):
+237-    return user_has_permission(user, "review_attendance_exception")
+159:def _clean_import_value(config, raw_value):
+160-    if isinstance(raw_value, float) and raw_value.is_integer():
+161-        raw_value = int(raw_value)
+162-
+163-    if config.data_type == "DATE":
+164-        parsed, err = _parse_date_cell(raw_value)
+165-        if err:
+166-            if config.is_required:
+167-                return None, err
+168-            return None, None
+169-        if config.is_required and parsed is None:
+170-            return None, f"{config.display_name} is required."
+171-        return parsed, None
+172-
+173-    value = "" if raw_value is None else str(raw_value).strip()
+174-
+175-    if config.is_required and not value:
+176-        return None, f"{config.display_name} is required."
+177-
+178-    if not value:
+179-        return None, None
+180-
+181-    if config.data_type in ("TEXT", "PHONE"):
+182-        return value, None
+183-
+184-    if config.data_type == "FULL_NAME":
+185-        parts = value.split(" ", 1)
+186-        return {"first_name": parts[0], "last_name": parts[1] if len(parts) > 1 else ""}, None
+187-
+188-    if config.data_type == "EMAIL":
+189-        cleaned = value.lower()
+190-        if "@" not in cleaned:
+191-            return None, f"{config.display_name} is not a valid email."
+192-        return cleaned, None
+193-
+194-    if config.data_type == "REGEX":
+195-        test_value = re.sub(r"\s+", "", value.splitlines()[0])
+196-        if config.field_key == "pan_no":
+197-            test_value = test_value.upper()
+198-        elif config.field_key == "aadhar_no":
+199-            test_value = re.sub(r"\D", "", test_value)
+200-        if config.validation_regex and not re.match(config.validation_regex, test_value):
+201-            return None, (
+202-                config.validation_message
+203-                or f"{config.display_name} format is invalid ({value!r})."
+204-            )
+205-        return test_value, None
+206-
+207-    if config.data_type == "DESIGNATION_FK":
+208-        return value, None
+209-
+210-    return value, None
+211-
+212-def _find_header_row(rows, configs):
+213-    required_labels = {c.column_label.strip().lower() for c in configs if c.is_required}
+214-    for i, row in enumerate(rows[:5]):
+215-        cells = {str(c).strip().lower() for c in row if c is not None}
+216-        if required_labels and required_labels.issubset(cells):
+217-            return i, [str(c).strip() if c is not None else "" for c in row]
+218-    return None, None
+219-
+220-
+221-def user_has_permission(user, permission_codename):
+222-    return (
+223-        user.is_superuser
+224-        or user.has_perm(f"appEmp.{permission_codename}")
+225-    )
+226-
+227-
+228-def user_has_hr_access(user):
+229-    return user_has_permission(user, "view_hr_dashboard")
+230-
+231-
+232-def can_review_leave(user):
+233-    return user_has_permission(user, "review_leave")
+234-
+235-
+236-def can_review_attendance_exception(user):
+237-    return user_has_permission(user, "review_attendance_exception")
+238-
+239-
+240-@login_required
+241-@permission_required("appEmp.manage_employees", raise_exception=True)
+242-def employee_bulk_import_view(request):
+243-    configs = list(
+244-        EmployeeImportFieldConfig.objects.filter(is_active=True).order_by("order")
+245-    )
+246-
+247-    preview_rows = []
+248-    has_errors = False
+249-    ready_count = 0
+139:def _parse_date_cell(raw):
+140-    if raw in (None, ""):
+141-        return None, None
+142-    if isinstance(raw, datetime):
+143-        return raw.date(), None
+144-    if isinstance(raw, date):
+145-        return raw, None
+146-
+147-    text = str(raw).strip()
+148-    match = DATE_TOKEN_RE.search(text)
+149-    candidate = match.group(0) if match else text.splitlines()[0].strip()
+150-
+151-    for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%d.%m.%Y", "%Y.%m.%d"):
+152-        try:
+153-            return datetime.strptime(candidate, fmt).date(), None
+154-        except ValueError:
+155-            continue
+156-    return None, f"Unrecognized date: {raw!r}"
+157-
+158-
+159-def _clean_import_value(config, raw_value):
+160-    if isinstance(raw_value, float) and raw_value.is_integer():
+161-        raw_value = int(raw_value)
+162-
+163-    if config.data_type == "DATE":
+164-        parsed, err = _parse_date_cell(raw_value)
+165-        if err:
+166-            if config.is_required:
+167-                return None, err
+168-            return None, None
+169-        if config.is_required and parsed is None:
+242:def employee_bulk_import_view(request):
+243-    configs = list(
+244-        EmployeeImportFieldConfig.objects.filter(is_active=True).order_by("order")
+245-    )
+246-
+247-    preview_rows = []
+248-    has_errors = False
+249-    ready_count = 0
+250-    skip_count = 0
+251-    warning_count = 0
+252-
+253-    # ---------------- CONFIRM ----------------
+254-    if request.method == "POST" and request.POST.get("action") == "confirm_import":
+255-        import_rows = request.session.get("employee_import_rows", [])
+256-        if not import_rows:
+257-            messages.error(request, "No validated employees are available for import.")
+258-            return redirect("employeeBulkImport")
+259-
+260-        created_count, skipped_count = 0, 0
+261-
+262-        with transaction.atomic():
+263-            for row in import_rows:
+264-                email = row["user_fields"].get("email")
+265-
+266-                if not email or User.objects.filter(email__iexact=email).exists():
+267-                    skipped_count += 1
+268-                    continue
+269-
+270-                user = User.objects.create(
+271-                    username=email,
+272-                    email=email,
+273-                    first_name=row["user_fields"].get("first_name", ""),
+274-                    last_name=row["user_fields"].get("last_name", ""),
+275-                )
+276-                user.set_unusable_password()
+277-                user.save()  # signal auto-creates empProfile
+278-
+279-                profile = empProfile.objects.get(user=user)
+280-
+281-                for key, value in row["profile_fields"].items():
+282-                    if key == "designation" and value:
+283-                        designation, _ = DesignationMaster.objects.get_or_create(name=value)
+284-                        profile.designation = designation
+285-                    elif key in ("date_hired", "avsec_training_date", "police_verification_date"):
+286-                        setattr(profile, key, datetime.strptime(value, "%Y-%m-%d").date() if value else None)
+287-                    else:
+288-                        setattr(profile, key, value or None)
+289-
+290-                profile.save()
+291-                created_count += 1
+292-
+293-        request.session.pop("employee_import_rows", None)
+294-        messages.success(
+295-            request,
+296-            f"{created_count} employee(s) imported successfully. {skipped_count} duplicate(s) skipped."
+297-        )
+298-        return redirect("employeeList")
+299-
+300-    # ---------------- PREVIEW ----------------
+301-    if request.method == "POST":
+302-        form = EmployeeBulkImportForm(request.POST, request.FILES)
+303-
+304-        if form.is_valid():
+305-            uploaded_file = form.cleaned_data["file"]
+306-            try:
+307-                workbook = load_workbook(uploaded_file, data_only=True)
+308-                worksheet = workbook.active
+309-                rows = [list(r) for r in worksheet.iter_rows(values_only=True)]
+310-
+311-                header_idx, headers = _find_header_row(rows, configs)
+312-
+313-                if header_idx is None:
+314-                    required_labels = ", ".join(c.column_label for c in configs if c.is_required)
+315-                    messages.error(
+316-                        request,
+317-                        f"Could not find the expected header row. Required columns: {required_labels}."
+318-                    )
+319-                else:
+320-                    col_index = {h.strip().lower(): i for i, h in enumerate(headers) if h}
+321-                    seen_emails = set()
+322-
+323-                    for row_number, row in enumerate(rows[header_idx + 1:], start=header_idx + 2):
+324-                        if not any(c is not None and str(c).strip() for c in row):
+325-                            continue
+326-
+327-                        row_blocking_errors, row_soft_errors, row_warnings = [], [], []
+328-                        user_fields, profile_fields, display_values = {}, {}, {}
+329-
+330-                        for config in configs:
+331-                            idx = col_index.get(config.column_label.strip().lower())
+332-                            raw_value = row[idx] if idx is not None and idx < len(row) else None
+333-
+334-                            value, error = _clean_import_value(config, raw_value)
+335-
+336-                            if error or isinstance(value, dict):
+337-                                display_values[config.display_name] = raw_value
+338-                            else:
+339-                                display_values[config.display_name] = value
+340-
+341-                            if error:
+342-                                if config.is_required:
+343-                                    row_blocking_errors.append(error)
+344-                                else:
+345-                                    row_soft_errors.append(f"{error} -- skipped, row still imported.")
+346-                                continue
+347-                            if value is None:
+348-                                continue
+349-
+350-                            if config.data_type == "FULL_NAME":
+351-                                user_fields.update(value)
+352-                            elif config.target_model == "USER":
+353-                                user_fields[config.field_key] = value
+354-                            elif config.data_type == "DATE":
+355-                                profile_fields[config.field_key] = value.isoformat()
+356-                            else:
+357-                                profile_fields[config.field_key] = value
+358-
+359-                        email = user_fields.get("email", "")
+360-                        is_duplicate = False
+361-
+362-                        if email and not row_blocking_errors:
+363-                            if email in seen_emails:
+364-                                is_duplicate = True
+365-                                row_warnings.append("Duplicate email inside uploaded file -- will be skipped.")
+366-                            elif User.objects.filter(email__iexact=email).exists():
+367-                                is_duplicate = True
+368-                                row_warnings.append("An account with this email already exists -- will be skipped.")
+369-                            else:
+370-                                seen_emails.add(email)
+371-
+372-                        if row_blocking_errors:
+373-                            status = "ERROR"
+374-                            has_errors = True
+375-                        elif is_duplicate:
+376-                            status = "SKIP"
+377-                            skip_count += 1
+378-                        elif row_soft_errors:
+379-                            status = "WARNING"
+380-                            ready_count += 1
+381-                            warning_count += 1
+382-                        else:
+383-                            status = "READY"
+384-                            ready_count += 1
+385-
+386-                        preview_rows.append({
+387-                            "row_number": row_number,
+388-                            "display_values": display_values,
+389-                            "errors": row_blocking_errors,
+390-                            "warnings": row_warnings + row_soft_errors,
+391-                            "status": status,
+392-                            "_user_fields": user_fields,
+393-                            "_profile_fields": profile_fields,
+394-                        })
+395-
+396-                    request.session["employee_import_rows"] = [
+397-                        {"user_fields": r["_user_fields"], "profile_fields": r["_profile_fields"]}
+398-                        for r in preview_rows if r["status"] in ("READY", "WARNING")
+399-                    ]
+400-
+401-            except Exception as exc:
+402-                request.session.pop("employee_import_rows", None)
+403-                messages.error(request, f"Could not read the uploaded file: {exc}")
+404-    else:
+405-        form = EmployeeBulkImportForm()
+406-
+407-    return render(request, "appEmp/employee_bulk_import.html", {
+408-        "form": form, "preview_rows": preview_rows, "configs": configs,
+409-        "has_errors": has_errors, "ready_count": ready_count,
+410-        "skip_count": skip_count, "warning_count": warning_count,
+411-    })
+412-
+413-def _filtered_emp_queryset(request):
+414-    """
+415-    Shared search/filter logic for the employee list — used by both
+416-    the on-screen list view and the PDF export, so they always stay
+417-    in sync.
+418-    """
+419-    search_query = request.GET.get("q", "").strip()
+420-    designation_id = request.GET.get("designation", "").strip()
+421-    shift_id = request.GET.get("shift", "").strip()
+422-    status = request.GET.get("status", "").strip()  # "active" | "inactive" | ""
+423-
+424-    objects = empProfile.objects.all()
+425-
+426-    if search_query:
+427-        objects = objects.filter(
+428-            Q(user__first_name__icontains=search_query)
+429-            | Q(user__last_name__icontains=search_query)
+430-            | Q(phone_number__icontains=search_query)
+431-        )
+432-
+433-    if designation_id:
+434-        objects = objects.filter(designation_id=designation_id)
+435-
+436-    if shift_id:
+437-        objects = objects.filter(shift_id=shift_id)
+438-
+439-    if status == "active":
+440-        objects = objects.filter(is_active=True)
+441-    elif status == "inactive":
+442-        objects = objects.filter(is_active=False)
+443-
+444-    filters = {
+445-        "search_query": search_query,
+446-        "designation_id": designation_id,
+447-        "shift_id": shift_id,
+448-        "status": status,
+449-    }
+450-    return objects, filters
+451-
+452-def empList_view(request):
+453-    if not user_has_permission(request.user, "manage_employees"):
+454-        messages.error(request, "You don't have permission to view employees.")
+455-        return redirect("dashboard")
+456-
+457-    objects, filters = _filtered_emp_queryset(request)
+458-
+459-    objects = objects.values(
+460-        "id",
+461-        "user__first_name",
+462-        "user__last_name",
+2149:class EmployeeImportFieldConfig(models.Model):
+2150-    TARGET_CHOICES = [
+2151-        ("USER", "User Account"),
+2152-        ("PROFILE", "Employee Profile"),
+2153-    ]
+2154-
+2155-    DATA_TYPE_CHOICES = [
+2156-        ("TEXT", "Text"),
+2157-        ("FULL_NAME", "Full Name (splits into first/last)"),
+2158-        ("EMAIL", "Email"),
+2159-        ("DATE", "Date"),
+2160-        ("PHONE", "Phone Number"),
+2161-        ("REGEX", "Text (custom pattern)"),
+2162-        ("DESIGNATION_FK", "Designation (lookup / create)"),
+2163-    ]
+2164-
+2165-    field_key = models.CharField(
+2166-        max_length=50,
+2167-        unique=True,
+2168-        help_text="Internal field name, e.g. 'aadhar_no', 'email', 'full_name'.",
+2169-    )
+2170-    column_label = models.CharField(
+2171-        max_length=100,
+2172-        help_text="Exact header text expected in the uploaded sheet, e.g. 'Aadhar No.'",
+2173-    )
+2174-    display_name = models.CharField(
+2175-        max_length=100,
+2176-        help_text="Label shown in the import preview table.",
+2177-    )
+2178-    target_model = models.CharField(max_length=10, choices=TARGET_CHOICES)
+2179-    data_type = models.CharField(max_length=20, choices=DATA_TYPE_CHOICES)
+2180-    is_required = models.BooleanField(default=False)
+2181-    validation_regex = models.CharField(
+2182-        max_length=200, blank=True,
+2183-        help_text="Only used when data_type = 'Text (custom pattern)'.",
+2184-    )
+2185-    validation_message = models.CharField(
+2186-        max_length=200, blank=True,
+2187-        help_text="Error shown when validation_regex doesn't match.",
+2188-    )
+2189-    order = models.PositiveIntegerField(default=0)
+2190-    is_active = models.BooleanField(default=True)
+2191-
+2192-    class Meta:
+2193-        ordering = ["order", "field_key"]
+2194-        verbose_name = "Employee Import Field"
+2195-        verbose_name_plural = "Employee Import Fields"
+2196-
+2197-    def __str__(self):
+2198-        return f"{self.column_label} → {self.field_key}"
+2199-    
+2200-class Airport(models.Model):
+2201-    name = models.CharField(max_length=100)
+2202-    code = models.CharField(max_length=10, unique=True)
+2203-    state = models.CharField(max_length=50)
+2204-    is_active = models.BooleanField(default=True)
+2205-
+2206-    class Meta:
+2207-        ordering = ["state", "name"]
+2208-
+2209-    def __str__(self):
+1542:class EmployeeBulkImportForm(forms.Form):
+1543-    file = forms.FileField(
+1544-        help_text="Upload the onboarding .xlsx sheet.",
+1545-        widget=forms.ClearableFileInput(attrs={"class": "form-control"}),
+1546-    )
+1547-
+1548-class BCASPassForm(forms.ModelForm):
+1549-    class Meta:
+1550-        model = BCASPass
+1551-        fields = [
+1552-            "employee",
+1553-            "pass_type",
+1554-            "airport",
+1555-            "issue_date",
+1556-            "expiry_date",
+1557-            "access_zones",
+1558-            "issuing_authority",
+1559-            "remarks",
+1560-        ]
+1561-
+1562-        widgets = {
+from django.db import migrations
+
+DEFAULT_FIELDS = [
+    dict(field_key="full_name", column_label="Emp Name", display_name="Employee Name",
+         target_model="USER", data_type="FULL_NAME", is_required=True, order=1),
+    dict(field_key="email", column_label="Mail ID", display_name="Email",
+         target_model="USER", data_type="EMAIL", is_required=True, order=2),
+    dict(field_key="phone_number", column_label="Mobile No.", display_name="Mobile Number",
+         target_model="PROFILE", data_type="PHONE", is_required=False, order=3),
+    dict(field_key="designation", column_label="Designation", display_name="Designation",
+         target_model="PROFILE", data_type="DESIGNATION_FK", is_required=False, order=4),
+    dict(field_key="aadhar_no", column_label="Aadhar No.", display_name="Aadhar Number",
+         target_model="PROFILE", data_type="REGEX", is_required=False, order=5,
+         validation_regex=r"^\d{12}$", validation_message="Aadhar No. must be exactly 12 digits."),
+    dict(field_key="pan_no", column_label="PAN NO.", display_name="PAN Number",
+         target_model="PROFILE", data_type="REGEX", is_required=False, order=6,
+         validation_regex=r"^[A-Z]{5}\d{4}[A-Z]$",
+         validation_message="PAN No. format looks invalid (e.g. ABCDE1234F)."),
+    dict(field_key="bank_name", column_label="NAME OF BANK", display_name="Bank Name",
+         target_model="PROFILE", data_type="TEXT", is_required=False, order=7),
+    dict(field_key="bank_account_no", column_label="Bank A/C No.", display_name="Bank Account No.",
+         target_model="PROFILE", data_type="TEXT", is_required=False, order=8),
+    dict(field_key="ifsc_no", column_label="IFSC No.", display_name="IFSC Code",
+         target_model="PROFILE", data_type="TEXT", is_required=False, order=9),
+    dict(field_key="address", column_label="Emp Adress", display_name="Address",
+         target_model="PROFILE", data_type="TEXT", is_required=False, order=10),
+    dict(field_key="date_hired", column_label="Date of Joining", display_name="Date of Joining",
+         target_model="PROFILE", data_type="DATE", is_required=False, order=11),
+    dict(field_key="avsec_training_date", column_label="Date of AVSEC Training",
+         display_name="AVSEC Training Date", target_model="PROFILE", data_type="DATE",
+         is_required=False, order=12),
+    dict(field_key="police_verification_date", column_label="Date of Police Verification",
+         display_name="Police Verification Date", target_model="PROFILE", data_type="DATE",
+         is_required=False, order=13),
+    dict(field_key="uan_no", column_label="UAN No.", display_name="UAN Number",
+         target_model="PROFILE", data_type="TEXT", is_required=False, order=14),
+    dict(field_key="esic_no", column_label="ESIC No.", display_name="ESIC Number",
+         target_model="PROFILE", data_type="TEXT", is_required=False, order=15),
+]
+
+
+def seed_fields(apps, schema_editor):
+    Config = apps.get_model("appEmp", "EmployeeImportFieldConfig")
+    for row in DEFAULT_FIELDS:
+        Config.objects.update_or_create(field_key=row["field_key"], defaults=row)
+
+
+def unseed_fields(apps, schema_editor):
+    Config = apps.get_model("appEmp", "EmployeeImportFieldConfig")
+    Config.objects.filter(field_key__in=[r["field_key"] for r in DEFAULT_FIELDS]).delete()
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("appEmp", "0041_employeeimportfieldconfig"),  # ← replace with the exact filename makemigrations gave you
+    ]
+
+    operations = [
+        migrations.RunPython(seed_fields, unseed_fields),
+    ]{% extends "base.html" %}
+{% load dict_extras %}
+{% block content %}
+<div class="container mt-4">
+<h3>Bulk Import Employees</h3>
+
+{% if not preview_rows %}
+<form method="post" enctype="multipart/form-data" class="mb-4">
+{% csrf_token %}
+{{ form.file }}
+<button type="submit" class="btn btn-success mt-2">Preview Import</button>
+</form>
+
+<details class="mb-3">
+<summary>Expected columns</summary>
+<ul>
+{% for c in configs %}
+<li>{{ c.column_label }}{% if c.is_required %} <strong>(required)</strong>{% endif %}</li>
+{% endfor %}
+</ul>
+</details>
+{% endif %}
+
+{% if preview_rows %}
+<p>
+<span class="badge bg-success">{{ ready_count }} ready</span>
+<span class="badge bg-info text-dark">{{ warning_count }} with optional fields skipped</span>
+<span class="badge bg-warning">{{ skip_count }} skipped</span>
+{% if has_errors %}<span class="badge bg-danger">some rows blocked (missing required fields)</span>{% endif %}
+</p>
+
+<div class="table-responsive">
+<table class="table table-sm table-bordered">
+<thead>
+<tr>
+<th>Row</th><th>Status</th>
+{% for c in configs %}<th>{{ c.display_name }}</th>{% endfor %}
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+{% for row in preview_rows %}
+<tr class="{% if row.status == 'ERROR' %}table-danger{% elif row.status == 'SKIP' %}table-warning{% elif row.status == 'WARNING' %}table-info{% else %}table-success{% endif %}">
+<td>{{ row.row_number }}</td>
+<td>{{ row.status }}</td>
+{% for c in configs %}<td>{{ row.display_values|dict_get:c.display_name }}</td>{% endfor %}
+<td>
+{% for e in row.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+{% for w in row.warnings %}<div class="text-muted small">{{ w }}</div>{% endfor %}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+{% if ready_count > 0 %}
+<form method="post">
+{% csrf_token %}
+<input type="hidden" name="action" value="confirm_import">
+<button type="submit" class="btn btn-primary">Confirm Import ({{ ready_count }})</button>
+</form>
+{% endif %}
+{% if has_errors %}
+<p class="text-danger">Some rows are missing a required field and won't be imported. Fix and re-upload those specific rows, or go ahead with everything else above.</p>
+{% endif %}
+
+<a href="{% url 'employeeBulkImport' %}" class="btn btn-link mt-2">Start Over</a>
+{% endif %}
+</div>
+{% endblock %}

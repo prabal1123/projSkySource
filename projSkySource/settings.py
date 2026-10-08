@@ -272,3 +272,7 @@ if USE_S3:
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
+
+
+LITE_SIGNUP_URL = "https://lite.numa-hr.com/register/"
+LITE_LOGIN_URL = "https://lite.numa-hr.com/login/"

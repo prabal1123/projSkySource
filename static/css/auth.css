@@ -1,241 +1,188 @@
+/* =========================================================
+   NumaHr in-app auth cards (Add employee, Change password)
+   Requires numahr-tokens.css to be loaded first.
+========================================================= */
+
 .sky-auth-wrap {
     min-height: calc(100vh - 250px);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 3rem 1rem;
-    background: var(--bg);
 }
 
 .sky-auth-card {
+    box-sizing: border-box;
     width: 100%;
-    max-width: 420px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-top: 3px solid var(--teal);
-    border-radius: 8px;
+    max-width: 440px;
+    background: var(--nh-paper);
+    border: 1px solid var(--nh-border);
+    border-top: 3px solid var(--nh-primary);
+    border-radius: var(--nh-radius);
+    box-shadow: var(--nh-shadow-md);
     padding: 2.25rem 2rem;
 }
 
 .sky-auth-eyebrow {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
+    display: block;
+    margin-bottom: 0.5rem;
+    font-family: var(--nh-font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--teal);
-    font-weight: 600;
-    display: block;
-    margin-bottom: 0.4rem;
+    color: var(--nh-primary);
 }
 
 .sky-auth-card h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 1.75rem;
+    margin: 0 0 1.75rem;
+    font-family: var(--nh-font-display);
+    font-size: 1.9rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--nh-ink);
 }
 
+
+/* Fields */
+
 .sky-auth-field {
-    margin-bottom: 1rem;
+    margin-bottom: 1.1rem;
 }
 
 .sky-auth-field label {
     display: block;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--ink-soft);
-    margin-bottom: 0.35rem;
-}
-
-.sky-auth-submit {
-    width: 100%;
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 0.95rem;
-    background: var(--teal);
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: 0.7rem;
-    margin-top: 0.5rem;
-    cursor: pointer;
-    transition: opacity 0.15s ease;
-}
-
-.sky-auth-submit:hover { opacity: 0.9; }
-
-.sky-auth-footer {
-    text-align: center;
-    font-size: 0.85rem;
-    color: var(--ink-soft);
-    margin-top: 1.5rem;
-}
-
-.sky-auth-footer a {
-    color: var(--teal);
-    text-decoration: none;
-    font-weight: 500;
-}
-
-.sky-auth-footer a:hover { text-decoration: underline; }
-
-/* Django renders bare <input> with no class - style by context instead */
-.sky-auth-field input {
-    width: 100%;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 0.6rem 0.8rem;
-    font-family: var(--font-body);
-    font-size: 0.92rem;
-    color: var(--ink);
-    background: #fff;
-}
-
-.sky-auth-field input:focus {
-    outline: none;
-    border-color: var(--teal);
-    box-shadow: 0 0 0 3px var(--teal-soft);
-}
-
-.sky-form-error {
-    font-size: 0.78rem;
-    color: var(--rose);
-    margin-top: 0.35rem;
-}
-
-.sky-auth-error-banner {
-    background: var(--rose-soft);
-    color: var(--rose);
-    border-radius: 6px;
-    padding: 0.7rem 0.9rem;
-    font-size: 0.85rem;
-    margin-bottom: 1.25rem;
-}
-.sky-auth-wrap {
-    min-height: calc(100vh - 250px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 3rem 1rem;
-    background: var(--bg);
-}
-
-.sky-auth-card {
-    width: 100%;
-    max-width: 420px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-top: 3px solid var(--teal);
-    border-radius: 8px;
-    padding: 2.25rem 2rem;
-}
-
-.sky-auth-eyebrow {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--teal);
-    font-weight: 600;
-    display: block;
     margin-bottom: 0.4rem;
-}
-
-.sky-auth-card h1 {
-    font-size: 1.5rem;
+    font-size: 0.82rem;
     font-weight: 600;
-    margin-bottom: 1.75rem;
+    color: var(--nh-ink-soft);
 }
 
-.sky-auth-field {
-    margin-bottom: 1rem;
-}
-
-.sky-auth-field label {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--ink-soft);
-    margin-bottom: 0.35rem;
-}
-
-.sky-auth-submit {
-    width: 100%;
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 0.95rem;
-    background: var(--teal);
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: 0.7rem;
-    margin-top: 0.5rem;
-    cursor: pointer;
-    transition: opacity 0.15s ease;
-}
-
-.sky-auth-submit:hover { opacity: 0.9; }
-
-.sky-auth-footer {
-    text-align: center;
-    font-size: 0.85rem;
-    color: var(--ink-soft);
-    margin-top: 1.5rem;
-}
-
-.sky-auth-footer a {
-    color: var(--teal);
-    text-decoration: none;
-    font-weight: 500;
-}
-
-.sky-auth-footer a:hover { text-decoration: underline; }
-
-/* Django renders bare <input> with no class - style by context instead */
+/* Django renders bare <input> with no class, so style by context */
 .sky-auth-field input {
+    box-sizing: border-box;
     width: 100%;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 0.6rem 0.8rem;
-    font-family: var(--font-body);
-    font-size: 0.92rem;
-    color: var(--ink);
-    background: #fff;
+    min-height: 44px;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--nh-border);
+    border-radius: var(--nh-radius-sm);
+    background: var(--nh-bg);
+    font-family: var(--nh-font-body);
+    font-size: 1rem;
+    color: var(--nh-ink);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.sky-auth-field input:hover {
+    border-color: var(--nh-border-strong);
 }
 
 .sky-auth-field input:focus {
     outline: none;
-    border-color: var(--teal);
-    box-shadow: 0 0 0 3px var(--teal-soft);
+    background: var(--nh-paper);
+    border-color: var(--nh-primary);
+    box-shadow: 0 0 0 3px rgba(188, 70, 30, 0.14);
+}
+
+.sky-help-text {
+    margin-top: 0.4rem;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--nh-muted-fg);
+}
+
+.sky-help-text ul {
+    margin: 0.25rem 0 0;
+    padding-left: 1.1rem;
 }
 
 .sky-form-error {
-    font-size: 0.78rem;
-    color: var(--rose);
     margin-top: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--nh-danger);
 }
 
 .sky-auth-error-banner {
-    background: var(--rose-soft);
-    color: var(--rose);
-    border-radius: 6px;
-    padding: 0.7rem 0.9rem;
-    font-size: 0.85rem;
     margin-bottom: 1.25rem;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--nh-danger-line);
+    border-radius: var(--nh-radius-sm);
+    background: var(--nh-danger-soft);
+    font-size: 0.85rem;
+    color: var(--nh-danger);
 }
 
-.sky-auth-center { text-align: center; }
 
-.sky-auth-message {
-    color: var(--ink-soft);
-    font-size: 0.9rem;
-    margin-bottom: 1.5rem;
+/* Buttons */
+
+.sky-auth-submit {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.8rem;
+    border: none;
+    border-radius: 999px;
+    background: var(--nh-primary);
+    font-family: var(--nh-font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--nh-primary-fg);
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.sky-auth-submit:hover {
+    background: var(--nh-primary-hover);
+    transform: translateY(-1px);
+}
+
+.sky-auth-submit:active {
+    transform: scale(0.99);
 }
 
 .sky-auth-link-btn {
     display: block;
-    text-decoration: none;
     box-sizing: border-box;
+    text-align: center;
+    text-decoration: none;
 }
+
+a.sky-auth-submit {
+    color: var(--nh-primary-fg);
+}
+
+
+/* Helpers */
+
+.sky-auth-center {
+    text-align: center;
+}
+
+.sky-auth-message {
+    margin-bottom: 1.5rem;
+    font-size: 0.92rem;
+    color: var(--nh-muted-fg);
+}
+
+.sky-auth-footer {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--nh-muted-fg);
+}
+
+.sky-auth-footer a {
+    font-weight: 600;
+    color: var(--nh-primary);
+    text-decoration: none;
+}
+
+.sky-auth-footer a:hover {
+    text-decoration: underline;
+}
+
+
+/* Password show / copy buttons */
 
 .sky-password-wrap {
     position: relative;
@@ -245,7 +192,7 @@
 
 .sky-password-wrap input {
     width: 100%;
-    padding-right: 64px; /* room for both icons */
+    padding-right: 72px; /* room for both icons */
 }
 
 .sky-pw-toggle,
@@ -253,10 +200,10 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
     padding: 4px;
+    border: none;
+    background: none;
+    cursor: pointer;
     opacity: 0.6;
 }
 
@@ -273,16 +220,31 @@
     right: 8px;
 }
 
-/* Simple icon placeholders using characters — swap for an icon font/SVG if you prefer */
+/* Simple icon placeholders; swap for SVG icons later if you prefer */
 .sky-eye-icon::before {
     content: "👁";
 }
+
 .sky-pw-toggle.is-visible .sky-eye-icon::before {
     content: "🙈";
 }
+
 .sky-copy-icon::before {
     content: "📋";
 }
+
 .sky-pw-copy.is-copied .sky-copy-icon::before {
     content: "✅";
+}
+
+
+@media (max-width: 480px) {
+    .sky-auth-wrap {
+        align-items: flex-start;
+        padding: 1.5rem 0.75rem;
+    }
+
+    .sky-auth-card {
+        padding: 1.75rem 1.25rem;
+    }
 }

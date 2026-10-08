@@ -12,12 +12,16 @@ from django.conf import settings
 from .forms import LoginForm, registerEmp, RequestOTPForm, VerifyOTPForm
 from .models import ActivityLog
 from appEmp.models import empProfile, EmailOTP
-from .utils import send_azure_otp
+from .utils import send_azure_otp, send_demo_notification
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.decorators import login_required
 from appEmp.models import empProfile, EmailOTP, WhatsAppOTP
 from appEmp.whatsapp_utils import send_whatsapp_otp
 from .forms import LoginForm, registerEmp, RequestOTPForm, VerifyOTPForm, RequestWhatsAppOTPForm
+from django.conf import settings
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+
 
 def get_client_ip(request):
     """
@@ -39,10 +43,59 @@ def get_client_ip(request):
 # def home_view(request):
 #     return render(request, "home.html")
 
+# def home_view(request):
+#     if request.user.is_authenticated:
+#         return redirect('dashboard')
+#     return render(request, "home.html")
+
 def home_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
-    return render(request, "home.html")
+    return render(request, "home.html", {
+        "lite_signup_url": getattr(settings, "LITE_SIGNUP_URL", "#book-demo"),
+        "lite_login_url": getattr(settings, "LITE_LOGIN_URL", "#"),
+    })
+
+
+def demo_request(request):
+    from django.contrib import messages
+    from .models import DemoRequest
+    if request.method == "POST" and not request.POST.get("website"):
+        d = {k: request.POST.get(k, "").strip() for k in ("name", "company", "team_size", "phone", "email", "message")}
+        digits = "".join(c for c in d["phone"] if c.isdigit())
+        try:
+            validate_email(d["email"])
+            email_ok = True
+        except ValidationError:
+            email_ok = False
+
+        required = ("name", "company", "team_size", "phone")
+        if all(d[k] for k in required) and email_ok and 10 <= len(digits) <= 13 and len(d["message"]) <= 500:
+            obj = DemoRequest.objects.create(**d)
+            send_demo_notification(obj)
+            messages.success(request, "Thanks! We'll call you to schedule your demo.")
+        else:
+            messages.error(request, "Please fill every field with a valid phone number and email.")
+    return redirect("/app/#book-demo")
+
+def contact_us(request):
+    from .models import ContactQuery
+    if request.method == "POST" and not request.POST.get("website"):
+        d = {k: request.POST.get(k, "").strip() for k in ("name", "company", "email", "phone", "message")}
+        digits = "".join(c for c in d["phone"] if c.isdigit())
+        try:
+            validate_email(d["email"])
+            email_ok = True
+        except ValidationError:
+            email_ok = False
+
+        if d["name"] and d["message"] and email_ok and len(d["message"]) <= 500 and (not digits or 10 <= len(digits) <= 13):
+            obj = ContactQuery.objects.create(**d)
+            send_contact_notification(obj)
+            messages.success(request, "Thanks! We've received your message and will get back to you shortly.", extra_tags="contact")
+        else:
+            messages.error(request, "Please enter your name, a valid email and a message (max 500 characters).", extra_tags="contact")
+    return redirect("/app/#contact")
 
 # def login_view(request):
 #     form = LoginForm(request.POST or None)

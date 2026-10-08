@@ -1,0 +1,56 @@
+/* =========================================================
+   NumaHr shared design tokens
+   Same file in NumaHr Pro and NumaHr Lite (static/css/numahr-tokens.css).
+   Source: landing page (home.css), converted from oklch to hex.
+========================================================= */
+
+:root {
+/* Surfaces and text */
+--nh-bg: #faf5ed;
+--nh-paper: #fefbf6;
+--nh-ink: #221812;
+--nh-ink-soft: #3a2e26;
+--nh-muted: #ede7de;
+--nh-muted-fg: #645850;
+--nh-border: #d6ccc1;
+--nh-border-strong: #bfb2a4;
+
+/* Brand accent (dark green) */
+--nh-primary: #125531;
+--nh-primary-hover: #0d4428;
+--nh-primary-fg: #fcf8f1;
+--nh-primary-soft: #dfece4;
+--nh-primary-line: #b5d2c0;
+--nh-primary-on-ink: #7cc49a;
+
+/* Status colours (kept apart from the brand accent) */
+--nh-success: #2f6b4f;
+--nh-success-soft: #e4efe8;
+--nh-warning: #b47a37;
+--nh-warning-soft: #fbf1e1;
+--nh-danger: #b3261e;
+--nh-danger-soft: #fbe9e7;
+--nh-danger-line: #efc4bf;
+
+/* Sidebar (light, warm) */
+--nh-sidebar-bg: #f2ebe0;
+--nh-sidebar-brand-bg: #fefbf6;
+--nh-sidebar-border: #d6ccc1;
+--nh-sidebar-text: #3a2e26;
+--nh-sidebar-muted: #7d7066;
+--nh-sidebar-hover: #ebe3d7;
+--nh-sidebar-active: #dfece4;
+--nh-sidebar-active-line: #b5d2c0;
+
+/* Type */
+--nh-font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+--nh-font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+--nh-font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+/* Shape and depth */
+--nh-radius-sm: 4px;
+--nh-radius: 8px;
+--nh-radius-lg: 14px;
+--nh-shadow-sm: 0 1px 3px rgba(34, 24, 18, 0.06);
+--nh-shadow-md: 0 10px 28px -12px rgba(34, 24, 18, 0.22);
+}
