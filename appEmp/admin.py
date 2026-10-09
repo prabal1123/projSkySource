@@ -77,7 +77,23 @@ class EmployeeAdmin(OrgColumnMixin, admin.ModelAdmin):
         "user__first_name",
         "user__last_name",
         "user__email",
-        )
+    )
+
+    SENSITIVE_FIELDS = (
+        "aadhar_no",
+        "pan_no",
+        "bank_account_no",
+        "uan_no",
+        "esic_no",
+        "phone_number",
+        "address",
+    )
+
+    def get_exclude(self, request, obj=None):
+        exclude = list(super().get_exclude(request, obj) or [])
+        if not request.user.is_superuser:
+            exclude += list(self.SENSITIVE_FIELDS)
+        return exclude
 
 
 @admin.register(WhatsAppOTP)
