@@ -324,6 +324,14 @@ class empProfile(models.Model):
 
         self._refresh_fingerprints()
 
+        if self.aadhar_bidx:
+            clash = empProfile.objects.filter(aadhar_bidx=self.aadhar_bidx).exclude(pk=self.pk)
+            if clash.exists():
+                raise ValidationError(
+                    "This Aadhaar number is already registered. "
+                    "Check the number. If it is correct, contact support."
+                )
+
     def save(self, *args, **kwargs):
         """
         Ensure only one employee is marked as the default manager.

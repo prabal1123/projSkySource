@@ -97,6 +97,7 @@ import csv
 import io
 from appEmp.whatsapp_router import find_employee_by_phone
 from .blind_index import BlindIndexError, aadhaar_index, phone_index
+from django.db import IntegrityError
 
 from openpyxl import load_workbook
 from datetime import datetime
@@ -281,31 +282,36 @@ def employee_bulk_import_view(request):
                     skipped_count += 1
                     continue
 
-                user = User(
-                    username=email,
-                    email=email,
-                    first_name=row["user_fields"].get("first_name", ""),
-                    last_name=row["user_fields"].get("last_name", ""),
-                )
-                user.set_unusable_password()
-                user._organization = request.current_org
-                user.save()  # signal auto-creates empProfile
-
-                profile = empProfile.objects.get(user=user)
-
-                for key, value in row["profile_fields"].items():
-                    if key == "designation" and value:
-                        designation, _ = DesignationMaster.objects.get_or_create(
-                            name=value,
-                            organization=request.current_org,
+                try:
+                    with transaction.atomic():
+                        user = User(
+                            username=email,
+                            email=email,
+                            first_name=row["user_fields"].get("first_name", ""),
+                            last_name=row["user_fields"].get("last_name", ""),
                         )
-                        profile.designation = designation
-                    elif key in ("date_hired", "avsec_training_date", "police_verification_date"):
-                        setattr(profile, key, datetime.strptime(value, "%Y-%m-%d").date() if value else None)
-                    else:
-                        setattr(profile, key, value or None)
+                        user.set_unusable_password()
+                        user._organization = request.current_org
+                        user.save()  # signal auto-creates empProfile
 
-                profile.save()
+                        profile = empProfile.objects.get(user=user)
+
+                        for key, value in row["profile_fields"].items():
+                            if key == "designation" and value:
+                                designation, _ = DesignationMaster.objects.get_or_create(
+                                    name=value,
+                                    organization=request.current_org,
+                                )
+                                profile.designation = designation
+                            elif key in ("date_hired", "avsec_training_date", "police_verification_date"):
+                                setattr(profile, key, datetime.strptime(value, "%Y-%m-%d").date() if value else None)
+                            else:
+                                setattr(profile, key, value or None)
+
+                        profile.save()
+                except (IntegrityError, ValidationError):
+                    skipped_count += 1
+                    continue
                 created_count += 1
 
         request.session.pop("employee_import_rows", None)
