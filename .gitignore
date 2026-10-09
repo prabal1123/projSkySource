@@ -6,3 +6,6 @@ db.sqlite3
 staticfiles/
 .DS_Store
 media/
+.venv/
+.env.*
+!.env.example

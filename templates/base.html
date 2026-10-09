@@ -168,6 +168,17 @@
             <!-- MESSAGES -->
             <!-- ========================================= -->
 
+            {% if is_viewing_other_org %}
+            <div style="background: #b45309; color: #ffffff; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                <span><strong>You are working inside: {{ current_org.name }}</strong> &mdash; any change you make is saved in this organization.</span>
+                <form method="post" action="{% url 'switch_organization' %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="org_id" value="">
+                    <button type="submit" class="btn btn-sm btn-light">Back to my organization</button>
+                </form>
+            </div>
+            {% endif %}
+
             {% include 'includes/messages.html' %}
 
 

@@ -187,7 +187,10 @@
 280-
 281-                for key, value in row["profile_fields"].items():
 282-                    if key == "designation" and value:
-283-                        designation, _ = DesignationMaster.objects.get_or_create(name=value)
+283-                        designation, _ = DesignationMaster.objects.get_or_create(
+                            name=value,
+                            organization=request.current_org,
+                        )
 284-                        profile.designation = designation
 285-                    elif key in ("date_hired", "avsec_training_date", "police_verification_date"):
 286-                        setattr(profile, key, datetime.strptime(value, "%Y-%m-%d").date() if value else None)
@@ -383,7 +386,12 @@
 2162-        ("DESIGNATION_FK", "Designation (lookup / create)"),
 2163-    ]
 2164-
-2165-    field_key = models.CharField(
+2165-    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        related_name="import_field_configs",
+    )
+    field_key = models.CharField(
 2166-        max_length=50,
 2167-        unique=True,
 2168-        help_text="Internal field name, e.g. 'aadhar_no', 'email', 'full_name'.",

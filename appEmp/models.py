@@ -75,6 +75,13 @@ class empProfile(models.Model):
         on_delete=models.CASCADE
     )
 
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        related_name="emp_profiles",
+        help_text="Organization this employee belongs to.",
+    )
+
 
     manager = models.ForeignKey(
         "self",
@@ -302,6 +309,7 @@ class empProfile(models.Model):
         """
         if self.is_default_manager:
             empProfile.objects.filter(
+                organization=self.organization,
                 is_default_manager=True
             ).exclude(
                 pk=self.pk
@@ -311,6 +319,7 @@ class empProfile(models.Model):
 
         if not self.work_schedule_id:
             default_schedule = WorkSchedule.objects.filter(
+                organization=self.organization,
                 is_default=True,
                 is_active=True
             ).first()
@@ -601,6 +610,12 @@ class Salary(models.Model):
         on_delete=models.CASCADE,
         related_name='salary_records',
     )
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        editable=False,
+        related_name="salaries",
+    )
     basic_salary = models.DecimalField(max_digits=12, decimal_places=2)
     hra = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     pf = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # employee contribution — deducted, not added
@@ -641,6 +656,7 @@ class Salary(models.Model):
         return f"{self.employee.user.get_full_name() or self.employee.user.username} — {self.effective_date}"
 
     def save(self, *args, **kwargs):
+        self.organization_id = self.employee.organization_id
         # Enforce "only one active record per employee" at save time.
         if self.is_active:
             Salary.objects.filter(
@@ -734,6 +750,12 @@ class WageRegisterEntry(models.Model):
 
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     salary = models.ForeignKey(Salary, on_delete=models.PROTECT, related_name='wage_entries')
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        editable=False,
+        related_name="wage_register_entries",
+    )
     wage_month = models.DateField(help_text="Any date within the wage month; day is ignored.")
 
     # ── Rate override ────────────────────────────────────────────────
@@ -765,6 +787,10 @@ class WageRegisterEntry(models.Model):
     class Meta:
         unique_together = ('salary', 'wage_month')
         ordering = ['-wage_month']
+
+    def save(self, *args, **kwargs):
+        self.organization_id = self.salary.organization_id
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.salary.employee} — {self.wage_month:%b %Y}"
@@ -939,9 +965,14 @@ class WorkSchedule(models.Model):
         editable=False
     )
 
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        related_name="work_schedules",
+    )
+
     name = models.CharField(
         max_length=100,
-        unique=True,
         help_text="Example: Standard 5-Day Week"
     )
 
@@ -983,10 +1014,17 @@ class WorkSchedule(models.Model):
         verbose_name = "Work Schedule"
         verbose_name_plural = "Work Schedules"
         ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "name"],
+                name="unique_work_schedule_name_per_org",
+            )
+        ]
 
     def save(self, *args, **kwargs):
         if self.is_default:
             WorkSchedule.objects.filter(
+                organization=self.organization,
                 is_default=True
             ).exclude(
                 pk=self.pk
@@ -1022,7 +1060,12 @@ class ShiftMaster(models.Model):
     new employees get auto-assigned to it unless changed on their profile.
     """
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    name = models.CharField(max_length=50, unique=True)  # e.g. "General Shift", "Night Shift"
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        related_name="shifts",
+    )
+    name = models.CharField(max_length=50)  # e.g. "General Shift", "Night Shift"
     start_time = models.TimeField()
     end_time = models.TimeField()
     is_night_shift = models.BooleanField(
@@ -1044,6 +1087,12 @@ class ShiftMaster(models.Model):
     class Meta:
         verbose_name = "Shift"
         verbose_name_plural = "Shifts"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "name"],
+                name="unique_shift_name_per_org",
+            )
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.start_time.strftime('%H:%M')}–{self.end_time.strftime('%H:%M')})"
@@ -1052,6 +1101,7 @@ class ShiftMaster(models.Model):
         # Enforce "only one default shift" — same pattern as Salary.is_active
         if self.is_default:
             ShiftMaster.objects.filter(
+                organization=self.organization,
                 is_default=True
             ).exclude(pk=self.pk).update(is_default=False)
         super().save(*args, **kwargs)
@@ -1060,7 +1110,12 @@ class ShiftMaster(models.Model):
 class DesignationMaster(models.Model):
     """Job designation lookup, e.g. 'Software Engineer', 'HR Manager'."""
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    name = models.CharField(max_length=100, unique=True)
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        related_name="designations",
+    )
+    name = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1070,6 +1125,12 @@ class DesignationMaster(models.Model):
         verbose_name = "Designation"
         verbose_name_plural = "Designations"
         ordering = ['name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "name"],
+                name="unique_designation_name_per_org",
+            )
+        ]
 
     def __str__(self):
         return self.name
@@ -1092,16 +1153,20 @@ class LeaveTypeMaster(models.Model):
         editable=False
     )
 
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        related_name="leave_types",
+    )
+
     name = models.CharField(
         max_length=100,
-        unique=True,
         help_text="Example: Casual Leave, Sick Leave, Earned Leave."
     )
 
     code = models.CharField(
         max_length=20,
-        unique=True,
-        help_text="Short unique code such as CL, SL, EL or LOP."
+        help_text="Short code such as CL, SL, EL or LOP, unique within the organization."
     )
 
     description = models.TextField(
@@ -1141,6 +1206,16 @@ class LeaveTypeMaster(models.Model):
         verbose_name = "Leave Type"
         verbose_name_plural = "Leave Types"
         ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "name"],
+                name="unique_leave_type_name_per_org",
+            ),
+            models.UniqueConstraint(
+                fields=["organization", "code"],
+                name="unique_leave_type_code_per_org",
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         # Keep codes consistent, e.g. "cl" becomes "CL".
@@ -1437,6 +1512,12 @@ class Holiday(models.Model):
         editable=False
     )
 
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        related_name="holidays",
+    )
+
     name = models.CharField(
         max_length=150
     )
@@ -1481,7 +1562,7 @@ class Holiday(models.Model):
 
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "date"],
+                fields=["organization", "name", "date"],
                 name="unique_holiday_name_per_date"
             )
         ]
@@ -2057,9 +2138,13 @@ def validate_document_size(file):
 
 
 class DocumentTypeMaster(models.Model):
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        related_name="document_types",
+    )
     name = models.CharField(
         max_length=50,
-        unique=True,
         help_text="e.g. Aadhar Card, Resume, Offer Letter"
     )
 
@@ -2080,6 +2165,12 @@ class DocumentTypeMaster(models.Model):
         ordering = ["name"]
         verbose_name = "Document Type"
         verbose_name_plural = "Document Types"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "name"],
+                name="unique_document_type_name_per_org",
+            )
+        ]
 
     def __str__(self):
         return self.name
@@ -2162,9 +2253,13 @@ class EmployeeImportFieldConfig(models.Model):
         ("DESIGNATION_FK", "Designation (lookup / create)"),
     ]
 
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        related_name="import_field_configs",
+    )
     field_key = models.CharField(
         max_length=50,
-        unique=True,
         help_text="Internal field name, e.g. 'aadhar_no', 'email', 'full_name'.",
     )
     column_label = models.CharField(
@@ -2193,6 +2288,12 @@ class EmployeeImportFieldConfig(models.Model):
         ordering = ["order", "field_key"]
         verbose_name = "Employee Import Field"
         verbose_name_plural = "Employee Import Fields"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "field_key"],
+                name="unique_import_field_key_per_org",
+            )
+        ]
 
     def __str__(self):
         return f"{self.column_label} → {self.field_key}"
@@ -2220,6 +2321,12 @@ MANUAL_STATUS_CHOICES = (("SUSPENDED", "Suspended"), ("SURRENDERED", "Surrendere
 class BCASPass(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     employee = models.ForeignKey(empProfile, on_delete=models.CASCADE, related_name="bcas_passes")
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        editable=False,
+        related_name="bcas_passes",
+    )
     pass_type = models.CharField(max_length=15, choices=PASS_TYPE_CHOICES)
     airport = models.ForeignKey(Airport, on_delete=models.PROTECT, related_name="bcas_passes")
     issue_date = models.DateField()
@@ -2234,6 +2341,10 @@ class BCASPass(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        self.organization_id = self.employee.organization_id
+        super().save(*args, **kwargs)
 
     @property
     def status(self):

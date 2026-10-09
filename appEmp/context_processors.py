@@ -7,6 +7,7 @@ from .models import (
 def user_role(request):
     if not request.user.is_authenticated:
         return {
+            "current_org": None,
             "is_admin_role": False,
             "is_manager_role": False,
 
@@ -91,13 +92,21 @@ def user_role(request):
     # Superuser can also see the menu.
     # ---------------------------------------------------------
 
-    has_direct_reports = empProfile.objects.filter(
-        manager__user=user,
-        is_active=True,
-    ).exists()
+    current_org = getattr(request, "current_org", None)
+
+    has_direct_reports = (
+        current_org is not None
+        and empProfile.objects.filter(
+            organization=current_org,
+            manager__user=user,
+            is_active=True,
+        ).exists()
+    )
 
     has_pending_manager_noc = (
-        ClearanceApproval.objects.filter(
+        current_org is not None
+        and ClearanceApproval.objects.filter(
+            clearance_request__employee__organization=current_org,
             approval_type="MANAGER_NOC",
             assigned_to=user,
             status="PENDING",
@@ -158,7 +167,25 @@ def user_role(request):
     # Context
     # ---------------------------------------------------------
 
+    home_org = getattr(request, "home_org", None)
+    switchable_orgs = []
+    is_viewing_other_org = False
+
+    if user.is_superuser:
+        from app_organizations.models import Organization
+
+        switchable_orgs = list(Organization.objects.order_by("name"))
+        is_viewing_other_org = (
+            current_org is not None
+            and home_org is not None
+            and current_org.pk != home_org.pk
+        )
+
     return {
+        "current_org": current_org,
+        "home_org": home_org,
+        "switchable_orgs": switchable_orgs,
+        "is_viewing_other_org": is_viewing_other_org,
         "is_admin_role": can_view_hr_dashboard,
 
         "is_manager_role": (

@@ -6,9 +6,56 @@ from .models import EmployeeImportFieldConfig
 from .models import WhatsAppOTP, Airport, BCASPass
 from .models import Salary, WageRegisterEntry
 # admin.site.register(empProfile)
+from django.core.exceptions import FieldDoesNotExist
+
+
+class OrgColumnMixin:
+    """
+    Superuser-only admin: show and filter by the owning organization.
+    org_path is a lookup such as "organization" or "employee__organization".
+    If the path does not exist on the model, nothing is added.
+    """
+
+    org_path = "organization"
+
+    def _org_path_valid(self):
+        model = self.model
+        for part in self.org_path.split("__"):
+            try:
+                field = model._meta.get_field(part)
+            except FieldDoesNotExist:
+                return False
+            if not field.is_relation:
+                return False
+            model = field.related_model
+        return True
+
+    def get_list_display(self, request):
+        cols = list(super().get_list_display(request))
+        if self._org_path_valid() and "admin_org" not in cols:
+            cols.append("admin_org")
+        return cols
+
+    def get_list_filter(self, request):
+        flt = list(super().get_list_filter(request))
+        if self._org_path_valid() and self.org_path not in flt:
+            flt.insert(0, self.org_path)
+        return flt
+
+    def admin_org(self, obj):
+        for part in self.org_path.split("__"):
+            obj = getattr(obj, part, None)
+            if obj is None:
+                return "-"
+        return obj
+
+    admin_org.short_description = "Organization"
+
+
 @admin.register(empProfile)
 
-class EmployeeAdmin(admin.ModelAdmin):
+class EmployeeAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "organization"
     list_display = (
         "user",
         # "role",
@@ -42,7 +89,8 @@ class WhatsAppOTPAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at",)
 
 @admin.register(EmployeeImportFieldConfig)
-class EmployeeImportFieldConfigAdmin(admin.ModelAdmin):
+class EmployeeImportFieldConfigAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "organization"
     list_display = (
         "order", "column_label", "field_key", "display_name",
         "target_model", "data_type", "is_required", "is_active",
@@ -53,21 +101,24 @@ class EmployeeImportFieldConfigAdmin(admin.ModelAdmin):
 
 
 @admin.register(Attendance)
-class AttendanceAdmin(admin.ModelAdmin):
+class AttendanceAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "employee__organization"
     list_display = ('employee', 'date', 'status', 'check_in', 'check_out', 'marked_by')
     list_filter = ('status', 'date')
     search_fields = ('employee__user__first_name', 'employee__user__last_name')
 
 
 @admin.register(ShiftMaster)
-class ShiftMasterAdmin(admin.ModelAdmin):
+class ShiftMasterAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "organization"
     list_display = ('name', 'start_time', 'end_time', 'is_night_shift', 'grace_period_minutes', 'is_default', 'is_active')
     list_filter = ('is_default', 'is_active', 'is_night_shift')
     search_fields = ('name',)
 
 
 @admin.register(DesignationMaster)
-class DesignationMasterAdmin(admin.ModelAdmin):
+class DesignationMasterAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "organization"
     list_display = ('name', 'is_active', 'created_at')
     list_filter = ('is_active',)
     search_fields = ('name',)
@@ -80,7 +131,8 @@ class DesignationMasterAdmin(admin.ModelAdmin):
 #     search_fields = ('name',)
 
 @admin.register(AttendanceException)
-class AttendanceExceptionAdmin(admin.ModelAdmin):
+class AttendanceExceptionAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "attendance__employee__organization"
     list_display = (
         "attendance",
         "raised_by",
@@ -107,7 +159,8 @@ class AttendanceExceptionAdmin(admin.ModelAdmin):
     )
 
 @admin.register(LeaveTypeMaster)
-class LeaveTypeMasterAdmin(admin.ModelAdmin):
+class LeaveTypeMasterAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "organization"
     list_display = (
         "name",
         "code",
@@ -142,7 +195,8 @@ class LeaveTypeMasterAdmin(admin.ModelAdmin):
     )
 
 @admin.register(LeaveBalance)
-class LeaveBalanceAdmin(admin.ModelAdmin):
+class LeaveBalanceAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "employee__organization"
     list_display = (
         "employee",
         "leave_type",
@@ -231,7 +285,8 @@ class LeaveBalanceAdmin(admin.ModelAdmin):
 
 
 @admin.register(LeaveRequest)
-class LeaveRequestAdmin(admin.ModelAdmin):
+class LeaveRequestAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "employee__organization"
     list_display = (
         "employee",
         "leave_type",
@@ -314,7 +369,8 @@ class LeaveRequestAdmin(admin.ModelAdmin):
     )
 
 @admin.register(Holiday)
-class HolidayAdmin(admin.ModelAdmin):
+class HolidayAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "organization"
     list_display = (
         "name",
         "date",
@@ -348,7 +404,8 @@ class HolidayAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 @admin.register(WorkSchedule)
-class WorkScheduleAdmin(admin.ModelAdmin):
+class WorkScheduleAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "organization"
     list_display = (
         "name",
         "monday",
@@ -385,14 +442,16 @@ class WorkScheduleAdmin(admin.ModelAdmin):
 
 
 @admin.register(DocumentTypeMaster)
-class DocumentTypeMasterAdmin(admin.ModelAdmin):
+class DocumentTypeMasterAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "organization"
     list_display = ("name", "is_active", "created_at")
     list_filter = ("is_active",)
     search_fields = ("name",)
 
 
 @admin.register(empDocument)
-class empDocumentAdmin(admin.ModelAdmin):
+class empDocumentAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "employee__organization"
     list_display = ("employee", "document_type", "uploaded_at", "is_verified")
     list_filter = ("document_type", "is_verified")
     search_fields = ("employee__user__first_name", "employee__user__last_name")
@@ -408,7 +467,8 @@ class AirportAdmin(admin.ModelAdmin):
 
 
 @admin.register(BCASPass)
-class BCASPassAdmin(admin.ModelAdmin):
+class BCASPassAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "organization"
     list_display = (
         "employee", "pass_type", "airport", "issue_date",
         "expiry_date", "status", "manual_status", "created_by",
@@ -434,14 +494,16 @@ class WhatsAppTicketAdmin(admin.ModelAdmin):
     search_fields = ('sender_name', 'sender_wa_id', 'message_body')
 
 @admin.register(Salary)
-class SalaryAdmin(admin.ModelAdmin):
+class SalaryAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "organization"
     list_display = ('employee', 'wage_type', 'basic_salary', 'hra', 'daily_rate', 'effective_date', 'is_active')
     list_filter = ('wage_type', 'is_active')
     search_fields = ('employee__user__first_name', 'employee__user__last_name')
 
 
 @admin.register(WageRegisterEntry)
-class WageRegisterEntryAdmin(admin.ModelAdmin):
+class WageRegisterEntryAdmin(OrgColumnMixin, admin.ModelAdmin):
+    org_path = "organization"
     list_display = (
         'salary', 'wage_month', 'days_worked', 'operational_ot_hours',
         'national_holidays_in_month', 'gross_total', 'net_payment', 'payment_date',

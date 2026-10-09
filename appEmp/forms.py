@@ -347,8 +347,11 @@ class ProfileFormAdmin(forms.ModelForm):
             ),
         }
 
-    def __init__(self, *args, **kwargs):
+    PRIVILEGED_GROUP_NAMES = ("HR_ADMIN", "ORG_ADMIN")
+
+    def __init__(self, *args, request_user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.request_user = request_user
 
         current_employee = self.instance
         if (
@@ -373,10 +376,17 @@ class ProfileFormAdmin(forms.ModelForm):
         # Groups
         # -----------------------------------------------------
 
+        group_qs = Group.objects.all()
+
+        if not self._is_superuser_editor():
+            held = self._held_privileged_names()
+            group_qs = (
+                group_qs.exclude(name__in=self.PRIVILEGED_GROUP_NAMES)
+                | Group.objects.filter(name__in=held)
+            )
+
         self.fields["access_group"].queryset = (
-            Group.objects
-            .all()
-            .order_by("name")
+            group_qs.distinct().order_by("name")
         )
 
         # Pre-select employee's current role/group.
@@ -391,6 +401,16 @@ class ProfileFormAdmin(forms.ModelForm):
                 .first()
             )
 
+            held_privileged = (
+                current_employee.user.groups
+                .filter(name__in=self.PRIVILEGED_GROUP_NAMES)
+                .order_by("name")
+                .first()
+            )
+
+            if held_privileged:
+                current_group = held_privileged
+
             if current_group:
                 self.fields["access_group"].initial = (
                     current_group
@@ -402,7 +422,10 @@ class ProfileFormAdmin(forms.ModelForm):
 
         self.fields["shift"].queryset = (
             ShiftMaster.objects
-            .filter(is_active=True)
+            .filter(
+                organization_id=self.instance.organization_id,
+                is_active=True,
+            )
             .order_by("name")
         )
 
@@ -412,7 +435,10 @@ class ProfileFormAdmin(forms.ModelForm):
 
         self.fields["work_schedule"].queryset = (
             WorkSchedule.objects
-            .filter(is_active=True)
+            .filter(
+                organization_id=self.instance.organization_id,
+                is_active=True,
+            )
             .order_by("name")
         )
 
@@ -422,7 +448,10 @@ class ProfileFormAdmin(forms.ModelForm):
 
         manager_queryset = (
             empProfile.objects
-            .filter(is_active=True)
+            .filter(
+                organization_id=self.instance.organization_id,
+                is_active=True,
+            )
             .select_related("user")
             .order_by(
                 "user__first_name",
@@ -464,6 +493,43 @@ class ProfileFormAdmin(forms.ModelForm):
                     "class",
                     "form-control"
                 )
+
+    def _is_superuser_editor(self):
+        return bool(
+            self.request_user and self.request_user.is_superuser
+        )
+
+    def _held_privileged_names(self):
+        target = self.instance
+        if not (target and target.pk and target.user_id):
+            return set()
+        return set(
+            target.user.groups
+            .filter(name__in=self.PRIVILEGED_GROUP_NAMES)
+            .values_list("name", flat=True)
+        )
+
+    def clean_access_group(self):
+        group = self.cleaned_data.get("access_group")
+
+        if self._is_superuser_editor():
+            return group
+
+        privileged = set(self.PRIVILEGED_GROUP_NAMES)
+        held = self._held_privileged_names()
+        chosen = group.name if group else None
+
+        if chosen in privileged and chosen not in held:
+            raise forms.ValidationError(
+                "Only a superuser can assign this access group."
+            )
+
+        if held and chosen not in held:
+            raise forms.ValidationError(
+                "Only a superuser can change this employee's admin access group."
+            )
+
+        return group
 
     def clean_manager(self):
         manager = self.cleaned_data.get(
@@ -700,7 +766,10 @@ class LeaveRequestForm(forms.ModelForm):
 
         self.fields["leave_type"].queryset = (
             LeaveTypeMaster.objects
-            .filter(is_active=True)
+            .filter(
+                organization_id=getattr(employee, "organization_id", None),
+                is_active=True,
+            )
             .order_by("name")
         )
 
@@ -1053,12 +1122,12 @@ class LeaveBalanceForm(forms.ModelForm):
             ),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, org, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.fields["employee"].queryset = (
             empProfile.objects
-            .filter(is_active=True)
+            .filter(organization=org, is_active=True)
             .select_related("user")
             .order_by(
                 "user__first_name",
@@ -1068,7 +1137,7 @@ class LeaveBalanceForm(forms.ModelForm):
 
         self.fields["leave_type"].queryset = (
             LeaveTypeMaster.objects
-            .filter(is_active=True)
+            .filter(organization=org, is_active=True)
             .order_by("name")
         )
 
@@ -1356,12 +1425,12 @@ class TerminationForm(forms.Form):
         ),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, org, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.fields["employee"].queryset = (
             empProfile.objects
-            .filter(is_active=True)
+            .filter(organization=org, is_active=True)
             .select_related("user")
             .order_by(
                 "user__first_name",
@@ -1382,6 +1451,30 @@ class TerminationForm(forms.Form):
         return final_date
 
 class HolidayForm(forms.ModelForm):
+    def __init__(self, *args, org, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.org = org
+
+    def clean(self):
+        cleaned_data = super().clean()
+        name = cleaned_data.get("name")
+        holiday_date = cleaned_data.get("date")
+
+        if name and holiday_date:
+            duplicates = Holiday.objects.filter(
+                organization=self.org,
+                name__iexact=name.strip(),
+                date=holiday_date,
+            )
+            if self.instance.pk:
+                duplicates = duplicates.exclude(pk=self.instance.pk)
+            if duplicates.exists():
+                raise forms.ValidationError(
+                    "A holiday with this name and date already exists."
+                )
+
+        return cleaned_data
+
     class Meta:
         model = Holiday
         fields = [
@@ -1437,6 +1530,24 @@ class HolidayBulkUploadForm(forms.Form):
         return uploaded_file
 
 class WorkScheduleForm(forms.ModelForm):
+    def __init__(self, *args, org, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.org = org
+
+    def clean_name(self):
+        name = self.cleaned_data["name"].strip()
+        duplicates = WorkSchedule.objects.filter(
+            organization=self.org,
+            name__iexact=name,
+        )
+        if self.instance.pk:
+            duplicates = duplicates.exclude(pk=self.instance.pk)
+        if duplicates.exists():
+            raise forms.ValidationError(
+                "A work schedule with this name already exists."
+            )
+        return name
+
     class Meta:
         model = WorkSchedule
         fields = [
@@ -1489,6 +1600,7 @@ class OptionalHolidayRequestForm(forms.ModelForm):
         today = timezone.localdate()
 
         holidays = Holiday.objects.filter(
+            organization_id=getattr(employee, "organization_id", None),
             holiday_type="OPTIONAL",
             is_active=True,
             date__gte=today,
@@ -1523,6 +1635,20 @@ class empDocumentForm(forms.ModelForm):
         model = empDocument  # noqa: F821 (defined in your models.py)
         fields = ["document_type", "file"]
  
+    def __init__(self, *args, org, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["document_type"].queryset = (
+            self.fields["document_type"].queryset.filter(
+                organization=org, is_active=True
+            )
+        )
+
+        if "employee" in self.fields:
+            self.fields["employee"].queryset = (
+                self.fields["employee"].queryset.filter(organization=org)
+            )
+
     def clean_file(self):
         file = self.cleaned_data["file"]
         original_size = file.size
@@ -1583,12 +1709,12 @@ class BCASPassForm(forms.ModelForm):
             ),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, org, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.fields["employee"].queryset = (
             empProfile.objects
-            .filter(is_active=True)
+            .filter(organization=org, is_active=True)
             .select_related("user")
             .order_by("user__first_name", "user__last_name")
         )

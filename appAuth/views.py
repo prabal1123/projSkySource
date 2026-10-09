@@ -11,6 +11,7 @@ from django.conf import settings
 
 from .forms import LoginForm, registerEmp, RequestOTPForm, VerifyOTPForm
 from .models import ActivityLog
+from app_organizations.utils import require_org_role
 from appEmp.models import empProfile, EmailOTP
 from .utils import send_azure_otp, send_demo_notification
 from django.views.decorators.cache import never_cache
@@ -141,7 +142,7 @@ def login_view(request):
     if request.method == "POST" and form.is_valid():
         email = form.cleaned_data["email"]
 
-        user = User.objects.filter(email__iexact=email, empprofile__isnull=False).first()
+        user = User.objects.filter(email__iexact=email, empprofile__isnull=False, is_active=True).first()
 
         if not user:
             messages.error(request, "This email is not registered. Contact HR/Admin to get access.")
@@ -186,7 +187,7 @@ def verify_otp_view(request):
             messages.error(request, "Invalid or expired code.")
             return render(request, "appAuth/verify_otp.html", {"form": form, "email": email})
 
-        user = User.objects.filter(email__iexact=email, empprofile__isnull=False).first()
+        user = User.objects.filter(email__iexact=email, empprofile__isnull=False, is_active=True).first()
         if not user:
             messages.error(request, "No employee account found for this email.")
             return redirect("login")
@@ -209,6 +210,8 @@ def verify_otp_view(request):
     return render(request, "appAuth/verify_otp.html", {"form": form, "email": email})
 
 
+@login_required
+@require_org_role(["owner", "admin"])
 def register_view(request):
     requester_profile = empProfile.objects.filter(user=request.user).first()
 
@@ -230,13 +233,14 @@ def register_view(request):
             messages.error(request, "An account with this email already exists.")
             return render(request, "appAuth/register.html", {"form": form})
 
-        user = User.objects.create(
+        user = User(
             username=email,  # email doubles as username since login is email/OTP-based
             email=email,
             first_name=first_name,
             last_name=last_name,
         )
         user.set_unusable_password()
+        user._organization = request.current_org
         user.save()
 
         emp_profile = empProfile.objects.filter(user=user).first()

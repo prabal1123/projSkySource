@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Create Organization{% endblock %}
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/numahr-tokens.css' %}">
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+{% block content %}
+<div class="sky-auth-wrap">
+    <div class="sky-auth-card">
+        <span class="sky-auth-eyebrow">Administration / New Organization</span>
+        <h1>Create Organization</h1>
+
+        {% if created %}
+        <div style="margin-bottom:1rem;padding:.75rem 1rem;border-radius:6px;background:#e8f5e9;color:#1b5e20;">
+            Organization <strong>{{ created.org.name }}</strong> was created.
+            The owner can log in with <strong>{{ created.owner.email }}</strong>
+            by requesting an emailed code.
+        </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+        <div class="sky-auth-error-banner">
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="sky-auth-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <div class="sky-form-error">{{ field.errors|striptags }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="sky-auth-submit">Create organization</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

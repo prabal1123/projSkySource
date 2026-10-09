@@ -68,6 +68,7 @@ from .services import (
 import calendar
 from datetime import date
 
+from app_organizations.utils import require_org_role
 from .models import (
     Attendance,
     AttendanceException,
@@ -209,6 +210,12 @@ def _clean_import_value(config, raw_value):
 
     return value, None
 
+AADHAAR_IN_USE_MESSAGE = (
+    "This Aadhaar number is already registered, so this person can't be imported. "
+    "Check the number. If it is correct, contact support."
+)
+
+
 def _find_header_row(rows, configs):
     required_labels = {c.column_label.strip().lower() for c in configs if c.is_required}
     for i, row in enumerate(rows[:5]):
@@ -239,9 +246,10 @@ def can_review_attendance_exception(user):
 
 @login_required
 @permission_required("appEmp.manage_employees", raise_exception=True)
+@require_org_role(["owner", "admin"])
 def employee_bulk_import_view(request):
     configs = list(
-        EmployeeImportFieldConfig.objects.filter(is_active=True).order_by("order")
+        EmployeeImportFieldConfig.objects.filter(organization=request.current_org, is_active=True).order_by("order")
     )
 
     preview_rows = []
@@ -267,20 +275,29 @@ def employee_bulk_import_view(request):
                     skipped_count += 1
                     continue
 
-                user = User.objects.create(
+                aadhaar = row["profile_fields"].get("aadhar_no")
+                if aadhaar and empProfile.objects.filter(aadhar_no=aadhaar).exists():
+                    skipped_count += 1
+                    continue
+
+                user = User(
                     username=email,
                     email=email,
                     first_name=row["user_fields"].get("first_name", ""),
                     last_name=row["user_fields"].get("last_name", ""),
                 )
                 user.set_unusable_password()
+                user._organization = request.current_org
                 user.save()  # signal auto-creates empProfile
 
                 profile = empProfile.objects.get(user=user)
 
                 for key, value in row["profile_fields"].items():
                     if key == "designation" and value:
-                        designation, _ = DesignationMaster.objects.get_or_create(name=value)
+                        designation, _ = DesignationMaster.objects.get_or_create(
+                            name=value,
+                            organization=request.current_org,
+                        )
                         profile.designation = designation
                     elif key in ("date_hired", "avsec_training_date", "police_verification_date"):
                         setattr(profile, key, datetime.strptime(value, "%Y-%m-%d").date() if value else None)
@@ -319,6 +336,7 @@ def employee_bulk_import_view(request):
                 else:
                     col_index = {h.strip().lower(): i for i, h in enumerate(headers) if h}
                     seen_emails = set()
+                    seen_aadhaar = set()
 
                     for row_number, row in enumerate(rows[header_idx + 1:], start=header_idx + 2):
                         if not any(c is not None and str(c).strip() for c in row):
@@ -368,6 +386,16 @@ def employee_bulk_import_view(request):
                                 row_warnings.append("An account with this email already exists -- will be skipped.")
                             else:
                                 seen_emails.add(email)
+
+                        aadhaar = profile_fields.get("aadhar_no")
+                        if aadhaar and not row_blocking_errors and not is_duplicate:
+                            # Deliberately not org-scoped: the number is globally unique,
+                            # and the message must not reveal where it is registered.
+                            if aadhaar in seen_aadhaar or empProfile.objects.filter(aadhar_no=aadhaar).exists():
+                                is_duplicate = True
+                                row_warnings.append(AADHAAR_IN_USE_MESSAGE)
+                            else:
+                                seen_aadhaar.add(aadhaar)
 
                         if row_blocking_errors:
                             status = "ERROR"
@@ -421,7 +449,7 @@ def _filtered_emp_queryset(request):
     shift_id = request.GET.get("shift", "").strip()
     status = request.GET.get("status", "").strip()  # "active" | "inactive" | ""
 
-    objects = empProfile.objects.all()
+    objects = empProfile.objects.filter(organization=request.current_org)
 
     if search_query:
         objects = objects.filter(
@@ -449,6 +477,7 @@ def _filtered_emp_queryset(request):
     }
     return objects, filters
 
+@login_required
 def empList_view(request):
     if not user_has_permission(request.user, "manage_employees"):
         messages.error(request, "You don't have permission to view employees.")
@@ -464,8 +493,12 @@ def empList_view(request):
         "uuid",
     )
 
-    designations = DesignationMaster.objects.filter(is_active=True).order_by("name")
-    shifts = ShiftMaster.objects.all().order_by("name")
+    designations = DesignationMaster.objects.filter(
+        organization=request.current_org, is_active=True
+    ).order_by("name")
+    shifts = ShiftMaster.objects.filter(
+        organization=request.current_org
+    ).order_by("name")
 
     return render(
         request,
@@ -584,7 +617,10 @@ def verificationStats_view(request):
 
     verification_fields = _get_verification_fields()
 
-    profiles = empProfile.objects.filter(is_active=True).select_related("user")
+    profiles = empProfile.objects.filter(
+        organization=request.current_org,
+        is_active=True,
+    ).select_related("user")
     total = profiles.count()
 
     stat_cards = []
@@ -643,7 +679,11 @@ def verification_quick_update_view(request, uuid):
     if request.method != "POST":
         raise PermissionDenied("Verification updates must be submitted securely.")
 
-    profile = get_object_or_404(empProfile, uuid=uuid)
+    profile = get_object_or_404(
+        empProfile,
+        uuid=uuid,
+        organization=request.current_org,
+    )
     verification_fields = _get_verification_fields()
 
     changed_fields = []
@@ -683,6 +723,7 @@ def profileDetail_view(request, uuid):
             "shift",
         ),
         uuid=uuid,
+        organization=request.current_org,
     )
 
     is_admin = user_has_permission(request.user, "manage_employees")
@@ -698,7 +739,8 @@ def profileDetail_view(request, uuid):
     if request.method == "POST":
         form = ProfileFormAdmin(
             request.POST,
-            instance=employee
+            instance=employee,
+            request_user=request.user,
         )
 
         if form.is_valid():
@@ -715,7 +757,8 @@ def profileDetail_view(request, uuid):
             )
     else:
         form = ProfileFormAdmin(
-            instance=employee
+            instance=employee,
+            request_user=request.user,
         )
 
     target_salary = employee.salary_records.filter(
@@ -738,7 +781,7 @@ def profileDetail_view(request, uuid):
             "target_uuid": employee.uuid,
             "current_year": timezone.now().year,
             "current_month": timezone.now().month,
-            "document_form": empDocumentForm(),
+            "document_form": empDocumentForm(org=request.current_org),
             "documents": employee.documents.all(),
         },
     )
@@ -746,7 +789,23 @@ def profileDetail_view(request, uuid):
 
 @login_required
 def empProfile_view(request):
-    profile, created = empProfile.objects.get_or_create(user=request.user)
+    from app_organizations.models import OrganizationMember
+
+    membership = (
+        OrganizationMember.objects
+        .filter(user=request.user)
+        .select_related("organization")
+        .order_by("id")
+        .first()
+    )
+    if membership is None:
+        messages.error(request, "Your account is not part of any organization.")
+        return redirect("dashboard")
+
+    profile, created = empProfile.objects.get_or_create(
+        user=request.user,
+        defaults={"organization": membership.organization},
+    )
     if request.method == "POST":
         form = EmployeeForm(request.POST, instance=profile)
         if form.is_valid():
@@ -829,6 +888,7 @@ def dashboard_view(request):
     ):
         pending_finance_noc_count = (
             ClearanceApproval.objects.filter(
+                clearance_request__employee__organization=request.current_org,
                 approval_type="FINANCE_NOC",
                 status="PENDING",
                 clearance_request__status="PENDING",
@@ -848,6 +908,7 @@ def dashboard_view(request):
     ):
         pending_resignations_count = (
             EmployeeExitRequest.objects.filter(
+                employee__organization=request.current_org,
                 exit_type="RESIGNATION",
                 status="SUBMITTED",
             ).count()
@@ -855,6 +916,7 @@ def dashboard_view(request):
 
         rejected_exit_requests_count = (
             EmployeeExitRequest.objects.filter(
+                employee__organization=request.current_org,
                 status__in=[
                     "HR_REJECTED",
                     "CLEARANCE_REJECTED",
@@ -863,7 +925,9 @@ def dashboard_view(request):
         )
 
         total_exit_requests_count = (
-            EmployeeExitRequest.objects.count()
+            EmployeeExitRequest.objects.filter(
+                employee__organization=request.current_org,
+            ).count()
         )
 
     if (
@@ -874,12 +938,14 @@ def dashboard_view(request):
     ):
         ready_for_finalization_count = (
             EmployeeExitRequest.objects.filter(
+                employee__organization=request.current_org,
                 status="READY_FOR_FINALIZATION",
             ).count()
         )
 
     exiting_employees_count = (
         EmployeeExitRequest.objects.filter(
+            employee__organization=request.current_org,
             status__in=[
                 "SUBMITTED",
                 "CLEARANCE_IN_PROGRESS",
@@ -929,18 +995,18 @@ def dashboard_view(request):
         # WORKFORCE
         # -----------------------------------------------------
 
-        total_employees = (
-            empProfile.objects.count()
+        org_profiles = empProfile.objects.filter(
+            organization=request.current_org
         )
 
-        active_employees = (
-            empProfile.objects.filter(
-                is_active=True
-            ).count()
-        )
+        total_employees = org_profiles.count()
+
+        active_employees = org_profiles.filter(
+            is_active=True
+        ).count()
 
         recent_employees = (
-            empProfile.objects
+            org_profiles
             .filter(
                 is_active=True
             )
@@ -958,35 +1024,25 @@ def dashboard_view(request):
         # -----------------------------------------------------
 
         verification_stats = {
-            "email": (
-                empProfile.objects.filter(
-                    is_email_verified=True
-                ).count()
-            ),
+            "email": org_profiles.filter(
+                is_email_verified=True
+            ).count(),
 
-            "phone": (
-                empProfile.objects.filter(
-                    is_phone_verified=True
-                ).count()
-            ),
+            "phone": org_profiles.filter(
+                is_phone_verified=True
+            ).count(),
 
-            "address": (
-                empProfile.objects.filter(
-                    is_address_verified=True
-                ).count()
-            ),
+            "address": org_profiles.filter(
+                is_address_verified=True
+            ).count(),
 
-            "aadhar": (
-                empProfile.objects.filter(
-                    is_aadhar_verified=True
-                ).count()
-            ),
+            "aadhar": org_profiles.filter(
+                is_aadhar_verified=True
+            ).count(),
 
-            "background_check": (
-                empProfile.objects.filter(
-                    is_background_check_completed=True
-                ).count()
-            ),
+            "background_check": org_profiles.filter(
+                is_background_check_completed=True
+            ).count(),
         }
 
         # -----------------------------------------------------
@@ -996,6 +1052,7 @@ def dashboard_view(request):
         today_attendance = (
             Attendance.objects
             .filter(
+                employee__organization=request.current_org,
                 date=today
             )
             .select_related(
@@ -1069,6 +1126,7 @@ def dashboard_view(request):
         attendance_records = (
             Attendance.objects
             .filter(
+                employee__organization=request.current_org,
                 date__gte=attendance_start_date,
                 date__lte=today,
             )
@@ -1085,6 +1143,7 @@ def dashboard_view(request):
         approved_leave_today = (
             LeaveRequest.objects
             .filter(
+                employee__organization=request.current_org,
                 status="APPROVED",
                 start_date__lte=today,
                 end_date__gte=today,
@@ -1162,6 +1221,7 @@ def dashboard_view(request):
         trend_query = (
             Attendance.objects
             .filter(
+                employee__organization=request.current_org,
                 date__gte=trend_start,
                 date__lte=today,
             )
@@ -1258,24 +1318,28 @@ def dashboard_view(request):
 
         pending_leave_requests_count = (
             LeaveRequest.objects.filter(
+                employee__organization=request.current_org,
                 status="PENDING"
             ).count()
         )
 
         pending_attendance_exceptions_count = (
             AttendanceException.objects.filter(
+                attendance__employee__organization=request.current_org,
                 status="PENDING"
             ).count()
         )
 
         pending_optional_holiday_requests_count = (
             OptionalHolidayRequest.objects.filter(
+                employee__organization=request.current_org,
                 status="PENDING"
             ).count()
         )
         # Document Review — pending verification
         pending_document_reviews_count = (
             empDocument.objects.filter(
+                employee__organization=request.current_org,
                 is_verified=False
             ).count()
         )
@@ -1285,7 +1349,7 @@ def dashboard_view(request):
         )
 
         employees_without_leave_balance = (
-            empProfile.objects
+            org_profiles
             .filter(
                 is_active=True
             )
@@ -1314,6 +1378,7 @@ def dashboard_view(request):
         upcoming_approved_leaves = (
             LeaveRequest.objects
             .filter(
+                employee__organization=request.current_org,
                 status="APPROVED",
                 end_date__gte=today,
             )
@@ -1341,6 +1406,7 @@ def dashboard_view(request):
         upcoming_holidays = (
             Holiday.objects
             .filter(
+                organization=request.current_org,
                 is_active=True,
                 date__gte=today,
             )
@@ -1506,6 +1572,7 @@ def dashboard_view(request):
         upcoming_holidays = (
             Holiday.objects
             .filter(
+                organization=request.current_org,
                 is_active=True,
                 holiday_type="MANDATORY",
                 date__gte=today,
@@ -1558,7 +1625,6 @@ def dashboard_view(request):
         "dashboard.html",
         context,
     )
-
 
 
 def _get_attendance_date(employee, current_datetime):
@@ -1656,6 +1722,7 @@ def _get_employee_day_context(employee, target_date):
     holiday = (
         Holiday.objects
         .filter(
+            organization_id=employee.organization_id,
             date=target_date,
             holiday_type="MANDATORY",
             is_active=True,
@@ -1673,6 +1740,7 @@ def _get_employee_day_context(employee, target_date):
         work_schedule = (
             WorkSchedule.objects
             .filter(
+                organization_id=employee.organization_id,
                 is_default=True,
                 is_active=True,
             )
@@ -1994,6 +2062,7 @@ def update_attendance_view(request, uuid):
     attendance = get_object_or_404(
         Attendance,
         uuid=uuid,
+        employee__organization=request.current_org,
     )
 
     if request.method == "POST":
@@ -2038,6 +2107,7 @@ def salary_update_view(request, uuid):
     target = get_object_or_404(
         empProfile,
         uuid=uuid,
+        organization=request.current_org,
     )
 
     if request.method == "POST":
@@ -2201,6 +2271,7 @@ def salary_slip_admin_view(request, uuid, year, month):
     profile = get_object_or_404(
         empProfile,
         uuid=uuid,
+        organization=request.current_org,
     )
 
     salary = profile.salary_records.filter(
@@ -2316,6 +2387,7 @@ def _build_attendance_calendar(employee, year, month):
     holidays = (
         Holiday.objects
         .filter(
+            organization_id=employee.organization_id,
             date__gte=first_day,
             date__lt=next_month_first_day,
             holiday_type="MANDATORY",
@@ -2411,6 +2483,7 @@ def _build_attendance_calendar(employee, year, month):
         work_schedule = (
             WorkSchedule.objects
             .filter(
+                organization_id=employee.organization_id,
                 is_default=True,
                 is_active=True,
             )
@@ -2943,6 +3016,7 @@ def attendance_calendar_admin_view(
             "work_schedule",
         ),
         uuid=uuid,
+        organization=request.current_org,
     )
 
     # ==================================================
@@ -3109,7 +3183,7 @@ def attendance_calendar_admin_view(
     )
 
 
-def _build_holiday_calendar(year, month):
+def _build_holiday_calendar(org, year, month):
     month_calendar = calendar.Calendar(firstweekday=0)
     calendar_weeks = month_calendar.monthdatescalendar(year, month)
 
@@ -3121,6 +3195,7 @@ def _build_holiday_calendar(year, month):
         next_month_first_day = date(year, month + 1, 1)
 
     holidays = Holiday.objects.filter(
+        organization=org,
         date__gte=first_day,
         date__lt=next_month_first_day,
         is_active=True,
@@ -3172,10 +3247,11 @@ def _build_holiday_calendar(year, month):
         "next_month": next_month,
     }
 
-def _build_holiday_year(year):
+def _build_holiday_year(org, year):
     month_calendar = calendar.Calendar(firstweekday=0)
 
     holidays = Holiday.objects.filter(
+        organization=org,
         date__year=year,
         is_active=True,
     ).order_by("date")
@@ -3243,6 +3319,7 @@ def holiday_calendar_view(request):
         )
 
     calendar_data = _build_holiday_calendar(
+        request.current_org,
         selected_date.year,
         selected_date.month,
     )
@@ -3361,10 +3438,12 @@ def pending_leave_requests_view(request):
 
     if can_review_leave(request.user):
         leave_requests = LeaveRequest.objects.filter(
+            employee__organization=request.current_org,
             status="PENDING"
         )
     else:
         leave_requests = LeaveRequest.objects.filter(
+            employee__organization=request.current_org,
             status="PENDING",
             employee__manager=logged_in_profile,
         )
@@ -3405,6 +3484,7 @@ def review_leave_request_view(request, uuid):
             "leave_type",
         ),
         uuid=uuid,
+        employee__organization=request.current_org,
     )
 
     is_admin = can_review_leave(
@@ -3769,7 +3849,7 @@ def all_leave_requests_view(request):
             "leave_type",
             "reviewed_by",
         )
-        .all()
+        .filter(employee__organization=request.current_org)
     )
 
     # ── Filters ─────────────────────────────────────────────
@@ -3810,7 +3890,7 @@ def all_leave_requests_view(request):
 
     employees = (
         empProfile.objects
-        .filter(is_active=True)
+        .filter(organization=request.current_org, is_active=True)
         .select_related("user")
         .order_by(
             "user__first_name",
@@ -3820,7 +3900,7 @@ def all_leave_requests_view(request):
 
     leave_types = (
         LeaveTypeMaster.objects
-        .filter(is_active=True)
+        .filter(organization=request.current_org, is_active=True)
         .order_by("name")
     )
 
@@ -3873,7 +3953,7 @@ def leave_balance_list_view(request):
             "leave_type",
             "assigned_by",
         )
-        .all()
+        .filter(employee__organization=request.current_org)
     )
 
     employee_id = request.GET.get("employee")
@@ -3900,14 +3980,14 @@ def leave_balance_list_view(request):
 
     employees = (
         empProfile.objects
-        .filter(is_active=True)
+        .filter(organization=request.current_org, is_active=True)
         .select_related("user")
         .order_by("user__first_name", "user__last_name")
     )
 
     leave_types = (
         LeaveTypeMaster.objects
-        .filter(is_active=True)
+        .filter(organization=request.current_org, is_active=True)
         .order_by("name")
     )
 
@@ -3961,7 +4041,8 @@ def leave_balance_edit_view(request, uuid=None):
     if request.method == "POST":
 
         form = LeaveBalanceForm(
-            request.POST
+            request.POST,
+            org=request.current_org,
         )
 
         if form.is_valid():
@@ -4046,7 +4127,7 @@ def leave_balance_edit_view(request, uuid=None):
             )
 
     else:
-        form = LeaveBalanceForm()
+        form = LeaveBalanceForm(org=request.current_org)
 
     return render(
         request,
@@ -4070,6 +4151,7 @@ def pending_attendance_exceptions_view(request):
         exception_requests = (
             AttendanceException.objects
             .filter(
+                attendance__employee__organization=request.current_org,
                 status="PENDING"
             )
         )
@@ -4078,6 +4160,7 @@ def pending_attendance_exceptions_view(request):
         exception_requests = (
             AttendanceException.objects
             .filter(
+                attendance__employee__organization=request.current_org,
                 status="PENDING",
                 attendance__employee__manager=(
                     reviewer_profile
@@ -4129,6 +4212,7 @@ def review_attendance_exception_view(
             "raised_by",
         ),
         uuid=uuid,
+        attendance__employee__organization=request.current_org,
     )
 
     employee = (
@@ -4482,6 +4566,7 @@ def pending_resignations_view(request):
     pending_resignations = (
         EmployeeExitRequest.objects
         .filter(
+            employee__organization=request.current_org,
             exit_type="RESIGNATION",
             status="SUBMITTED",
         )
@@ -4514,6 +4599,7 @@ def review_resignation_view(request, uuid):
             "initiated_by",
         ),
         uuid=uuid,
+        employee__organization=request.current_org,
         exit_type="RESIGNATION",
     )
 
@@ -4597,6 +4683,7 @@ def manager_clearance_queue_view(request):
             approval_type="MANAGER_NOC",
             status="PENDING",
             assigned_to=request.user,
+            clearance_request__employee__organization=request.current_org,
             clearance_request__status="PENDING",
         )
         .select_related(
@@ -4627,6 +4714,7 @@ def manager_clearance_review_view(request, uuid):
             "clearance_request__employee_exit_request",
         ),
         uuid=uuid,
+        clearance_request__employee__organization=request.current_org,
         approval_type="MANAGER_NOC",
     )
 
@@ -4705,6 +4793,7 @@ def finance_clearance_queue_view(request):
     pending_approvals = (
         ClearanceApproval.objects
         .filter(
+            clearance_request__employee__organization=request.current_org,
             approval_type="FINANCE_NOC",
             status="PENDING",
             clearance_request__status="PENDING",
@@ -4742,6 +4831,7 @@ def finance_clearance_review_view(request, uuid):
             "clearance_request__employee_exit_request",
         ),
         uuid=uuid,
+        clearance_request__employee__organization=request.current_org,
         approval_type="FINANCE_NOC",
     )
 
@@ -4813,6 +4903,7 @@ def ready_for_finalization_view(request):
     exit_requests = (
         EmployeeExitRequest.objects
         .filter(
+            employee__organization=request.current_org,
             status="READY_FOR_FINALIZATION",
         )
         .select_related(
@@ -4854,6 +4945,7 @@ def finalize_employee_exit_view(request, uuid):
             "clearance_request",
         ),
         uuid=uuid,
+        employee__organization=request.current_org,
     )
 
     if request.method != "POST":
@@ -4895,7 +4987,7 @@ def finalize_employee_exit_view(request, uuid):
 def initiate_termination_view(request):
 
     if request.method == "POST":
-        form = TerminationForm(request.POST)
+        form = TerminationForm(request.POST, org=request.current_org)
 
         if form.is_valid():
             try:
@@ -4931,7 +5023,7 @@ def initiate_termination_view(request):
                 )
 
     else:
-        form = TerminationForm()
+        form = TerminationForm(org=request.current_org)
 
     return render(
         request,
@@ -4960,6 +5052,7 @@ def all_exit_requests_view(request):
 
     exit_requests = (
         EmployeeExitRequest.objects
+        .filter(employee__organization=request.current_org)
         .select_related(
             "employee__user",
             "employee__manager__user",
@@ -5047,6 +5140,7 @@ def holiday_list_view(request):
     holiday_type = request.GET.get("type", "")
 
     holidays = Holiday.objects.filter(
+        organization=request.current_org,
         date__year=year
     ).order_by("date")
 
@@ -5071,10 +5165,11 @@ def holiday_list_view(request):
 @permission_required("appEmp.manage_employees", raise_exception=True) 
 def holiday_create_view(request):
     if request.method == "POST":
-        form = HolidayForm(request.POST)
+        form = HolidayForm(request.POST, org=request.current_org)
 
         if form.is_valid():
             holiday = form.save(commit=False)
+            holiday.organization = request.current_org
             holiday.created_by = request.user
             holiday.save()
 
@@ -5086,7 +5181,7 @@ def holiday_create_view(request):
             return redirect("holidayList")
 
     else:
-        form = HolidayForm()
+        form = HolidayForm(org=request.current_org)
 
     return render(
         request,
@@ -5104,12 +5199,14 @@ def holiday_edit_view(request, uuid):
     holiday = get_object_or_404(
         Holiday,
         uuid=uuid,
+        organization=request.current_org,
     )
 
     if request.method == "POST":
         form = HolidayForm(
             request.POST,
             instance=holiday,
+            org=request.current_org,
         )
 
         if form.is_valid():
@@ -5124,7 +5221,8 @@ def holiday_edit_view(request, uuid):
 
     else:
         form = HolidayForm(
-            instance=holiday
+            instance=holiday,
+            org=request.current_org,
         )
 
     return render(
@@ -5148,7 +5246,7 @@ def holiday_year_view(request):
     except (TypeError, ValueError):
         year = today.year
 
-    months = _build_holiday_year(year)
+    months = _build_holiday_year(request.current_org, year)
 
     default_month = (
         today.month
@@ -5210,6 +5308,7 @@ def holiday_bulk_upload_view(request):
                 # Safety check in case record was added
                 # after preview but before confirmation.
                 existing = Holiday.objects.filter(
+                    organization=request.current_org,
                     name__iexact=name,
                     date=holiday_date,
                 ).exists()
@@ -5219,6 +5318,7 @@ def holiday_bulk_upload_view(request):
                     continue
 
                 Holiday.objects.create(
+                    organization=request.current_org,
                     name=name,
                     date=holiday_date,
                     holiday_type=row["holiday_type"],
@@ -5505,6 +5605,7 @@ def holiday_bulk_upload_view(request):
 
                                     # Duplicate already DB
                                     if Holiday.objects.filter(
+                                        organization=request.current_org,
                                         name__iexact=name,
                                         date=holiday_date,
                                     ).exists():
@@ -5600,7 +5701,9 @@ def holiday_bulk_upload_view(request):
 
 @login_required
 def work_schedule_list_view(request):
-    schedules = WorkSchedule.objects.all().order_by("name")
+    schedules = WorkSchedule.objects.filter(
+        organization=request.current_org
+    ).order_by("name")
 
     return render(
         request,
@@ -5614,10 +5717,12 @@ def work_schedule_list_view(request):
 @permission_required("appEmp.manage_employees", raise_exception=True) 
 def work_schedule_create_view(request):
     if request.method == "POST":
-        form = WorkScheduleForm(request.POST)
+        form = WorkScheduleForm(request.POST, org=request.current_org)
 
         if form.is_valid():
-            form.save()
+            schedule = form.save(commit=False)
+            schedule.organization = request.current_org
+            schedule.save()
 
             messages.success(
                 request,
@@ -5627,7 +5732,7 @@ def work_schedule_create_view(request):
             return redirect("workScheduleList")
 
     else:
-        form = WorkScheduleForm()
+        form = WorkScheduleForm(org=request.current_org)
 
     return render(
         request,
@@ -5644,12 +5749,14 @@ def work_schedule_edit_view(request, uuid):
     schedule = get_object_or_404(
         WorkSchedule,
         uuid=uuid,
+        organization=request.current_org,
     )
 
     if request.method == "POST":
         form = WorkScheduleForm(
             request.POST,
             instance=schedule,
+            org=request.current_org,
         )
 
         if form.is_valid():
@@ -5664,7 +5771,8 @@ def work_schedule_edit_view(request, uuid):
 
     else:
         form = WorkScheduleForm(
-            instance=schedule
+            instance=schedule,
+            org=request.current_org,
         )
 
     return render(
@@ -5755,7 +5863,10 @@ def pending_optional_holiday_requests_view(request):
 
     requests = (
         OptionalHolidayRequest.objects
-        .filter(status="PENDING")
+        .filter(
+            employee__organization=request.current_org,
+            status="PENDING",
+        )
         .select_related(
             "employee__user",
             "employee__manager__user",
@@ -5787,6 +5898,7 @@ def review_optional_holiday_request_view(request, uuid):
             "holiday",
         ),
         uuid=uuid,
+        employee__organization=request.current_org,
     )
 
     if optional_request.status != "PENDING":
@@ -5844,22 +5956,24 @@ def review_optional_holiday_request_view(request, uuid):
 
 @login_required
 def upload_document(request):
-    employee = request.user.empprofile
+    employee = empProfile.objects.filter(user=request.user).first()
+    if employee is None:
+        messages.error(request, "Your account has no employee profile.")
+        return redirect("dashboard")
     can_upload_for_others = request.user.has_perm("appEmp.manage_employees")
 
     FormClass = HrDocumentUploadForm if can_upload_for_others else empDocumentForm
 
     if request.method == "POST":
-        form = FormClass(request.POST, request.FILES)
+        form = FormClass(request.POST, request.FILES, org=request.current_org)
         if form.is_valid():
             doc = form.save(commit=False)
             doc.employee = form.cleaned_data["employee"] if can_upload_for_others else employee
             doc.save()
             _add_compression_message(request, form)
             return redirect("upload_document")
-            return redirect("upload_document")
     else:
-        form = FormClass()
+        form = FormClass(org=request.current_org)
 
     documents = employee.documents.all()
 
@@ -5874,7 +5988,7 @@ def upload_document(request):
 def hr_document_list(request):
     documents = empDocument.objects.select_related(
         "employee__user", "document_type"
-    ).all()
+    ).filter(employee__organization=request.current_org)
 
     selected_type = request.GET.get("document_type", "")
     selected_status = request.GET.get("is_verified", "")
@@ -5885,7 +5999,9 @@ def hr_document_list(request):
     if selected_status in ("true", "false"):
         documents = documents.filter(is_verified=(selected_status == "true"))
 
-    document_types = DocumentTypeMaster.objects.filter(is_active=True)
+    document_types = DocumentTypeMaster.objects.filter(
+        organization=request.current_org, is_active=True
+    )
 
     return render(request, "appEmp/hr_document_list.html", {
         "documents": documents,
@@ -5898,7 +6014,11 @@ def hr_document_list(request):
 @login_required
 @permission_required("appEmp.manage_employees", raise_exception=True)
 def hr_verify_document(request, doc_id):
-    document = get_object_or_404(empDocument, id=doc_id)
+    document = get_object_or_404(
+        empDocument,
+        id=doc_id,
+        employee__organization=request.current_org,
+    )
 
     if request.method == "POST":
         document.is_verified = True
@@ -5916,7 +6036,11 @@ def hr_verify_document(request, doc_id):
 @login_required
 @permission_required("appEmp.manage_employees", raise_exception=True)
 def hr_reject_document(request, doc_id):
-    document = get_object_or_404(empDocument, id=doc_id)
+    document = get_object_or_404(
+        empDocument,
+        id=doc_id,
+        employee__organization=request.current_org,
+    )
 
     if request.method == "POST":
         document.is_verified = False
@@ -5933,7 +6057,11 @@ def hr_reject_document(request, doc_id):
 
 @login_required
 def profile_document_upload(request, uuid):
-    profile = get_object_or_404(empProfile, uuid=uuid)
+    profile = get_object_or_404(
+        empProfile,
+        uuid=uuid,
+        organization=request.current_org,
+    )
 
     is_self = hasattr(request.user, "empprofile") and request.user.empprofile.id == profile.id
     can_manage = request.user.has_perm("appEmp.manage_employees")
@@ -5942,7 +6070,7 @@ def profile_document_upload(request, uuid):
         raise PermissionDenied
 
     if request.method == "POST":
-        form = empDocumentForm(request.POST, request.FILES)
+        form = empDocumentForm(request.POST, request.FILES, org=request.current_org)
         if form.is_valid():
             doc = form.save(commit=False)
             doc.employee = profile
@@ -5970,6 +6098,7 @@ def attendance_location_view(request, uuid):
     attendance = get_object_or_404(
         Attendance.objects.select_related("employee__user"),
         uuid=uuid,
+        employee__organization=request.current_org,
     )
 
     has_location = (
@@ -6102,7 +6231,7 @@ def bcas_pass_dashboard_view(request):
     passes = (
         BCASPass.objects
         .select_related("employee__user", "airport")
-        .all()
+        .filter(employee__organization=request.current_org)
     )
 
     # ── Filters ──────────────────────────────────────────────
@@ -6145,7 +6274,9 @@ def bcas_pass_dashboard_view(request):
 
     # ── State-wise summary ──────────────────────────────────
     state_summary = {}
-    for bcas_pass in BCASPass.objects.select_related("airport"):
+    for bcas_pass in BCASPass.objects.select_related("airport").filter(
+        employee__organization=request.current_org
+    ):
         state = bcas_pass.airport.state
         state_summary.setdefault(state, {"total": 0, "active": 0})
         state_summary[state]["total"] += 1
@@ -6165,7 +6296,7 @@ def bcas_pass_dashboard_view(request):
             "selected_status": status_filter,
             "selected_state": state_filter,
             "search": search,
-            "form": BCASPassForm(),
+            "form": BCASPassForm(org=request.current_org),
         },
     )
 
@@ -6177,7 +6308,7 @@ def bcas_pass_issue_view(request):
         return redirect("dashboard")
 
     if request.method == "POST":
-        form = BCASPassForm(request.POST)
+        form = BCASPassForm(request.POST, org=request.current_org)
         if form.is_valid():
             bcas_pass = form.save(commit=False)
             bcas_pass.created_by = request.user
@@ -6198,7 +6329,11 @@ def bcas_pass_status_update_view(request, uuid):
         messages.error(request, "You don't have permission to update BCAS passes.")
         return redirect("dashboard")
 
-    bcas_pass = get_object_or_404(BCASPass, uuid=uuid)
+    bcas_pass = get_object_or_404(
+        BCASPass,
+        uuid=uuid,
+        employee__organization=request.current_org,
+    )
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -6227,7 +6362,9 @@ def bcas_pass_export_csv_view(request):
         messages.error(request, "You don't have permission to export BCAS passes.")
         return redirect("dashboard")
 
-    passes = BCASPass.objects.select_related("employee__user", "airport").all()
+    passes = BCASPass.objects.select_related(
+        "employee__user", "airport"
+    ).filter(employee__organization=request.current_org)
 
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="bcas_passes.csv"'
@@ -6255,10 +6392,11 @@ def bcas_pass_export_csv_view(request):
 
     return response
 
-def _mandatory_holiday_count(year, month):
+def _mandatory_holiday_count(org, year, month):
     month_start = date(year, month, 1)
     month_end = date(year, month, calendar.monthrange(year, month)[1])
     return Holiday.objects.filter(
+        organization=org,
         is_active=True, holiday_type="MANDATORY",
         date__gte=month_start, date__lte=month_end,
     ).count()
@@ -6272,7 +6410,8 @@ def wage_register_bulk_view(request, year, month):
 
     wage_month = date(year, month, 1)
     daily_wage_salaries = Salary.objects.filter(
-        is_active=True, wage_type="DAILY"
+        is_active=True, wage_type="DAILY",
+        employee__organization=request.current_org,
     ).select_related("employee", "employee__user")
 
     existing_entries = {
@@ -6288,7 +6427,11 @@ def wage_register_bulk_view(request, year, month):
             with transaction.atomic():
                 for form in formset:
                     cd = form.cleaned_data
-                    salary = get_object_or_404(Salary, pk=cd["salary_id"])
+                    salary = get_object_or_404(
+                        Salary,
+                        pk=cd["salary_id"],
+                        employee__organization=request.current_org,
+                    )
                     WageRegisterEntry.objects.update_or_create(
                         salary=salary,
                         wage_month=wage_month,
@@ -6309,7 +6452,7 @@ def wage_register_bulk_view(request, year, month):
         else:
             messages.error(request, "Please correct the errors below.")
     else:
-        default_nh = _mandatory_holiday_count(year, month)
+        default_nh = _mandatory_holiday_count(request.current_org, year, month)
         initial = []
         for salary in daily_wage_salaries:
             existing = existing_entries.get(salary.pk)

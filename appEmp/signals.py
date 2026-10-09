@@ -128,9 +128,21 @@ def create_profile(sender, instance, created, **kwargs):
     if empProfile.objects.filter(user=instance).exists():
         return
 
+    from app_organizations.models import Organization, OrganizationMember
+
+    organization = getattr(instance, "_organization", None)
+
+    if organization is None:
+        organization = Organization.objects.order_by("id").first()
+
+    if organization is None:
+        # Fresh database with no organization yet: nothing to attach to.
+        return
+
     default_shift = (
         ShiftMaster.objects
         .filter(
+            organization=organization,
             is_default=True,
             is_active=True,
         )
@@ -143,6 +155,7 @@ def create_profile(sender, instance, created, **kwargs):
         default_manager = (
             empProfile.objects
             .filter(
+                organization=organization,
                 is_default_manager=True,
                 is_active=True,
             )
@@ -152,8 +165,15 @@ def create_profile(sender, instance, created, **kwargs):
 
     empProfile.objects.create(
         user=instance,
+        organization=organization,
         shift=default_shift,
         manager=default_manager,
+    )
+
+    OrganizationMember.objects.get_or_create(
+        user=instance,
+        organization=organization,
+        defaults={"role": "admin" if instance.is_superuser else "member"},
     )
 
     # Default role for normal users = EMPLOYEE group.

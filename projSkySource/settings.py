@@ -26,6 +26,55 @@ load_dotenv(BASE_DIR / env_file)
 
 
 # =========================================================
+# Field Encryption Keys (Phase 2)
+# =========================================================
+
+# Newest key first. The first key encrypts; every key can decrypt.
+FIELD_ENCRYPTION_KEYS = [
+    key.strip()
+    for key in os.environ.get("FIELD_ENCRYPTION_KEYS", "").split(",")
+    if key.strip()
+]
+# Separate secret used only for blind-index fingerprints.
+BLIND_INDEX_KEY = os.environ.get("BLIND_INDEX_KEY", "").strip()
+
+
+def _validate_field_keys():
+    # Fail loudly at startup. Never put a key value in an error message.
+    from cryptography.fernet import Fernet
+    from django.core.exceptions import ImproperlyConfigured
+
+    if not FIELD_ENCRYPTION_KEYS:
+        raise ImproperlyConfigured(
+            "FIELD_ENCRYPTION_KEYS is not set. Generate a key once with: "
+            "python -c 'from cryptography.fernet import Fernet; "
+            "print(Fernet.generate_key().decode())' and add it to your env "
+            "file. Back it up outside the server: if it is lost, encrypted "
+            "data cannot be recovered."
+        )
+    for position, key in enumerate(FIELD_ENCRYPTION_KEYS, start=1):
+        try:
+            Fernet(key.encode())
+        except (ValueError, TypeError):
+            raise ImproperlyConfigured(
+                "FIELD_ENCRYPTION_KEYS entry #%d is not a valid Fernet key." % position
+            ) from None
+    if len(set(FIELD_ENCRYPTION_KEYS)) != len(FIELD_ENCRYPTION_KEYS):
+        raise ImproperlyConfigured("FIELD_ENCRYPTION_KEYS contains a duplicate key.")
+    if len(BLIND_INDEX_KEY) < 32:
+        raise ImproperlyConfigured(
+            "BLIND_INDEX_KEY is missing or shorter than 32 characters."
+        )
+    if BLIND_INDEX_KEY in FIELD_ENCRYPTION_KEYS:
+        raise ImproperlyConfigured(
+            "BLIND_INDEX_KEY must be different from every encryption key."
+        )
+
+
+_validate_field_keys()
+
+
+# =========================================================
 # Security
 # =========================================================
 
@@ -76,6 +125,7 @@ INSTALLED_APPS = [
 
     "appAuth",
     "appEmp",
+    "app_organizations",
 ]
 
 
@@ -93,6 +143,8 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
 
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+
+    "app_organizations.middleware.CurrentOrganizationMiddleware",
 
     "django.contrib.messages.middleware.MessageMiddleware",
 

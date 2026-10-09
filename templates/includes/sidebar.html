@@ -282,6 +282,36 @@
 
 
         <!-- ===================================== -->
+        <!-- CREATE ORGANIZATION (superuser only) -->
+        <!-- ===================================== -->
+
+        {% if user.is_superuser %}
+
+            <div class="hr-sidebar-section">
+
+                <form method="post" action="{% url 'switch_organization' %}" style="padding: 8px 16px 12px;">
+                    {% csrf_token %}
+                    <label for="orgSwitchSelect" style="display: block; font-size: 12px; opacity: 0.7; margin-bottom: 4px;">Working inside</label>
+                    <select id="orgSwitchSelect" name="org_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                        {% for org in switchable_orgs %}
+                            <option value="{{ org.pk }}" {% if org.pk == current_org.pk %}selected{% endif %}>{{ org.name }}{% if org.pk == home_org.pk %} (yours){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                    <noscript><button type="submit" class="btn btn-sm btn-secondary mt-2">Switch</button></noscript>
+                </form>
+
+                <a href="{% url 'create_organization' %}" class="hr-sidebar-link {% if request.resolver_match.url_name == 'create_organization' %}active{% endif %}">
+                    <i class="bi bi-building"></i>
+                    <span>Create Organization</span>
+                </a>
+
+            </div>
+
+        {% endif %}
+
+
+
+        <!-- ===================================== -->
         <!-- LEAVES -->
         <!-- ===================================== -->
 
