@@ -100,6 +100,8 @@ class EncryptedCharField(_EncryptedTextBase):
 
     def formfield(self, **kwargs):
         defaults = {"widget": forms.TextInput, "max_length": self.max_length}
+        if self.null:
+            defaults["empty_value"] = None
         defaults.update(kwargs)
         return super(models.TextField, self).formfield(
             form_class=forms.CharField, **defaults

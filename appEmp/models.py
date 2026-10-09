@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from .fields import EncryptedCharField, EncryptedTextField
 from django.contrib.auth.models import User
 from datetime import time
 from django.utils import timezone
@@ -224,6 +225,21 @@ class empProfile(models.Model):
         blank=True,
         help_text="Date of police verification."
     )
+
+    # -- Phase 2: encrypted shadow columns (temporary names) -------------
+    # Filled by the backfill migration. The plain columns above stay live
+    # until the switch-over step renames these into place.
+    aadhar_no_enc = EncryptedCharField(max_length=20, null=True, blank=True, editable=False)
+    pan_no_enc = EncryptedCharField(max_length=10, null=True, blank=True, editable=False)
+    bank_account_no_enc = EncryptedCharField(max_length=30, null=True, blank=True, editable=False)
+    uan_no_enc = EncryptedCharField(max_length=20, null=True, blank=True, editable=False)
+    esic_no_enc = EncryptedCharField(max_length=20, null=True, blank=True, editable=False)
+    phone_number_enc = EncryptedCharField(max_length=15, null=True, blank=True, editable=False)
+    address_enc = EncryptedTextField(null=True, blank=True, editable=False)
+
+    # Blind-index fingerprints (keyed hash; see appEmp/blind_index.py).
+    aadhar_bidx = models.CharField(max_length=64, null=True, blank=True, db_index=True, editable=False)
+    phone_bidx = models.CharField(max_length=64, null=True, blank=True, db_index=True, editable=False)
 
     is_address_verified = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
