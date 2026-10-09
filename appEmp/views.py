@@ -96,6 +96,7 @@ from django.contrib import messages
 import csv
 import io
 from appEmp.whatsapp_router import find_employee_by_phone
+from .blind_index import BlindIndexError, aadhaar_index, phone_index
 
 from openpyxl import load_workbook
 from datetime import datetime
@@ -276,7 +277,7 @@ def employee_bulk_import_view(request):
                     continue
 
                 aadhaar = row["profile_fields"].get("aadhar_no")
-                if aadhaar and empProfile.objects.filter(aadhar_no=aadhaar).exists():
+                if aadhaar and _aadhaar_unusable(aadhaar):
                     skipped_count += 1
                     continue
 
@@ -391,11 +392,16 @@ def employee_bulk_import_view(request):
                         if aadhaar and not row_blocking_errors and not is_duplicate:
                             # Deliberately not org-scoped: the number is globally unique,
                             # and the message must not reveal where it is registered.
-                            if aadhaar in seen_aadhaar or empProfile.objects.filter(aadhar_no=aadhaar).exists():
+                            try:
+                                aadhaar_fp = aadhaar_index(aadhaar)
+                            except BlindIndexError:
+                                aadhaar_fp = None
+                                row_blocking_errors.append("Aadhaar number is not a valid 12-digit number.")
+                            if aadhaar_fp and (aadhaar_fp in seen_aadhaar or empProfile.objects.filter(aadhar_bidx=aadhaar_fp).exists()):
                                 is_duplicate = True
                                 row_warnings.append(AADHAAR_IN_USE_MESSAGE)
                             else:
-                                seen_aadhaar.add(aadhaar)
+                                seen_aadhaar.add(aadhaar_fp)
 
                         if row_blocking_errors:
                             status = "ERROR"
@@ -438,6 +444,19 @@ def employee_bulk_import_view(request):
         "skip_count": skip_count, "warning_count": warning_count,
     })
 
+def _aadhaar_unusable(value):
+    """
+    Bulk-import check: True when the number is malformed or already
+    registered. Compared by fingerprint across all organizations, because
+    an Aadhaar number is globally unique.
+    """
+    try:
+        fingerprint = aadhaar_index(value)
+    except BlindIndexError:
+        return True
+    return bool(fingerprint) and empProfile.objects.filter(aadhar_bidx=fingerprint).exists()
+
+
 def _filtered_emp_queryset(request):
     """
     Shared search/filter logic for the employee list — used by both
@@ -452,11 +471,14 @@ def _filtered_emp_queryset(request):
     objects = empProfile.objects.filter(organization=request.current_org)
 
     if search_query:
-        objects = objects.filter(
+        match = (
             Q(user__first_name__icontains=search_query)
             | Q(user__last_name__icontains=search_query)
-            | Q(phone_number__icontains=search_query)
         )
+        phone_fp = phone_index(search_query)
+        if phone_fp:
+            match |= Q(phone_bidx=phone_fp)
+        objects = objects.filter(match)
 
     if designation_id:
         objects = objects.filter(designation_id=designation_id)

@@ -77,8 +77,7 @@ class EmployeeAdmin(OrgColumnMixin, admin.ModelAdmin):
         "user__first_name",
         "user__last_name",
         "user__email",
-        "phone_number",
-    )
+        )
 
 
 @admin.register(WhatsAppOTP)

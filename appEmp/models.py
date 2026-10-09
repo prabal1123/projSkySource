@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from .fields import EncryptedCharField, EncryptedTextField
+from .blind_index import BlindIndexError, aadhaar_index, phone_index
 from django.contrib.auth.models import User
 from datetime import time
 from django.utils import timezone
@@ -124,11 +125,7 @@ class empProfile(models.Model):
         )
     )
 
-    phone_number = models.CharField(
-        max_length=15,
-        null=True,
-        blank=True
-    )
+    phone_number = EncryptedCharField(max_length=15, null=True, blank=True)
 
     position = models.CharField(
         max_length=50,
@@ -150,10 +147,7 @@ class empProfile(models.Model):
         ),
     )
 
-    address = models.TextField(
-        null=True,
-        blank=True
-    )
+    address = EncryptedTextField(null=True, blank=True)
 
     state = models.CharField(
         max_length=30,
@@ -168,15 +162,14 @@ class empProfile(models.Model):
     )
 
     # ── Onboarding / bulk-import fields ─────────────────────────────
-    aadhar_no = models.CharField(
+    aadhar_no = EncryptedCharField(
         max_length=20,
         null=True,
         blank=True,
-        unique=True,
         help_text="12-digit Aadhar number."
     )
 
-    pan_no = models.CharField(
+    pan_no = EncryptedCharField(
         max_length=10,
         null=True,
         blank=True,
@@ -189,11 +182,7 @@ class empProfile(models.Model):
         blank=True
     )
 
-    bank_account_no = models.CharField(
-        max_length=30,
-        null=True,
-        blank=True
-    )
+    bank_account_no = EncryptedCharField(max_length=30, null=True, blank=True)
 
     ifsc_no = models.CharField(
         max_length=15,
@@ -201,18 +190,14 @@ class empProfile(models.Model):
         blank=True
     )
 
-    uan_no = models.CharField(
+    uan_no = EncryptedCharField(
         max_length=20,
         null=True,
         blank=True,
         help_text="Universal Account Number (EPFO)."
     )
 
-    esic_no = models.CharField(
-        max_length=20,
-        null=True,
-        blank=True
-    )
+    esic_no = EncryptedCharField(max_length=20, null=True, blank=True)
 
     avsec_training_date = models.DateField(
         null=True,
@@ -226,19 +211,17 @@ class empProfile(models.Model):
         help_text="Date of police verification."
     )
 
-    # -- Phase 2: encrypted shadow columns (temporary names) -------------
-    # Filled by the backfill migration. The plain columns above stay live
-    # until the switch-over step renames these into place.
-    aadhar_no_enc = EncryptedCharField(max_length=20, null=True, blank=True, editable=False)
-    pan_no_enc = EncryptedCharField(max_length=10, null=True, blank=True, editable=False)
-    bank_account_no_enc = EncryptedCharField(max_length=30, null=True, blank=True, editable=False)
-    uan_no_enc = EncryptedCharField(max_length=20, null=True, blank=True, editable=False)
-    esic_no_enc = EncryptedCharField(max_length=20, null=True, blank=True, editable=False)
-    phone_number_enc = EncryptedCharField(max_length=15, null=True, blank=True, editable=False)
-    address_enc = EncryptedTextField(null=True, blank=True, editable=False)
+    # -- Phase 2: legacy plain columns, read-only, dropped in a later cleanup step
+    aadhar_no_legacy = models.CharField(max_length=20, null=True, blank=True, unique=True, editable=False, help_text="12-digit Aadhar number.")
+    pan_no_legacy = models.CharField(max_length=10, null=True, blank=True, editable=False, help_text="PAN number, e.g. ABCDE1234F.")
+    bank_account_no_legacy = models.CharField(max_length=30, null=True, blank=True, editable=False)
+    uan_no_legacy = models.CharField(max_length=20, null=True, blank=True, editable=False, help_text="Universal Account Number (EPFO).")
+    esic_no_legacy = models.CharField(max_length=20, null=True, blank=True, editable=False)
+    phone_number_legacy = models.CharField(max_length=15, null=True, blank=True, editable=False)
+    address_legacy = models.TextField(null=True, blank=True, editable=False)
 
     # Blind-index fingerprints (keyed hash; see appEmp/blind_index.py).
-    aadhar_bidx = models.CharField(max_length=64, null=True, blank=True, db_index=True, editable=False)
+    aadhar_bidx = models.CharField(max_length=64, null=True, blank=True, unique=True, editable=False)
     phone_bidx = models.CharField(max_length=64, null=True, blank=True, db_index=True, editable=False)
 
     is_address_verified = models.BooleanField(default=False)
@@ -308,6 +291,26 @@ class empProfile(models.Model):
         ),
     ]
 
+    def _refresh_fingerprints(self, update_fields=None):
+        """
+        Recompute the blind-index fingerprints from the current values.
+        With update_fields, only the fingerprints whose source field is listed
+        are recomputed. Returns the fingerprint field names that were set.
+        """
+        changed = []
+        if update_fields is None or "aadhar_no" in update_fields:
+            try:
+                self.aadhar_bidx = aadhaar_index(self.aadhar_no)
+            except BlindIndexError:
+                raise ValidationError({
+                    "aadhar_no": "Enter a valid 12-digit Aadhaar number."
+                }) from None
+            changed.append("aadhar_bidx")
+        if update_fields is None or "phone_number" in update_fields:
+            self.phone_bidx = phone_index(self.phone_number)
+            changed.append("phone_bidx")
+        return changed
+
     def clean(self):
         """
         Prevent an employee from being assigned as their own manager.
@@ -319,10 +322,17 @@ class empProfile(models.Model):
                 "manager": "An employee cannot be their own manager."
             })
 
+        self._refresh_fingerprints()
+
     def save(self, *args, **kwargs):
         """
         Ensure only one employee is marked as the default manager.
         """
+        update_fields = kwargs.get("update_fields")
+        changed = self._refresh_fingerprints(update_fields)
+        if update_fields is not None:
+            kwargs["update_fields"] = set(update_fields) | set(changed)
+
         if self.is_default_manager:
             empProfile.objects.filter(
                 organization=self.organization,

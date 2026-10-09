@@ -2,6 +2,7 @@
 
 import re
 from appEmp.models import empProfile
+from appEmp.blind_index import phone_index
 from django.utils import timezone
 
 def normalize_phone(raw: str) -> str:
@@ -21,10 +22,11 @@ def find_employee_by_phone(sender_number: str):
     if not target:
         return None
 
-    matches = [
-        emp for emp in empProfile.objects.exclude(phone_number__isnull=True).exclude(phone_number="")
-        if normalize_phone(emp.phone_number) == target
-    ]
+    fingerprint = phone_index(sender_number)
+    if not fingerprint:
+        return None
+
+    matches = list(empProfile.objects.filter(phone_bidx=fingerprint)[:2])
 
     if len(matches) == 1:
         return matches[0]
