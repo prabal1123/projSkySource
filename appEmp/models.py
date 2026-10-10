@@ -650,9 +650,9 @@ class Salary(models.Model):
         editable=False,
         related_name="salaries",
     )
-    basic_salary = models.DecimalField(max_digits=12, decimal_places=2)
-    hra = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    pf = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # employee contribution — deducted, not added
+    basic_salary = EncryptedDecimalField(max_digits=12, decimal_places=2)
+    hra = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    pf = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)  # employee contribution, deducted not added
 
     # ── Wage-basis fields (for daily-wage register support) ────────────
     WAGE_TYPE_CHOICES = (
@@ -665,17 +665,17 @@ class Salary(models.Model):
         default='MONTHLY',
         help_text="MONTHLY = existing CTC/TDS flow. DAILY = wage-register (Bonus/EPF/ESIC) flow.",
     )
-    daily_rate = models.DecimalField(
+    daily_rate = EncryptedDecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,
         help_text="Only used when wage_type=DAILY. If blank, derived from basic_salary / days in month.",
     )
     # ─────────────────────────────────────────────────────────────────
 
-    # -- Phase 2: encrypted shadow columns (temporary names) --
-    basic_salary_enc = EncryptedDecimalField(max_digits=12, decimal_places=2, null=True, blank=True, editable=False)
-    hra_enc = EncryptedDecimalField(max_digits=12, decimal_places=2, null=True, blank=True, editable=False)
-    pf_enc = EncryptedDecimalField(max_digits=12, decimal_places=2, null=True, blank=True, editable=False)
-    daily_rate_enc = EncryptedDecimalField(max_digits=10, decimal_places=2, null=True, blank=True, editable=False)
+    # -- Phase 2: legacy plain columns, read-only, dropped in a later cleanup step
+    basic_salary_legacy = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, editable=False)
+    hra_legacy = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, editable=False)
+    pf_legacy = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, editable=False)
+    daily_rate_legacy = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, editable=False)
 
     effective_date = models.DateField(default=timezone.now)
     is_active = models.BooleanField(default=True)
@@ -799,9 +799,9 @@ class WageRegisterEntry(models.Model):
     wage_month = models.DateField(help_text="Any date within the wage month; day is ignored.")
 
     # ── Rate override ────────────────────────────────────────────────
-    rate_override_enc = EncryptedDecimalField(max_digits=10, decimal_places=2, null=True, blank=True, editable=False)
+    rate_override_legacy = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, editable=False)
 
-    rate_override = models.DecimalField(
+    rate_override = EncryptedDecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,
         help_text="Leave blank to use Salary.get_daily_rate(). Set to override for this month only."
     )
