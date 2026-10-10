@@ -1,6 +1,6 @@
 import uuid
 from django.db import models
-from .fields import EncryptedCharField, EncryptedTextField
+from .fields import EncryptedCharField, EncryptedDecimalField, EncryptedTextField
 from .blind_index import BlindIndexError, aadhaar_index, phone_index
 from django.contrib.auth.models import User
 from datetime import time
@@ -671,6 +671,12 @@ class Salary(models.Model):
     )
     # ─────────────────────────────────────────────────────────────────
 
+    # -- Phase 2: encrypted shadow columns (temporary names) --
+    basic_salary_enc = EncryptedDecimalField(max_digits=12, decimal_places=2, null=True, blank=True, editable=False)
+    hra_enc = EncryptedDecimalField(max_digits=12, decimal_places=2, null=True, blank=True, editable=False)
+    pf_enc = EncryptedDecimalField(max_digits=12, decimal_places=2, null=True, blank=True, editable=False)
+    daily_rate_enc = EncryptedDecimalField(max_digits=10, decimal_places=2, null=True, blank=True, editable=False)
+
     effective_date = models.DateField(default=timezone.now)
     is_active = models.BooleanField(default=True)
 
@@ -793,6 +799,8 @@ class WageRegisterEntry(models.Model):
     wage_month = models.DateField(help_text="Any date within the wage month; day is ignored.")
 
     # ── Rate override ────────────────────────────────────────────────
+    rate_override_enc = EncryptedDecimalField(max_digits=10, decimal_places=2, null=True, blank=True, editable=False)
+
     rate_override = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,
         help_text="Leave blank to use Salary.get_daily_rate(). Set to override for this month only."
