@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import migrations
 
 DEFAULT_ORG_NAME = "yugaamAi"
@@ -22,6 +23,11 @@ def _get_default_org(apps):
     )
 
 
+def _is_fresh_database(apps):
+    User = apps.get_model(settings.AUTH_USER_MODEL)
+    return not User.objects.exists()
+
+
 def backfill_masters_organization(apps, schema_editor):
     org = _get_default_org(apps)
 
@@ -33,6 +39,9 @@ def backfill_masters_organization(apps, schema_editor):
             continue
 
         if org is None:
+            if _is_fresh_database(apps):
+                unassigned.delete()
+                continue
             raise RuntimeError(
                 f"Default organization '{DEFAULT_ORG_NAME}' not found, but "
                 f"{model_name} rows without an organization exist."
