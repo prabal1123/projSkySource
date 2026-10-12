@@ -1670,6 +1670,27 @@ class EmployeeBulkImportForm(forms.Form):
         help_text="Upload the onboarding .xlsx sheet.",
         widget=forms.ClearableFileInput(attrs={"class": "form-control"}),
     )
+    default_project = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        to_field_name="uuid",
+        empty_label="No project",
+        label="Default project (for rows without a Project Code)",
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
+    def __init__(self, *args, organization=None, offer_projects=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if organization is not None and offer_projects:
+            from app_projects.models import Project
+
+            self.fields["default_project"].queryset = (
+                Project.objects.filter(organization=organization)
+                .exclude(status=Project.STATUS_ARCHIVED)
+                .order_by("name")
+            )
+        else:
+            del self.fields["default_project"]
 
 class BCASPassForm(forms.ModelForm):
     class Meta:

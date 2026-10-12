@@ -119,6 +119,8 @@ from appEmp.whatsapp_router import (
 import re
 from .models import EmployeeImportFieldConfig
 from .forms import EmployeeBulkImportForm
+from app_projects import access as project_access
+from app_projects.models import Project as ProjectModel
 
 from django.views.decorators.cache import never_cache
 from .models import Airport, BCASPass
@@ -256,6 +258,15 @@ def employee_bulk_import_view(request):
 
     preview_rows = []
     has_errors = False
+    show_project_column = False
+    org = request.current_org
+    offer_projects = project_access.can_manage_projects(request.user, org)
+    project_by_code = {}
+    if offer_projects:
+        project_by_code = {
+            project.code.upper(): project
+            for project in ProjectModel.objects.filter(organization=org)
+        }
     ready_count = 0
     skip_count = 0
     warning_count = 0
@@ -267,10 +278,25 @@ def employee_bulk_import_view(request):
             messages.error(request, "No validated employees are available for import.")
             return redirect("employeeBulkImport")
 
-        created_count, skipped_count = 0, 0
+        created_count, skipped_count, project_skipped_count = 0, 0, 0
+
+        project_ids = {r.get("project_id") for r in import_rows if r.get("project_id")}
+        valid_project_ids = set()
+        if project_ids:
+            valid_project_ids = set(
+                ProjectModel.objects
+                .filter(organization=request.current_org, pk__in=project_ids)
+                .exclude(status=ProjectModel.STATUS_ARCHIVED)
+                .values_list("pk", flat=True)
+            )
 
         with transaction.atomic():
             for row in import_rows:
+                project_id = row.get("project_id")
+                if project_id and project_id not in valid_project_ids:
+                    project_skipped_count += 1
+                    continue
+
                 email = row["user_fields"].get("email")
 
                 if not email or User.objects.filter(email__iexact=email).exists():
@@ -308,6 +334,9 @@ def employee_bulk_import_view(request):
                             else:
                                 setattr(profile, key, value or None)
 
+                        if project_id:
+                            profile.project_id = project_id
+
                         profile.save()
                 except (IntegrityError, ValidationError):
                     skipped_count += 1
@@ -319,14 +348,22 @@ def employee_bulk_import_view(request):
             request,
             f"{created_count} employee(s) imported successfully. {skipped_count} duplicate(s) skipped."
         )
+        if project_skipped_count:
+            messages.warning(
+                request,
+                f"{project_skipped_count} row(s) skipped because their project is no longer available."
+            )
         return redirect("employeeList")
 
     # ---------------- PREVIEW ----------------
     if request.method == "POST":
-        form = EmployeeBulkImportForm(request.POST, request.FILES)
+        form = EmployeeBulkImportForm(
+            request.POST, request.FILES, organization=org, offer_projects=offer_projects
+        )
 
         if form.is_valid():
             uploaded_file = form.cleaned_data["file"]
+            default_project = form.cleaned_data.get("default_project")
             try:
                 workbook = load_workbook(uploaded_file, data_only=True)
                 worksheet = workbook.active
@@ -342,6 +379,10 @@ def employee_bulk_import_view(request):
                     )
                 else:
                     col_index = {h.strip().lower(): i for i, h in enumerate(headers) if h}
+                    project_col = col_index.get("project code")
+                    show_project_column = bool(
+                        offer_projects and (project_col is not None or default_project is not None)
+                    )
                     seen_emails = set()
                     seen_aadhaar = set()
 
@@ -380,6 +421,29 @@ def employee_bulk_import_view(request):
                                 profile_fields[config.field_key] = value.isoformat()
                             else:
                                 profile_fields[config.field_key] = value
+
+                        project_id = None
+                        project_display = ""
+                        raw_code = row[project_col] if project_col is not None and project_col < len(row) else None
+                        if isinstance(raw_code, float) and raw_code.is_integer():
+                            raw_code = int(raw_code)
+                        code = "" if raw_code is None else str(raw_code).strip().upper()
+
+                        if code and not offer_projects:
+                            row_warnings.append("Project Code ignored -- you cannot assign projects.")
+                        elif code:
+                            matched = project_by_code.get(code)
+                            project_display = code
+                            if matched is None:
+                                row_blocking_errors.append(f"Unknown project code '{code}'.")
+                            elif matched.status == ProjectModel.STATUS_ARCHIVED:
+                                row_blocking_errors.append(f"Project '{code}' is archived.")
+                            else:
+                                project_id = matched.pk
+                                project_display = matched.code
+                        elif default_project is not None:
+                            project_id = default_project.pk
+                            project_display = default_project.code
 
                         email = user_fields.get("email", "")
                         is_duplicate = False
@@ -431,10 +495,16 @@ def employee_bulk_import_view(request):
                             "status": status,
                             "_user_fields": user_fields,
                             "_profile_fields": profile_fields,
+                            "_project_id": project_id,
+                            "project_display": project_display,
                         })
 
                     request.session["employee_import_rows"] = [
-                        {"user_fields": r["_user_fields"], "profile_fields": r["_profile_fields"]}
+                        {
+                            "user_fields": r["_user_fields"],
+                            "profile_fields": r["_profile_fields"],
+                            "project_id": r["_project_id"],
+                        }
                         for r in preview_rows if r["status"] in ("READY", "WARNING")
                     ]
 
@@ -442,10 +512,11 @@ def employee_bulk_import_view(request):
                 request.session.pop("employee_import_rows", None)
                 messages.error(request, f"Could not read the uploaded file: {exc}")
     else:
-        form = EmployeeBulkImportForm()
+        form = EmployeeBulkImportForm(organization=org, offer_projects=offer_projects)
 
     return render(request, "appEmp/employee_bulk_import.html", {
         "form": form, "preview_rows": preview_rows, "configs": configs,
+        "show_project_column": show_project_column,
         "has_errors": has_errors, "ready_count": ready_count,
         "skip_count": skip_count, "warning_count": warning_count,
     })
