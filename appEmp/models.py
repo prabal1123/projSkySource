@@ -211,14 +211,6 @@ class empProfile(models.Model):
         help_text="Date of police verification."
     )
 
-    # -- Phase 2: legacy plain columns, read-only, dropped in a later cleanup step
-    aadhar_no_legacy = models.CharField(max_length=20, null=True, blank=True, unique=True, editable=False, help_text="12-digit Aadhar number.")
-    pan_no_legacy = models.CharField(max_length=10, null=True, blank=True, editable=False, help_text="PAN number, e.g. ABCDE1234F.")
-    bank_account_no_legacy = models.CharField(max_length=30, null=True, blank=True, editable=False)
-    uan_no_legacy = models.CharField(max_length=20, null=True, blank=True, editable=False, help_text="Universal Account Number (EPFO).")
-    esic_no_legacy = models.CharField(max_length=20, null=True, blank=True, editable=False)
-    phone_number_legacy = models.CharField(max_length=15, null=True, blank=True, editable=False)
-    address_legacy = models.TextField(null=True, blank=True, editable=False)
 
     # Blind-index fingerprints (keyed hash; see appEmp/blind_index.py).
     aadhar_bidx = models.CharField(max_length=64, null=True, blank=True, unique=True, editable=False)
@@ -671,11 +663,6 @@ class Salary(models.Model):
     )
     # ─────────────────────────────────────────────────────────────────
 
-    # -- Phase 2: legacy plain columns, read-only, dropped in a later cleanup step
-    basic_salary_legacy = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, editable=False)
-    hra_legacy = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, editable=False)
-    pf_legacy = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, editable=False)
-    daily_rate_legacy = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, editable=False)
 
     effective_date = models.DateField(default=timezone.now)
     is_active = models.BooleanField(default=True)
@@ -799,7 +786,6 @@ class WageRegisterEntry(models.Model):
     wage_month = models.DateField(help_text="Any date within the wage month; day is ignored.")
 
     # ── Rate override ────────────────────────────────────────────────
-    rate_override_legacy = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, editable=False)
 
     rate_override = EncryptedDecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,

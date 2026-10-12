@@ -75,10 +75,15 @@ class SalaryEncryptionTests(common.Base):
         with self.assertRaises(FieldError):
             list(Salary.objects.filter(basic_salary__gt=1))
 
-    def test_new_rows_do_not_need_the_old_plain_columns(self):
-        s = self.make_salary("zz_s7@example.com")
-        for col in ("basic_salary_legacy", "hra_legacy", "pf_legacy", "daily_rate_legacy"):
-            self.assertIsNone(raw_in("appEmp_salary", s.pk, col), col)
+    def test_no_plain_text_legacy_columns_remain(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT table_name, column_name FROM information_schema.columns "
+                "WHERE table_schema = current_schema() AND column_name ~ %s",
+                ["_legacy$"],
+            )
+            left = cursor.fetchall()
+        self.assertEqual(left, [])
 
     def test_key_rotation_covers_salary_fields(self):
         s = self.make_salary("zz_s8@example.com")
