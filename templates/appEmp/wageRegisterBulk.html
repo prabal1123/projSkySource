@@ -43,6 +43,7 @@
                 <span class="sky-count">Editable fields fall back to automatic values when left blank</span>
             </div>
 
+            {% include "app_projects/_project_filter.html" %}
             <form method="post">
                 {% csrf_token %}
                 {{ formset.management_form }}

@@ -6543,7 +6543,16 @@ def wage_register_bulk_view(request, year, month):
     daily_wage_salaries = Salary.objects.filter(
         is_active=True, wage_type="DAILY",
         employee__organization=request.current_org,
-    ).select_related("employee", "employee__user")
+    )
+    project_ctx = project_filter_context(request)
+    daily_wage_salaries = apply_project_filter(
+        daily_wage_salaries,
+        project_ctx["project_filter_selected"],
+        path="employee__project",
+    )
+    daily_wage_salaries = daily_wage_salaries.select_related(
+        "employee", "employee__user"
+    ).order_by("employee__user__first_name", "employee__user__last_name", "pk")
 
     existing_entries = {
         e.salary_id: e
@@ -6619,4 +6628,5 @@ def wage_register_bulk_view(request, year, month):
         "year": year,
         "month": month,
         "totals": totals,
+        **project_ctx,
     })
