@@ -94,6 +94,15 @@ class empProfile(models.Model):
         help_text="Reporting manager or immediate superior of this employee."
     )
 
+    project = models.ForeignKey(
+        "app_projects.Project",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="employees",
+        help_text="Project (site or city) this employee is assigned to. Blank means unassigned.",
+    )
+
     designation = models.ForeignKey(
         "DesignationMaster",
         on_delete=models.SET_NULL,
@@ -328,6 +337,16 @@ class empProfile(models.Model):
         """
         Ensure only one employee is marked as the default manager.
         """
+        update_fields_arg = kwargs.get("update_fields")
+        if self.project_id and (
+            update_fields_arg is None
+            or {"project", "project_id"} & set(update_fields_arg)
+        ):
+            if self.project.organization_id != self.organization_id:
+                raise ValidationError(
+                    "The project belongs to a different organization."
+                )
+
         update_fields = kwargs.get("update_fields")
         changed = self._refresh_fingerprints(update_fields)
         if update_fields is not None:

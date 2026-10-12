@@ -126,6 +126,7 @@ INSTALLED_APPS = [
     "appAuth",
     "appEmp",
     "app_organizations",
+    "app_projects",
 ]
 
 
