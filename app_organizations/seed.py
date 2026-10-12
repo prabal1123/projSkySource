@@ -137,11 +137,16 @@ ORG_ADMIN_PERMISSIONS = (
     "finalize_employee_exit",
 )
 
+ORG_ADMIN_PROJECT_PERMISSIONS = (
+    "view_all_projects",
+    "manage_projects",
+)
+
 
 def ensure_org_admin_group():
     """
     Return the ORG_ADMIN group, creating it if needed, holding exactly the
-    12 custom appEmp permissions the app checks (no model add/change/delete/view
+    12 custom appEmp permissions the app checks, plus the 2 project permissions (no model add/change/delete/view
     permissions, nothing for Django's own tables).
     Raises RuntimeError, creating nothing, if any permission does not exist.
     """
@@ -158,6 +163,17 @@ def ensure_org_admin_group():
             "Missing appEmp permissions: " + ", ".join(sorted(missing))
         )
 
+    project_perms = Permission.objects.filter(
+        content_type__app_label="app_projects",
+        codename__in=ORG_ADMIN_PROJECT_PERMISSIONS,
+    )
+    project_found = set(project_perms.values_list("codename", flat=True))
+    project_missing = set(ORG_ADMIN_PROJECT_PERMISSIONS) - project_found
+    if project_missing:
+        raise RuntimeError(
+            "Missing app_projects permissions: " + ", ".join(sorted(project_missing))
+        )
+
     group, _ = Group.objects.get_or_create(name=ORG_ADMIN_GROUP)
-    group.permissions.set(perms)
+    group.permissions.set(list(perms) + list(project_perms))
     return group

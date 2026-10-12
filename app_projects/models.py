@@ -53,6 +53,10 @@ class Project(models.Model):
 
     class Meta:
         ordering = ["name"]
+        permissions = [
+            ("view_all_projects", "Can view all projects in the organization"),
+            ("manage_projects", "Can create, edit and archive projects"),
+        ]
         constraints = [
             models.UniqueConstraint(
                 Lower("name"),
