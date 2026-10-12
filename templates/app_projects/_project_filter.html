@@ -1,0 +1,9 @@
+{% if project_filter_show %}
+<select name="project" class="form-select" style="max-width: 220px;">
+    <option value="">All Projects</option>
+    <option value="unassigned" {% if project_filter_selected == "unassigned" %}selected{% endif %}>Unassigned</option>
+    {% for o in project_filter_options %}
+        <option value="{{ o.uuid }}" {% if project_filter_selected == o.uuid %}selected{% endif %}>{{ o.label }}</option>
+    {% endfor %}
+</select>
+{% endif %}

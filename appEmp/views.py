@@ -120,6 +120,7 @@ import re
 from .models import EmployeeImportFieldConfig
 from .forms import EmployeeBulkImportForm
 from app_projects import access as project_access
+from app_projects.filters import apply_project_filter, project_filter_context
 from app_projects.models import Project as ProjectModel
 
 from django.views.decorators.cache import never_cache
@@ -568,11 +569,15 @@ def _filtered_emp_queryset(request):
     elif status == "inactive":
         objects = objects.filter(is_active=False)
 
+    project_ctx = project_filter_context(request)
+    objects = apply_project_filter(objects, project_ctx["project_filter_selected"])
+
     filters = {
         "search_query": search_query,
         "designation_id": designation_id,
         "shift_id": shift_id,
         "status": status,
+        "project_ctx": project_ctx,
     }
     return objects, filters
 
@@ -610,6 +615,7 @@ def empList_view(request):
             "selected_designation": filters["designation_id"],
             "selected_shift": filters["shift_id"],
             "selected_status": filters["status"],
+            **filters["project_ctx"],
         },
     )
 

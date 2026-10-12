@@ -294,6 +294,8 @@
                         <option value="active" {% if selected_status == "active" %}selected{% endif %}>Active</option>
                         <option value="inactive" {% if selected_status == "inactive" %}selected{% endif %}>Inactive</option>
                     </select>
+
+                    {% include "app_projects/_project_filter.html" %}
                 </div>
 
                 <div class="sky-filter-row-actions">
@@ -301,7 +303,7 @@
                         Apply
                     </button>
 
-                    {% if search_query or selected_designation or selected_shift or selected_status %}
+                    {% if search_query or selected_designation or selected_shift or selected_status or project_filter_selected %}
                         <a href="{% url 'employeeList' %}" style="font-size: 0.85rem; color: var(--ink-soft); text-decoration: underline;">
                             Clear
                         </a>
