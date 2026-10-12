@@ -1,0 +1,31 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+    .pj-filters { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; padding: .85rem 1.25rem; border-bottom: 1px solid var(--border, #e6e8ec); }
+    .pj-table-wrap { width: 100%; overflow-x: auto; }
+    .pj-table { width: 100%; border-collapse: collapse; min-width: 560px; }
+    .pj-table th, .pj-table td { padding: .75rem 1rem; border-bottom: 1px solid var(--border, #e6e8ec); text-align: left; vertical-align: middle; }
+    .pj-table tbody tr:hover { background: #fcfdfd; }
+    .pj-empty { padding: 30px; text-align: center; color: #8a94a6; }
+    .pj-badge { display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 600; }
+    .pj-badge-active { background: #e6f6f4; color: #0f766e; }
+    .pj-badge-on_hold { background: #fff4e0; color: #a15c00; }
+    .pj-badge-archived { background: #eef0f3; color: #5b6b85; }
+    .pj-link { font-size: .78rem; color: var(--ink-soft, #5b6b85); text-decoration: none; border: 1px solid var(--border, #e6e8ec); padding: .25rem .55rem; border-radius: 4px; background: #fff; cursor: pointer; }
+    .pj-link:hover { border-color: var(--teal, #0f9e96); color: var(--teal, #0f9e96); }
+    .pj-btn { display: inline-block; padding: .55rem 1.3rem; font-size: .9rem; border-radius: 6px; border: 1px solid var(--teal, #0f9e96); background: var(--teal, #0f9e96); color: #fff; text-decoration: none; cursor: pointer; }
+    .pj-btn-ghost { background: #fff; color: var(--ink, #222); border-color: #ccc; }
+    .pj-body { padding: 1.25rem; }
+    .pj-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.25rem; }
+    .pj-form-group { display: flex; flex-direction: column; gap: .35rem; }
+    .pj-full { grid-column: 1 / -1; }
+    .pj-error { color: #dc2626; font-size: .8rem; }
+    .pj-help { color: #8a94a6; font-size: .78rem; }
+    .pj-actions { display: flex; gap: .6rem; margin-top: 1.25rem; flex-wrap: wrap; }
+    .pj-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin: 0; }
+    .pj-meta dt { font-size: .72rem; color: #8a94a6; font-weight: 600; text-transform: uppercase; }
+    .pj-meta dd { margin: 0; }
+    .pj-team { list-style: none; margin: 0; padding: 0; }
+    .pj-team li { padding: .55rem 0; border-bottom: 1px solid var(--border, #e6e8ec); }
+    @media (max-width: 768px) { .pj-form-grid { grid-template-columns: 1fr; } }
+</style>

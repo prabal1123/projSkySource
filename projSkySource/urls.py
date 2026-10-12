@@ -20,6 +20,7 @@ urlpatterns = [
     path("app/", include("appAuth.urls")),
     path("emp/", include("appEmp.urls")),
     path("org/", include("app_organizations.urls")),
+    path("projects/", include("app_projects.urls")),
     ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

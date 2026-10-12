@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Projects{% endblock %}
+
+{% block extra_css %}{% include "app_projects/_styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 1100px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Organization</span>
+                <h1>{% if view_all %}Projects{% else %}My Project{% endif %}</h1>
+                <p class="sky-help-text">
+                    {% if view_all %}Sites, cities or teams that your people are assigned to.{% else %}The project you are assigned to.{% endif %}
+                </p>
+            </div>
+            {% if can_manage %}
+                <a href="{% url 'projectCreate' %}" class="pj-btn">+ Add Project</a>
+            {% endif %}
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="sky-calendar-message">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="sky-panel">
+
+            {% if view_all %}
+                <form method="get" class="pj-filters">
+                    <input type="text" name="q" value="{{ search_query }}" placeholder="Search by name or code..." class="form-control" style="max-width: 280px;">
+                    <label style="display: flex; align-items: center; gap: .4rem; margin: 0;">
+                        <input type="checkbox" name="show_archived" value="1" {% if show_archived %}checked{% endif %}>
+                        Show archived
+                    </label>
+                    <button type="submit" class="pj-btn" style="padding: .45rem 1.1rem; font-size: .85rem;">Apply</button>
+                    {% if search_query or show_archived %}
+                        <a href="{% url 'projectList' %}" style="font-size: .85rem; color: var(--ink-soft); text-decoration: underline;">Clear</a>
+                    {% endif %}
+                </form>
+            {% endif %}
+
+            <div class="pj-table-wrap">
+                <table class="pj-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Code</th>
+                            <th>Status</th>
+                            <th>Lead</th>
+                            <th>Team</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in projects %}
+                            <tr>
+                                <td><a href="{% url 'projectDetail' p.uuid %}">{{ p.name }}</a></td>
+                                <td>{{ p.code }}</td>
+                                <td><span class="pj-badge pj-badge-{{ p.status }}">{{ p.get_status_display }}</span></td>
+                                <td>{% if p.lead %}{{ p.lead.user.get_full_name|default:p.lead.user.username }}{% else %}&mdash;{% endif %}</td>
+                                <td>{{ p.team_count }}</td>
+                                <td>
+                                    <a href="{% url 'projectDetail' p.uuid %}" class="pj-link">View</a>
+                                    {% if can_manage and not p.is_archived %}
+                                        <a href="{% url 'projectEdit' p.uuid %}" class="pj-link">Edit</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6">
+                                    <div class="pj-empty">
+                                        {% if view_all %}No projects found.{% else %}You have not been assigned to a project yet.{% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

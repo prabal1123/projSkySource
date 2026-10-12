@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.name }}{% endblock %}
+
+{% block extra_css %}{% include "app_projects/_styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 900px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Project &middot; {{ project.code }}</span>
+                <h1>{{ project.name }}</h1>
+                <span class="pj-badge pj-badge-{{ project.status }}">{{ project.get_status_display }}</span>
+            </div>
+            <div class="pj-actions" style="margin-top: 0;">
+                <a href="{% url 'projectList' %}" class="pj-btn pj-btn-ghost">Back</a>
+                {% if can_manage %}
+                    {% if project.is_archived %}
+                        <form method="post" action="{% url 'projectUnarchive' project.uuid %}">
+                            {% csrf_token %}
+                            <button type="submit" class="pj-btn">Unarchive</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'projectEdit' project.uuid %}" class="pj-btn">Edit</a>
+                        <form method="post" action="{% url 'projectArchive' project.uuid %}" onsubmit="return confirm('Archive this project? It becomes read-only.');">
+                            {% csrf_token %}
+                            <button type="submit" class="pj-btn pj-btn-ghost">Archive</button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="sky-calendar-message">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="sky-panel" style="margin-bottom: 1rem;">
+            <div class="pj-body">
+                <dl class="pj-meta">
+                    <div>
+                        <dt>Lead</dt>
+                        <dd>{% if project.lead %}{{ project.lead.user.get_full_name|default:project.lead.user.username }}{% else %}&mdash;{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>Start date</dt>
+                        <dd>{{ project.start_date|date:"d M Y"|default:"&mdash;" }}</dd>
+                    </div>
+                    <div>
+                        <dt>End date</dt>
+                        <dd>{{ project.end_date|date:"d M Y"|default:"&mdash;" }}</dd>
+                    </div>
+                </dl>
+                {% if project.description %}
+                    <p style="margin: 1rem 0 0; white-space: pre-line;">{{ project.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="sky-panel">
+            <div class="pj-body">
+                <h6 style="margin-bottom: .75rem;">Team ({{ team|length }})</h6>
+                <ul class="pj-team">
+                    {% for member in team %}
+                        <li>{{ member.user.get_full_name|default:member.user.username }}</li>
+                    {% empty %}
+                        <li class="pj-help">No one is assigned to this project yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -192,6 +192,7 @@ TEMPLATES = [
                 "context_processors.messages",
 
                 "appEmp.context_processors.user_role",
+                "app_projects.context_processors.project_nav",
             ],
         },
     },
