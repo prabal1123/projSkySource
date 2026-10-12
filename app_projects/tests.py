@@ -161,3 +161,35 @@ class DeleteAndArchiveTests(Base):
         Project.objects.filter(pk=proj.pk).update(lead=None)
         proj.refresh_from_db()
         self.assertIsNone(proj.lead_id)
+
+
+class FlashMessageTests(Base):
+    def setUp(self):
+        self.client.force_login(self.su)
+        session = self.client.session
+        session["switched_org_id"] = self.org1.id
+        session.save()
+
+    def _alert_count_after(self, url_name, project):
+        from django.urls import reverse
+        response = self.client.post(reverse(url_name, args=[project.uuid]), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, '<div class="sky-calendar-message">')
+        return response
+
+    def test_flash_shows_once_after_archive(self):
+        project = self.project(self.org1, "Flash One", "FL1")
+        response = self._alert_count_after("projectArchive", project)
+        self.assertContains(response, 'class="alert alert-', count=1)
+
+    def test_flash_shows_once_after_unarchive(self):
+        project = self.project(self.org1, "Flash Two", "FL2")
+        project.archive()
+        response = self._alert_count_after("projectUnarchive", project)
+        self.assertContains(response, 'class="alert alert-', count=1)
+
+    def test_project_pages_do_not_print_messages_themselves(self):
+        from django.template.loader import get_template
+        for name in ("app_projects/list.html", "app_projects/detail.html"):
+            with open(get_template(name).origin.name, encoding="utf-8") as handle:
+                self.assertNotIn("{% if messages %}", handle.read(), name)
