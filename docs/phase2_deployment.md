@@ -1,6 +1,6 @@
 # Phase 2 deployment notes (encrypted personal data)
 
-Applies to: appEmp migrations 0064 to 0066 and everything after them in Phase 2.
+Applies to: appEmp migrations 0064 to 0070.
 Assumes the app runs from a checkout of this repo on EC2, loads `.env.production`
 (`DJANGO_ENV=production`), and uses PostgreSQL (local, or RDS).
 
@@ -138,8 +138,8 @@ Reasons: a scheduled rotation, or someone who had access to the key leaving.
 
 ## Not finished yet
 
-- The old plain-text columns (`*_legacy`) still hold the original values. Until a
-  later migration drops them, the data is not protected at rest.
+- Migration 0070 drops the old plain-text columns. It cannot be reversed from inside
+  the database, so take the backup in step 2 before deploying.
 - Database dumps made before this phase contain plain text. Keep them only as
   long as you need them, and protect or delete them after that.
 

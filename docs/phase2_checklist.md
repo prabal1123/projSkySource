@@ -24,11 +24,11 @@
 
 ## Must be true before the final cleanup
 
-- [ ] Real-page check passed: HR employee list and phone search, profile edit,
+- [x] Real-page check passed: HR employee list and phone search, profile edit,
       bulk import preview and confirm, salary page, salary edit, wage register
       screen, payslip PDF.
-- [ ] Fresh backup taken and checked with `pg_restore --list`.
-- [ ] Tests pass.
+- [x] Fresh backup taken and checked with `pg_restore --list`.
+- [x] Tests pass.
 
 ## Final cleanup (migration 0070): drop the old plain-text columns
 
@@ -43,9 +43,9 @@ at rest.
 
 This cannot be undone from inside the database; the only way back is a backup.
 
-- [ ] Migration 0070 written and applied
-- [ ] Models cleaned (the legacy field lines removed)
-- [ ] Tests pass and pages checked again
+- [x] Migration 0070 written and applied
+- [x] Models cleaned (the legacy field lines removed)
+- [x] Tests pass and pages checked again
 - [ ] Old plain-text dumps deleted from `~/db_backups/` once you are sure
       (`postgres_before_phase2_5a.dump`, `postgres_before_phase2_5b.dump`,
       `postgres_before_salary_enc.dump`, and any older ones)
