@@ -3553,6 +3553,11 @@ def pending_leave_requests_view(request):
             employee__manager=logged_in_profile,
         )
 
+    project_ctx = project_filter_context(request)
+    leave_requests = apply_project_filter(
+        leave_requests, project_ctx["project_filter_selected"], path="employee__project"
+    )
+
     leave_requests = (
         leave_requests
         .select_related(
@@ -3571,6 +3576,7 @@ def pending_leave_requests_view(request):
         "appEmp/pending_leave_requests.html",
         {
             "leave_requests": leave_requests,
+            **project_ctx,
         },
     )
 
@@ -3957,6 +3963,11 @@ def all_leave_requests_view(request):
         .filter(employee__organization=request.current_org)
     )
 
+    project_ctx = project_filter_context(request)
+    leave_requests = apply_project_filter(
+        leave_requests, project_ctx["project_filter_selected"], path="employee__project"
+    )
+
     # ── Filters ─────────────────────────────────────────────
 
     employee_id = request.GET.get("employee")
@@ -4028,6 +4039,7 @@ def all_leave_requests_view(request):
         "selected_leave_type": leave_type_id,
         "selected_status": status,
         "selected_year": str(year) if year else "",
+        **project_ctx,
     }
 
     return render(
@@ -4077,6 +4089,11 @@ def leave_balance_list_view(request):
         except (TypeError, ValueError):
             pass
 
+    project_ctx = project_filter_context(request)
+    balances = apply_project_filter(
+        balances, project_ctx["project_filter_selected"], path="employee__project"
+    )
+
     balances = balances.order_by(
         "-year",
         "employee__user__first_name",
@@ -4109,6 +4126,7 @@ def leave_balance_list_view(request):
             "selected_employee": employee_id,
             "selected_leave_type": leave_type_id,
             "selected_year": year or "",
+            **project_ctx,
         },
     )
 
