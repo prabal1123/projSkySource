@@ -4291,6 +4291,13 @@ def pending_attendance_exceptions_view(request):
             )
         )
 
+    project_ctx = project_filter_context(request)
+    exception_requests = apply_project_filter(
+        exception_requests,
+        project_ctx["project_filter_selected"],
+        path="attendance__employee__project",
+    )
+
     exception_requests = (
         exception_requests
         .select_related(
@@ -4312,6 +4319,7 @@ def pending_attendance_exceptions_view(request):
             "exception_requests": (
                 exception_requests
             ),
+            **project_ctx,
         },
     )
 

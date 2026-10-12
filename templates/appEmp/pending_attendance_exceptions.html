@@ -22,6 +22,14 @@
             </a>
         </div>
 
+        {% if project_filter_show %}
+        <form method="get" class="sky-panel mb-4" style="padding: 0.85rem 1.25rem; display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+            {% include "app_projects/_project_filter.html" %}
+            <button type="submit" class="sky-header-btn">Apply Filters</button>
+            {% if project_filter_selected %}<a href="{% url 'pendingAttendanceExceptions' %}" class="sky-edit-link">Clear</a>{% endif %}
+        </form>
+        {% endif %}
+
         <div class="sky-panel">
 
             <div class="sky-panel-head">
