@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Actions - {{ project.name }}{% endblock %}
+
+{% block extra_css %}{% include "app_projects/_styles.html" %}{% include "app_projects/_action_styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 1100px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Project &middot; {{ project.code }}</span>
+                <h1>Actions</h1>
+                <p class="sky-help-text">{{ project.name }}{% if project.is_archived %} (archived, read-only){% endif %}</p>
+            </div>
+            <div class="pj-actions" style="margin-top: 0;">
+                <a href="{% url 'projectDetail' project.uuid %}" class="pj-btn pj-btn-ghost">Back to project</a>
+                {% if can_edit %}
+                    <a href="{% url 'projectActionCreate' project.uuid %}" class="pj-btn">+ Add action</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="sky-panel">
+            <div class="pj-tabs">
+                {% for t in tabs %}
+                    <a href="{{ t.url }}" class="pj-tab {% if t.active %}active{% endif %}">{{ t.label }} ({{ t.count }})</a>
+                {% endfor %}
+            </div>
+
+            <form method="get" class="pj-filters">
+                {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+                <input type="text" name="q" value="{{ q }}" placeholder="Search titles..." class="form-control" style="max-width: 260px;">
+                <select name="assignee" class="form-select" style="max-width: 240px;">
+                    <option value="">Anyone</option>
+                    <option value="unassigned" {% if assignee == "unassigned" %}selected{% endif %}>Unassigned</option>
+                    {% for m in team %}
+                        <option value="{{ m.uuid }}" {% if assignee == m.uuid|stringformat:"s" %}selected{% endif %}>{{ m.user.get_full_name|default:m.user.username }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="pj-btn" style="padding: .45rem 1.1rem; font-size: .85rem;">Filter</button>
+                {% if q or assignee or status %}
+                    <a href="{% url 'projectActionList' project.uuid %}" style="font-size: .85rem; color: var(--ink-soft); text-decoration: underline;">Clear</a>
+                {% endif %}
+            </form>
+
+            <div class="pj-table-wrap">
+                <table class="pj-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Status</th>
+                            <th>Assignee</th>
+                            <th>Due</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in page %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'projectActionDetail' project.uuid a.uuid %}">{{ a.title }}</a>
+                                    {% if a.subtask_count %}<span class="pj-help">&middot; {{ a.subtask_count }} subtask{{ a.subtask_count|pluralize }}</span>{% endif %}
+                                </td>
+                                <td><span class="pj-badge pj-badge-{{ a.status }}">{{ a.get_status_display }}</span></td>
+                                <td>
+                                    {% if a.assignee %}{{ a.assignee.user.get_full_name|default:a.assignee.user.username }}{% else %}<span class="pj-help">Unassigned</span>{% endif %}
+                                    {% if a.needs_reassign %}<span class="pj-badge pj-badge-warn">Needs reassigning</span>{% endif %}
+                                </td>
+                                <td>
+                                    {% if a.due_date %}
+                                        {{ a.due_date|date:"d M Y" }}
+                                        {% if a.due_date < today and a.is_open %}<span class="pj-badge pj-badge-warn">Overdue</span>{% endif %}
+                                    {% else %}&mdash;{% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4" class="pj-empty">No actions match.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if page.has_other_pages %}
+                <div class="pj-pager">
+                    {% if page.has_previous %}<a class="pj-link" href="?{{ base_query }}{% if base_query %}&amp;{% endif %}page={{ page.previous_page_number }}">Previous</a>{% endif %}
+                    <span class="pj-help">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+                    {% if page.has_next %}<a class="pj-link" href="?{{ base_query }}{% if base_query %}&amp;{% endif %}page={{ page.next_page_number }}">Next</a>{% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

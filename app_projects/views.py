@@ -21,6 +21,7 @@ from .forms import ProjectForm
 from appEmp.models import empProfile
 
 from .models import Project
+from .services import actions_needing_reassign
 
 
 def _current_org(request):
@@ -85,6 +86,10 @@ def project_detail_view(request, uuid):
     return render(request, "app_projects/detail.html", {
         "project": project,
         "team": team,
+        "reassign_list": (
+            list(actions_needing_reassign(project).select_related("assignee__user")[:10])
+            if can_manage_projects(request.user, org) else []
+        ),
         "can_manage": can_manage_projects(request.user, org),
     })
 

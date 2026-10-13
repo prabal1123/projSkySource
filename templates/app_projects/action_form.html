@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}{% include "app_projects/_styles.html" %}{% include "app_projects/_action_styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 850px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">{{ project.name }} / Actions</span>
+                <h1>{{ page_title }}</h1>
+            </div>
+        </div>
+
+        <div class="sky-panel">
+            <div class="pj-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="sky-calendar-message">{{ form.non_field_errors }}</div>
+                    {% endif %}
+                    <div class="pj-form-grid">
+                        {% for field in form.visible_fields %}
+                            <div class="pj-form-group {% if field.name == 'title' or field.name == 'description' %}pj-full{% endif %}">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% for e in field.errors %}<span class="pj-error">{{ e }}</span>{% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="pj-actions">
+                        <button type="submit" class="pj-btn">Save</button>
+                        <a href="{{ cancel_url }}" class="pj-btn pj-btn-ghost">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

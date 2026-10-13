@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}My actions{% endblock %}
+
+{% block extra_css %}{% include "app_projects/_styles.html" %}{% include "app_projects/_action_styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 1100px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Projects</span>
+                <h1>My actions</h1>
+                <p class="sky-help-text">Actions assigned to you{% if not show_done %} that are still open{% endif %}.</p>
+            </div>
+            <div class="pj-actions" style="margin-top: 0;">
+                {% if show_done %}
+                    <a href="{% url 'myActions' %}" class="pj-btn pj-btn-ghost">Hide completed</a>
+                {% else %}
+                    <a href="{% url 'myActions' %}?done=1" class="pj-btn pj-btn-ghost">Show completed</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="sky-panel">
+            <div class="pj-table-wrap">
+                <table class="pj-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Project</th>
+                            <th>Status</th>
+                            <th>Due</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in page %}
+                            <tr>
+                                <td><a href="{% url 'projectActionDetail' a.project.uuid a.uuid %}">{{ a.title }}</a></td>
+                                <td>{{ a.project.name }}</td>
+                                <td><span class="pj-badge pj-badge-{{ a.status }}">{{ a.get_status_display }}</span></td>
+                                <td>
+                                    {% if a.due_date %}
+                                        {{ a.due_date|date:"d M Y" }}
+                                        {% if a.due_date < today and a.is_open %}<span class="pj-badge pj-badge-warn">Overdue</span>{% endif %}
+                                    {% else %}&mdash;{% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4" class="pj-empty">Nothing assigned to you.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if page.has_other_pages %}
+                <div class="pj-pager">
+                    {% if page.has_previous %}<a class="pj-link" href="?{% if show_done %}done=1&amp;{% endif %}page={{ page.previous_page_number }}">Previous</a>{% endif %}
+                    <span class="pj-help">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+                    {% if page.has_next %}<a class="pj-link" href="?{% if show_done %}done=1&amp;{% endif %}page={{ page.next_page_number }}">Next</a>{% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action.title }}{% endblock %}
+
+{% block extra_css %}{% include "app_projects/_styles.html" %}{% include "app_projects/_action_styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 900px;">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">{{ project.name }} &middot; Action</span>
+                <h1>{{ action.title }}</h1>
+                <span class="pj-badge pj-badge-{{ action.status }}">{{ action.get_status_display }}</span>
+                {% if action.needs_reassign %}<span class="pj-badge pj-badge-warn">Needs reassigning</span>{% endif %}
+            </div>
+            <div class="pj-actions" style="margin-top: 0;">
+                <a href="{% url 'projectActionList' project.uuid %}" class="pj-btn pj-btn-ghost">Back to actions</a>
+                {% if can_edit %}
+                    <a href="{% url 'projectActionEdit' project.uuid action.uuid %}" class="pj-btn">Edit</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="sky-panel" style="margin-bottom: 1rem;">
+            <div class="pj-body">
+                <dl class="pj-meta">
+                    <div>
+                        <dt>Assignee</dt>
+                        <dd>{% if action.assignee %}{{ action.assignee.user.get_full_name|default:action.assignee.user.username }}{% else %}&mdash;{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>Due</dt>
+                        <dd>
+                            {% if action.due_date %}{{ action.due_date|date:"d M Y" }}{% if action.due_date < today and action.is_open %} <span class="pj-badge pj-badge-warn">Overdue</span>{% endif %}{% else %}&mdash;{% endif %}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>Created by</dt>
+                        <dd>{% if action.created_by %}{{ action.created_by.get_full_name|default:action.created_by.username }}{% else %}&mdash;{% endif %}</dd>
+                    </div>
+                    {% if action.parent %}
+                        <div>
+                            <dt>Subtask of</dt>
+                            <dd><a href="{% url 'projectActionDetail' project.uuid action.parent.uuid %}">{{ action.parent.title }}</a></dd>
+                        </div>
+                    {% endif %}
+                </dl>
+                {% if action.description %}
+                    <p style="margin: 1rem 0 0; white-space: pre-line;">{{ action.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if subtasks %}
+            <div class="sky-panel" style="margin-bottom: 1rem;">
+                <div class="pj-body">
+                    <h6 style="margin-bottom: .75rem;">Subtasks ({{ subtasks|length }})</h6>
+                    <ul class="pj-team">
+                        {% for s in subtasks %}
+                            <li>
+                                <a href="{% url 'projectActionDetail' project.uuid s.uuid %}">{{ s.title }}</a>
+                                <span class="pj-badge pj-badge-{{ s.status }}">{{ s.get_status_display }}</span>
+                                <span class="pj-help">{% if s.assignee %}{{ s.assignee.user.get_full_name|default:s.assignee.user.username }}{% else %}Unassigned{% endif %}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="sky-panel">
+            <div class="pj-body">
+                <h6 style="margin-bottom: .75rem;">History</h6>
+                <ul class="pj-team">
+                    {% for h in history %}
+                        <li>{{ h.text }} <span class="pj-help">&middot; {{ h.who }} &middot; {{ h.when|date:"d M Y H:i" }}</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

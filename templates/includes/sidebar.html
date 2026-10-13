@@ -453,6 +453,11 @@
                     <span>{% if projects_nav_all %}Projects{% else %}My Project{% endif %}</span>
                 </a>
 
+                <a href="{% url 'myActions' %}" data-nav="my-actions" class="hr-sidebar-link {% if request.resolver_match.url_name == 'myActions' %}active{% endif %}">
+                    <i class="bi bi-check2-square"></i>
+                    <span>My Actions</span>
+                </a>
+
                 {% if projects_nav_manage %}
                 <a href="{% url 'projectAssign' %}" class="hr-sidebar-link {% if request.resolver_match.url_name == 'projectAssign' %}active{% endif %}">
                     <i class="bi bi-person-check"></i>

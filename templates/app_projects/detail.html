@@ -16,6 +16,7 @@
             </div>
             <div class="pj-actions" style="margin-top: 0;">
                 <a href="{% url 'projectList' %}" class="pj-btn pj-btn-ghost">Back</a>
+                <a href="{% url 'projectActionList' project.uuid %}" class="pj-btn">Actions</a>
                 {% if can_manage %}
                     {% if project.is_archived %}
                         <form method="post" action="{% url 'projectUnarchive' project.uuid %}">
@@ -65,6 +66,14 @@
                         <li class="pj-help">No one is assigned to this project yet.</li>
                     {% endfor %}
                 </ul>
+                {% if reassign_list %}
+                    <h6 style="margin: 1.25rem 0 .75rem;">Needs reassigning ({{ reassign_list|length }})</h6>
+                    <ul class="pj-team">
+                        {% for a in reassign_list %}
+                            <li><a href="{% url 'projectActionDetail' project.uuid a.uuid %}">{{ a.title }}</a> <span class="pj-help">&middot; {{ a.assignee.user.get_full_name|default:a.assignee.user.username }}</span></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
             </div>
         </div>
 
