@@ -386,7 +386,7 @@
 }
 
 /* =========================================================
-   4. MOBILE RESPONSIVENESS & OVERLAY (ADDED FIX)
+   4. MOBILE RESPONSIVENESS & OVERLAY
 ========================================================= */
 @media (max-width: 991px) {
     #hrSidebar.hr-sidebar {
@@ -419,6 +419,35 @@
     .hr-sidebar-overlay.show {
         opacity: 1;
         visibility: visible;
+    }
+}
+
+/* =========================================================
+   5. SCROLLBAR & HEIGHT FIXES (PREVENT OVERLAP)
+========================================================= */
+
+/* Make the scrollbar thin and elegant so it doesn't eat width */
+#hrSidebar .hr-sidebar-nav::-webkit-scrollbar {
+    width: 4px !important;
+}
+#hrSidebar .hr-sidebar-nav::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+#hrSidebar .hr-sidebar-nav::-webkit-scrollbar-thumb {
+    background: #cbd5e1 !important;
+    border-radius: 4px !important;
+}
+#hrSidebar .hr-sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8 !important;
+}
+
+/* Fix mobile height so the entire sidebar doesn't scroll */
+@media (max-width: 991px) {
+    #hrSidebar.hr-sidebar {
+        height: 100% !important; /* Fallback */
+        height: 100dvh !important; /* Modern fix for mobile address bar jumps */
+        bottom: 0 !important;
+        overflow: hidden !important; 
     }
 }
 </style>
