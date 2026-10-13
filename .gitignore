@@ -9,3 +9,4 @@ media/
 .venv/
 .env.*
 !.env.example
+private_media/

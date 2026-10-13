@@ -6,7 +6,12 @@ checks who may do it, checks the data, and writes an ActionEvent.
 PermissionDenied means "you may not"; ValidationError means "that is invalid".
 """
 
+import io
+import os
+import zipfile
+
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.files.base import ContentFile
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -14,7 +19,7 @@ from django.utils import timezone
 from appEmp.models import empProfile
 
 from .access import can_manage_projects
-from .models import Action, ActionEvent
+from .models import Action, ActionAttachment, ActionComment, ActionEvent
 
 TITLE_MAX = 200
 EDITABLE_FIELDS = ("title", "description", "due_date")
@@ -183,3 +188,166 @@ def actions_needing_reassign(project):
         .filter(project=project, status__in=Action.OPEN_STATUSES, assignee__isnull=False)
         .filter(~Q(assignee__project=project) | Q(assignee__is_active=False))
     )
+
+
+COMMENT_MAX = 5000
+ATTACH_MAX_BYTES = 200 * 1024
+ATTACH_MAX_PER_ACTION = 20
+ZIP_MAX_UNCOMPRESSED = 20 * 1024 * 1024
+ATTACH_TYPES = {
+    ".pdf": "application/pdf",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+}
+
+
+def _require_member(actor, org):
+    if not (can_manage_projects(actor, org) or _own_profile_id(actor, org)):
+        raise PermissionDenied("You are not part of this organization.")
+
+
+def _lock_child(model, obj):
+    return (
+        model.objects
+        .select_for_update(of=("self",))
+        .select_related("action__project", "organization")
+        .get(pk=obj.pk)
+    )
+
+
+def _clean_comment(body):
+    body = (body or "").strip()
+    if not body:
+        raise ValidationError({"body": "Write something first."})
+    if len(body) > COMMENT_MAX:
+        raise ValidationError({"body": "The comment is too long (5000 characters at most)."})
+    return body
+
+
+def _is_owner_or_manager(actor, org, owner_id):
+    if can_manage_projects(actor, org):
+        return True
+    return bool(owner_id and owner_id == getattr(actor, "pk", None))
+
+
+def can_modify_comment(actor, comment):
+    return _is_owner_or_manager(actor, comment.organization, comment.author_id)
+
+
+def can_delete_attachment(actor, attachment):
+    return _is_owner_or_manager(actor, attachment.organization, attachment.uploaded_by_id)
+
+
+@transaction.atomic
+def add_comment(action, actor, body):
+    action = _lock(action)
+    _require_member(actor, action.organization)
+    _require_writable(action.project)
+    return ActionComment.objects.create(
+        action=action,
+        organization=action.organization,
+        author=actor if getattr(actor, "is_authenticated", False) else None,
+        body=_clean_comment(body),
+    )
+
+
+@transaction.atomic
+def update_comment(comment, actor, body):
+    comment = _lock_child(ActionComment, comment)
+    if not can_modify_comment(actor, comment):
+        raise PermissionDenied("Only the author or a project manager can change this comment.")
+    _require_writable(comment.action.project)
+    comment.body = _clean_comment(body)
+    comment.edited_at = timezone.now()
+    comment.save(update_fields=["body", "edited_at"])
+    return comment
+
+
+@transaction.atomic
+def delete_comment(comment, actor):
+    comment = _lock_child(ActionComment, comment)
+    if not can_modify_comment(actor, comment):
+        raise PermissionDenied("Only the author or a project manager can delete this comment.")
+    _require_writable(comment.action.project)
+    comment.delete()
+
+
+def _signature_ok(ext, data):
+    if ext == ".pdf":
+        return data.startswith(b"%PDF-")
+    if ext == ".png":
+        return data.startswith(b"\x89PNG\r\n\x1a\n")
+    if ext in (".jpg", ".jpeg"):
+        return data.startswith(b"\xff\xd8\xff")
+    if ext == ".docx":
+        try:
+            with zipfile.ZipFile(io.BytesIO(data)) as z:
+                infos = z.infolist()
+                names = [i.filename for i in infos]
+                if sum(i.file_size for i in infos) > ZIP_MAX_UNCOMPRESSED:
+                    return False
+                return "[Content_Types].xml" in names and any(
+                    n.startswith("word/") for n in names
+                )
+        except (zipfile.BadZipFile, zipfile.LargeZipFile, OSError):
+            return False
+    return False
+
+
+def _validate_upload(upload):
+    if upload is None:
+        raise ValidationError({"file": "Choose a file to upload."})
+    name = os.path.basename((upload.name or "").replace("\\", "/")).strip()
+    name = "".join(ch for ch in name if ch.isprintable())
+    ext = os.path.splitext(name)[1].lower()
+    if ext not in ATTACH_TYPES:
+        raise ValidationError({"file": "Only pdf, jpg, png and docx files are allowed."})
+    if upload.size > ATTACH_MAX_BYTES:
+        raise ValidationError({"file": "The file is too large (200 KB at most)."})
+    upload.seek(0)
+    data = upload.read(ATTACH_MAX_BYTES + 1)
+    if not data:
+        raise ValidationError({"file": "The file is empty."})
+    if len(data) > ATTACH_MAX_BYTES:
+        raise ValidationError({"file": "The file is too large (200 KB at most)."})
+    if not _signature_ok(ext, data):
+        raise ValidationError({"file": "The file content does not match its type."})
+    if len(name) > 200:
+        name = name[: 200 - len(ext)] + ext
+    return name, ext, data
+
+
+@transaction.atomic
+def add_attachment(action, actor, upload):
+    action = _lock(action)
+    _require_member(actor, action.organization)
+    _require_writable(action.project)
+    name, ext, data = _validate_upload(upload)
+    if action.attachments.count() >= ATTACH_MAX_PER_ACTION:
+        raise ValidationError({"file": "This action already has 20 attachments."})
+    att = ActionAttachment(
+        action=action,
+        organization=action.organization,
+        uploaded_by=actor if getattr(actor, "is_authenticated", False) else None,
+        original_name=name,
+        content_type=ATTACH_TYPES[ext],
+        size=len(data),
+    )
+    att.file.save(name, ContentFile(data), save=False)
+    try:
+        att.save()
+    except Exception:
+        att.file.delete(save=False)
+        raise
+    return att
+
+
+@transaction.atomic
+def delete_attachment(attachment, actor):
+    attachment = _lock_child(ActionAttachment, attachment)
+    if not can_delete_attachment(actor, attachment):
+        raise PermissionDenied("Only the uploader or a project manager can delete this file.")
+    _require_writable(attachment.action.project)
+    attachment.delete()

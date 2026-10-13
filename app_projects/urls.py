@@ -18,4 +18,11 @@ urlpatterns = [
     path("<uuid:uuid>/actions/<uuid:action_uuid>/status/", action_views.action_status_view, name="projectActionStatus"),
     path("<uuid:uuid>/actions/<uuid:action_uuid>/reassign/", action_views.action_reassign_view, name="projectActionReassign"),
     path("<uuid:uuid>/actions/<uuid:action_uuid>/delete/", action_views.action_delete_view, name="projectActionDelete"),
+    path("<uuid:uuid>/actions/<uuid:action_uuid>/subtasks/new/", action_views.action_subtask_create_view, name="projectActionSubtaskCreate"),
+    path("<uuid:uuid>/actions/<uuid:action_uuid>/comments/add/", action_views.action_comment_add_view, name="projectActionCommentAdd"),
+    path("<uuid:uuid>/actions/<uuid:action_uuid>/comments/<uuid:comment_uuid>/edit/", action_views.action_comment_edit_view, name="projectActionCommentEdit"),
+    path("<uuid:uuid>/actions/<uuid:action_uuid>/comments/<uuid:comment_uuid>/delete/", action_views.action_comment_delete_view, name="projectActionCommentDelete"),
+    path("<uuid:uuid>/actions/<uuid:action_uuid>/attachments/add/", action_views.action_attachment_add_view, name="projectActionAttachmentAdd"),
+    path("<uuid:uuid>/actions/<uuid:action_uuid>/attachments/<uuid:attachment_uuid>/download/", action_views.action_attachment_download_view, name="projectActionAttachmentDownload"),
+    path("<uuid:uuid>/actions/<uuid:action_uuid>/attachments/<uuid:attachment_uuid>/delete/", action_views.action_attachment_delete_view, name="projectActionAttachmentDelete"),
 ]

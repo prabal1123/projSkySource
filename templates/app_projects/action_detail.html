@@ -19,6 +19,7 @@
                 <a href="{% url 'projectActionList' project.uuid %}" class="pj-btn pj-btn-ghost">Back to actions</a>
                 {% if can_edit %}
                     <a href="{% url 'projectActionEdit' project.uuid action.uuid %}" class="pj-btn">Edit</a>
+                    {% if not action.is_subtask %}<a href="{% url 'projectActionSubtaskCreate' project.uuid action.uuid %}" class="pj-btn">Add subtask</a>{% endif %}
                 {% endif %}
             </div>
         </div>
@@ -97,6 +98,70 @@
                 </div>
             </div>
         {% endif %}
+
+        <div class="sky-panel" style="margin-bottom: 1rem;">
+            <div class="pj-body">
+                <h6 style="margin-bottom: .75rem;">Attachments ({{ attachments|length }})</h6>
+                {% if attachments %}
+                    <ul class="pj-team">
+                        {% for a in attachments %}
+                            <li>
+                                <a href="{% url 'projectActionAttachmentDownload' project.uuid action.uuid a.uuid %}">{{ a.original_name }}</a>
+                                <span class="pj-help">{{ a.size|filesizeformat }} &middot; {{ a.uploaded_by.get_full_name|default:a.uploaded_by.username|default:"Former user" }} &middot; {{ a.created_at|date:"d M Y H:i" }}</span>
+                                {% if can_write and a.can_delete %}
+                                    <form method="post" action="{% url 'projectActionAttachmentDelete' project.uuid action.uuid a.uuid %}" style="display: inline;" onsubmit="return confirm('Delete this file?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="pj-btn pj-btn-ghost">Delete attachment</button>
+                                    </form>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="pj-help">No files yet.</p>
+                {% endif %}
+                {% if can_write %}
+                    <form method="post" enctype="multipart/form-data" action="{% url 'projectActionAttachmentAdd' project.uuid action.uuid %}" style="display: flex; gap: .5rem; align-items: center;">
+                        {% csrf_token %}
+                        <input type="file" name="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.docx" required>
+                        <button type="submit" class="pj-btn">Upload</button>
+                    </form>
+                    <p class="pj-help" style="margin-top: .5rem;">pdf, jpg, png or docx, up to 200 KB.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="sky-panel" style="margin-bottom: 1rem;">
+            <div class="pj-body">
+                <h6 style="margin-bottom: .75rem;">Comments ({{ comments|length }})</h6>
+                {% if comments %}
+                    <ul class="pj-team">
+                        {% for c in comments %}
+                            <li>
+                                <div style="white-space: pre-line;">{{ c.body }}</div>
+                                <span class="pj-help">{% if c.author %}{{ c.author.get_full_name|default:c.author.username }}{% else %}Former user{% endif %} &middot; {{ c.created_at|date:"d M Y H:i" }}{% if c.edited_at %} &middot; edited{% endif %}</span>
+                                {% if can_write and c.can_modify %}
+                                    <a href="{% url 'projectActionCommentEdit' project.uuid action.uuid c.uuid %}">Edit comment</a>
+                                    <form method="post" action="{% url 'projectActionCommentDelete' project.uuid action.uuid c.uuid %}" style="display: inline;" onsubmit="return confirm('Delete this comment?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="pj-btn pj-btn-ghost">Delete comment</button>
+                                    </form>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="pj-help">No comments yet.</p>
+                {% endif %}
+                {% if can_write %}
+                    <form method="post" action="{% url 'projectActionCommentAdd' project.uuid action.uuid %}">
+                        {% csrf_token %}
+                        <textarea name="body" rows="3" maxlength="5000" class="form-control" required></textarea>
+                        <button type="submit" class="pj-btn" style="margin-top: .5rem;">Add comment</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
 
         <div class="sky-panel">
             <div class="pj-body">

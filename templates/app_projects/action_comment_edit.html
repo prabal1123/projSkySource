@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Edit comment{% endblock %}
+
+{% block extra_css %}{% include "app_projects/_styles.html" %}{% include "app_projects/_action_styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container" style="max-width: 900px;">
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">{{ project.name }} &middot; {{ action.title }}</span>
+                <h1>Edit comment</h1>
+            </div>
+        </div>
+        <div class="sky-panel">
+            <div class="pj-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+                    {{ form.body }}
+                    {{ form.body.errors }}
+                    <div class="pj-actions">
+                        <button type="submit" class="pj-btn">Save comment</button>
+                        <a href="{{ cancel_url }}" class="pj-btn pj-btn-ghost">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

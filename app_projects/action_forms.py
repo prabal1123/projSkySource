@@ -54,3 +54,14 @@ class ReassignForm(forms.Form):
             .order_by("user__first_name", "user__last_name")
         )
         self.fields["assignee"].widget.attrs["class"] = "form-select"
+
+
+class CommentForm(forms.Form):
+    body = forms.CharField(
+        max_length=5000,
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+    )
+
+
+class AttachmentForm(forms.Form):
+    file = forms.FileField()

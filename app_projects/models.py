@@ -6,6 +6,11 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models.functions import Lower
 from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+from django.db import transaction
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+import os
 from appEmp.fields import EncryptedTextField
 
 
@@ -274,3 +279,88 @@ class ActionEvent(models.Model):
 
     class Meta:
         ordering = ["created_at", "id"]
+
+
+class PrivateStorage(FileSystemStorage):
+    @property
+    def base_location(self):
+        return settings.PRIVATE_MEDIA_ROOT
+
+    @property
+    def location(self):
+        return os.path.abspath(self.base_location)
+
+
+def get_private_storage():
+    return PrivateStorage()
+
+
+def action_attachment_path(instance, filename):
+    ext = os.path.splitext(filename)[1].lower()[:10]
+    return "org_%s/actions/%s/%s%s" % (
+        instance.organization_id, instance.action.uuid, uuid.uuid4().hex, ext
+    )
+
+
+class ActionComment(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
+    action = models.ForeignKey(
+        Action, on_delete=models.CASCADE, related_name="comments"
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    body = EncryptedTextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    edited_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+
+
+class ActionAttachment(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
+    action = models.ForeignKey(
+        Action, on_delete=models.CASCADE, related_name="attachments"
+    )
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    file = models.FileField(
+        upload_to=action_attachment_path,
+        storage=get_private_storage,
+        max_length=255,
+    )
+    original_name = models.CharField(max_length=255)
+    content_type = models.CharField(max_length=100)
+    size = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+
+
+@receiver(post_delete, sender=ActionAttachment)
+def remove_attachment_file(sender, instance, **kwargs):
+    name = instance.file.name
+    storage = instance.file.storage
+    if name:
+        transaction.on_commit(lambda: storage.delete(name))

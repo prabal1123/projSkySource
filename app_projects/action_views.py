@@ -3,10 +3,11 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, F
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from django.urls import reverse
@@ -16,8 +17,8 @@ from appEmp.models import empProfile
 
 from . import services
 from .access import can_manage_projects, get_visible_project_or_404, visible_projects
-from .action_forms import ActionForm, ReassignForm
-from .models import Action
+from .action_forms import ActionForm, AttachmentForm, CommentForm, ReassignForm
+from .models import Action, ActionAttachment, ActionComment
 from .views import _current_org, _require_manage
 
 PAGE_SIZE = 25
@@ -177,11 +178,21 @@ def action_detail_view(request, uuid, action_uuid):
         action.subtasks.select_related("assignee__user").order_by("created_at", "pk")
     )
     events = list(action.events.select_related("actor"))
+    manager = can_manage_projects(request.user, org)
+    comments = list(action.comments.select_related("author"))
+    for c in comments:
+        c.can_modify = manager or c.author_id == request.user.pk
+    attachments = list(action.attachments.select_related("uploaded_by"))
+    for a in attachments:
+        a.can_delete = manager or a.uploaded_by_id == request.user.pk
     return render(request, "app_projects/action_detail.html", {
         "project": project,
         "action": action,
         "subtasks": subtasks,
         "history": _history(events, org),
+        "comments": comments,
+        "attachments": attachments,
+        "can_write": not project.is_archived,
         "can_change_status": services.can_change_status(request.user, action) and not project.is_archived,
         "status_choices": Action.STATUS_CHOICES,
         "reassign_form": ReassignForm(project=project, initial={"assignee": action.assignee_id}) if _can_edit(request, org, project) else None,
@@ -351,3 +362,178 @@ def action_delete_view(request, uuid, action_uuid):
         return redirect(_detail_url(project, action))
     messages.success(request, "Action deleted.")
     return redirect(_list_url(project))
+
+
+def _get_comment(action, comment_uuid):
+    return get_object_or_404(
+        ActionComment.objects.select_related("author"),
+        action=action,
+        organization=action.organization,
+        uuid=comment_uuid,
+    )
+
+
+def _get_attachment(action, attachment_uuid):
+    return get_object_or_404(
+        ActionAttachment,
+        action=action,
+        organization=action.organization,
+        uuid=attachment_uuid,
+    )
+
+
+@login_required
+def action_subtask_create_view(request, uuid, action_uuid):
+    org = _current_org(request)
+    project = get_visible_project_or_404(request, uuid)
+    parent = _get_action(project, action_uuid)
+    _require_manage(request, org)
+    if project.is_archived:
+        messages.error(request, "This project is archived, so its actions are read-only.")
+        return redirect(_detail_url(project, parent))
+    if parent.is_subtask:
+        messages.error(request, "Subtasks can only be one level deep.")
+        return redirect(_detail_url(project, parent))
+
+    form = ActionForm(
+        request.POST if request.method == "POST" else None, project=project
+    )
+    if request.method == "POST" and form.is_valid():
+        cd = form.cleaned_data
+        try:
+            services.create_action(
+                project=project,
+                actor=request.user,
+                title=cd["title"],
+                description=cd["description"],
+                assignee=cd["assignee"],
+                due_date=cd["due_date"],
+                parent=parent,
+            )
+        except ValidationError as exc:
+            _form_errors(form, exc)
+        else:
+            messages.success(request, "Subtask added.")
+            return redirect(_detail_url(project, parent))
+    return render(request, "app_projects/action_form.html", {
+        "form": form,
+        "project": project,
+        "page_title": "New subtask of " + parent.title,
+        "cancel_url": _detail_url(project, parent),
+    })
+
+
+@login_required
+@require_POST
+def action_comment_add_view(request, uuid, action_uuid):
+    project = get_visible_project_or_404(request, uuid)
+    action = _get_action(project, action_uuid)
+    form = CommentForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "Write a comment of up to 5000 characters.")
+    else:
+        try:
+            services.add_comment(action, request.user, form.cleaned_data["body"])
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+        else:
+            messages.success(request, "Comment added.")
+    return redirect(_detail_url(project, action))
+
+
+@login_required
+def action_comment_edit_view(request, uuid, action_uuid, comment_uuid):
+    project = get_visible_project_or_404(request, uuid)
+    action = _get_action(project, action_uuid)
+    comment = _get_comment(action, comment_uuid)
+    if not services.can_modify_comment(request.user, comment):
+        raise PermissionDenied
+    if project.is_archived:
+        messages.error(request, "This project is archived, so its actions are read-only.")
+        return redirect(_detail_url(project, action))
+    form = CommentForm(
+        request.POST if request.method == "POST" else None,
+        initial={"body": comment.body},
+    )
+    if request.method == "POST" and form.is_valid():
+        try:
+            services.update_comment(comment, request.user, form.cleaned_data["body"])
+        except ValidationError as exc:
+            _form_errors(form, exc)
+        else:
+            messages.success(request, "Comment updated.")
+            return redirect(_detail_url(project, action))
+    return render(request, "app_projects/action_comment_edit.html", {
+        "form": form,
+        "project": project,
+        "action": action,
+        "cancel_url": _detail_url(project, action),
+    })
+
+
+@login_required
+@require_POST
+def action_comment_delete_view(request, uuid, action_uuid, comment_uuid):
+    project = get_visible_project_or_404(request, uuid)
+    action = _get_action(project, action_uuid)
+    comment = _get_comment(action, comment_uuid)
+    try:
+        services.delete_comment(comment, request.user)
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+    else:
+        messages.success(request, "Comment deleted.")
+    return redirect(_detail_url(project, action))
+
+
+@login_required
+@require_POST
+def action_attachment_add_view(request, uuid, action_uuid):
+    project = get_visible_project_or_404(request, uuid)
+    action = _get_action(project, action_uuid)
+    form = AttachmentForm(request.POST, request.FILES)
+    if not form.is_valid():
+        messages.error(request, " ".join(form.errors.get("file", ["Choose a file to upload."])))
+    else:
+        try:
+            services.add_attachment(action, request.user, form.cleaned_data["file"])
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+        else:
+            messages.success(request, "File uploaded.")
+    return redirect(_detail_url(project, action))
+
+
+@login_required
+def action_attachment_download_view(request, uuid, action_uuid, attachment_uuid):
+    project = get_visible_project_or_404(request, uuid)
+    action = _get_action(project, action_uuid)
+    att = _get_attachment(action, attachment_uuid)
+    try:
+        handle = att.file.storage.open(att.file.name, "rb")
+    except (FileNotFoundError, ValueError):
+        raise Http404("File not found.")
+    response = FileResponse(
+        handle,
+        as_attachment=True,
+        filename=att.original_name,
+        content_type=att.content_type,
+    )
+    response["X-Content-Type-Options"] = "nosniff"
+    response["Cache-Control"] = "private, no-store"
+    return response
+
+
+@login_required
+@require_POST
+def action_attachment_delete_view(request, uuid, action_uuid, attachment_uuid):
+    project = get_visible_project_or_404(request, uuid)
+    action = _get_action(project, action_uuid)
+    att = _get_attachment(action, attachment_uuid)
+    try:
+        services.delete_attachment(att, request.user)
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+    else:
+        messages.success(request, "File deleted.")
+    return redirect(_detail_url(project, action))
