@@ -17,10 +17,14 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -e
             cd ${{ secrets.EC2_PROJECT_PATH }}
             source venv/bin/activate
             git pull origin main
             pip install -r requirements.txt
+            python manage.py check
             python manage.py migrate --noinput
             python manage.py collectstatic --noinput
             sudo systemctl restart gunicorn
+            sleep 2
+            sudo systemctl is-active --quiet gunicorn || (sudo journalctl -u gunicorn -n 25 --no-pager && exit 1)
