@@ -290,6 +290,33 @@
     box-shadow: var(--shadow-sm);
     scroll-margin-top: 24px;
   }
+
+  /* =========================================================
+     MOBILE RESPONSIVENESS FIX (Remove massive side gaps)
+  ========================================================= */
+  @media (max-width: 768px) {
+    /* Shrink the outer wrapper padding */
+    .pe {
+      padding: 16px 12px 64px !important; 
+    }
+    
+    /* Shrink the massive internal padding inside the cards */
+    .pe .sidebar-card,
+    .pe .content-card,
+    .pe .salary-wrapper {
+      padding: 24px 16px !important;
+    }
+
+    /* Make grid inputs span full width easier on phones */
+    .pe .form-grid {
+      grid-template-columns: 1fr !important; 
+    }
+    
+    /* Align the document upload button vertically on phones */
+    #documents .form-grid {
+       align-items: stretch !important;
+    }
+  }
 </style>
 
 <div class="pe">
@@ -548,7 +575,6 @@
                 <div class="alert">{{ document_form.non_field_errors }}</div>
             {% endif %}
 
-            <!-- FIX: Wrapped the action URL in a conditional block to prevent NoReverseMatch errors -->
             <form method="post" 
                   {% if profile and profile.uuid %}
                       action="{% url 'profile_document_upload' profile.uuid %}" 
