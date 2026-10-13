@@ -1321,6 +1321,81 @@
 
 
 
+                                <article class="hr-card hr-wide-card">
+
+                    <div class="hr-card-header">
+
+                        <div>
+
+                            <span class="hr-section-label">
+                                PROJECTS
+                            </span>
+
+                            <h2>
+                                Projects overview
+                            </h2>
+
+                        </div>
+
+                        <a href="{% url 'projectList' %}" class="hr-text-link">
+                            All projects &rarr;
+                        </a>
+
+                    </div>
+
+                    {% if admin_projects.rows or admin_projects.unassigned %}
+
+                        <div class="table-responsive">
+
+                            <table class="hr-dashboard-table">
+
+                                <thead>
+                                    <tr>
+                                        <th>Project</th>
+                                        <th>People</th>
+                                        <th>Open actions</th>
+                                        <th>Overdue</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    {% for p in admin_projects.rows %}
+                                        <tr>
+                                            <td><a href="{% url 'projectDetail' p.uuid %}">{{ p.name }}</a></td>
+                                            <td>{{ p.people }}</td>
+                                            <td>{{ p.open }}</td>
+                                            <td>{{ p.overdue }}</td>
+                                        </tr>
+                                    {% endfor %}
+
+                                    {% if admin_projects.unassigned %}
+                                        <tr>
+                                            <td><a href="{% url 'projectAssign' %}">Unassigned</a></td>
+                                            <td>{{ admin_projects.unassigned }}</td>
+                                            <td>-</td>
+                                            <td>-</td>
+                                        </tr>
+                                    {% endif %}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    {% else %}
+
+                        <div class="hr-empty-state">
+                            No projects yet.
+                        </div>
+
+                    {% endif %}
+
+                </article>
+
+
+
                 <!-- =================================================
                      ATTENDANCE HISTORY
                 ================================================== -->

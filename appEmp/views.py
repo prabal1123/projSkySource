@@ -1725,6 +1725,12 @@ def dashboard_view(request):
         exit_clearance_context
     )
 
+    if is_admin_view:
+        from appEmp.dashboard_stats import project_overview
+        context['admin_projects'] = project_overview(
+            request.current_org, today
+        )
+
     return render(
         request,
         "dashboard.html",
