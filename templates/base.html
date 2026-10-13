@@ -158,9 +158,15 @@
 
 
             <!-- ========================================= -->
-            <!-- TOPBAR -->
+            <!-- TOPBAR (ADDED MOBILE MENU TOGGLE) -->
             <!-- ========================================= -->
-
+            
+            <div class="d-flex d-lg-none p-3 align-items-center justify-content-between bg-white border-bottom">
+                <strong style="color: #0a3728; font-size: 18px;">NumaHr</strong>
+                <button id="mobileSidebarToggle" class="btn btn-sm" style="background: #0a3728; color: white; border-radius: 8px;">
+                    <i class="bi bi-list fs-5"></i>
+                </button>
+            </div>
             
 
 
@@ -317,6 +323,32 @@
     if (fileInput) {
       attachCompression(fileInput, { maxKB: 190 });
     }
+  });
+
+  // Mobile Sidebar Toggle Logic
+  document.addEventListener("DOMContentLoaded", function() {
+      const sidebar = document.getElementById("hrSidebar");
+      const overlay = document.getElementById("sidebarOverlay");
+      const toggleBtn = document.getElementById("mobileSidebarToggle");
+
+      function toggleMobileSidebar() {
+          if (sidebar) sidebar.classList.toggle("show-mobile");
+          if (overlay) overlay.classList.toggle("show");
+          
+          if (sidebar && sidebar.classList.contains("show-mobile")) {
+              document.body.style.overflow = "hidden";
+          } else {
+              document.body.style.overflow = "";
+          }
+      }
+
+      if (toggleBtn) {
+          toggleBtn.addEventListener("click", toggleMobileSidebar);
+      }
+
+      if (overlay) {
+          overlay.addEventListener("click", toggleMobileSidebar);
+      }
   });
 </script>
 <!-- ========================================= -->

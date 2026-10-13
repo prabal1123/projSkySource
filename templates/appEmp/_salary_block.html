@@ -1,69 +1,173 @@
-{# appEmp/templates/appEmp/_salary_block.html #}
+<style>
+  /* Overview Stats Grid */
+  .salary-stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px;
+  }
+  .stat-box {
+    background: var(--surface-alt, #f8faf9); padding: 16px; border-radius: var(--radius-md, 10px);
+    border: 1px solid var(--border, #e5e7eb);
+  }
+  .stat-box.accent {
+    background: var(--primary-light, #e6f0eb); border-color: var(--primary-border, #b8d4c5);
+  }
+  .stat-label { 
+    display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; 
+    color: var(--text-muted, #62736a); font-weight: 600; margin-bottom: 6px; 
+  }
+  .stat-box.accent .stat-label { color: var(--primary, #2d5a43); }
+  .stat-value { 
+    font-size: 1.15rem; font-weight: 700; color: var(--text-main, #111827); font-family: monospace; 
+  }
 
+  /* Notice Banner */
+  .salary-empty-notice {
+    display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: var(--radius-md, 10px);
+    background: var(--surface-alt, #f8faf9); border: 1px dashed var(--border, #cbd5e1);
+    color: var(--text-muted, #62736a); font-size: 0.88rem; margin-bottom: 16px;
+  }
+  
+  /* Form Grid */
+  .salary-form-box {
+    background: var(--surface-alt, #f8faf9);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius-md, 10px);
+    padding: 24px;
+    margin-top: 16px;
+  }
+  .salary-form-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;
+  }
+  .salary-field label {
+    display: block; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em;
+    font-weight: 600; color: var(--text-muted, #4b5563); margin-bottom: 6px;
+  }
+  .currency-input { position: relative; display: flex; align-items: center; }
+  .currency-input span.symbol {
+    position: absolute; left: 12px; color: var(--text-light, #9ca3af); font-weight: 600; pointer-events: none;
+  }
+  .currency-input input, .salary-field input[type="date"] {
+    width: 100%; height: 42px; font-size: 0.95rem; color: var(--text-main, #111827);
+    background: var(--surface, #ffffff); border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius-sm, 6px); transition: all 0.2s ease;
+  }
+  .currency-input input { padding: 9px 12px 9px 28px !important; }
+  .salary-field input[type="date"] { padding: 9px 12px; box-sizing: border-box; }
+  .currency-input input:focus, .salary-field input[type="date"]:focus {
+    outline: none; border-color: var(--primary, #2d5a43); box-shadow: 0 0 0 3px var(--primary-ring, rgba(45, 90, 67, 0.15));
+  }
 
-<div class="card sky-salary-card mt-4">
-  <div class="card-header sky-salary-card__header">
-    <span>Salary</span>
-    {% if can_edit_salary %}
-      <button class="btn btn-sm btn-outline-light" type="button"
-              data-bs-toggle="collapse" data-bs-target="#salaryEditForm">
-        {% if salary %}Revise{% else %}Set Salary{% endif %}
+  .salary-footer {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .salary-meta { font-size: 0.85rem; color: var(--text-muted); }
+  .salary-meta .mono { font-family: monospace; font-weight: 600; color: var(--text-main); }
+</style>
+
+<div class="salary-body">
+  {% if can_edit_salary %}
+    <div style="text-align: right; margin-bottom: 20px;">
+      <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#salaryEditForm" style="width: auto; padding: 8px 16px; font-size: 0.9rem;">
+        {% if salary %}Revise Salary{% else %}Set Salary{% endif %}
       </button>
-    {% endif %}
-  </div>
+    </div>
+  {% endif %}
 
-  <div class="card-body">
-    {% if salary %}
-      <div class="row sky-salary-grid">
-        <div class="col-6 col-md-3 sky-salary-stat">
-          <span class="sky-label">Basic Salary</span>
-          <span class="sky-value mono">₹{{ salary.basic_salary|floatformat:2 }}</span>
-        </div>
-        <div class="col-6 col-md-3 sky-salary-stat">
-          <span class="sky-label">HRA</span>
-          <span class="sky-value mono">₹{{ salary.hra|floatformat:2 }}</span>
-        </div>
-        <div class="col-6 col-md-3 sky-salary-stat">
-          <span class="sky-label">PF</span>
-          <span class="sky-value mono">₹{{ salary.pf|floatformat:2 }}</span>
-        </div>
-        <div class="col-6 col-md-3 sky-salary-stat sky-salary-stat--accent">
-          <span class="sky-label">Monthly CTC</span>
-          <span class="sky-value mono">₹{{ salary.ctc_monthly|floatformat:2 }}</span>
-        </div>
-        <div class="col-6 col-md-3 sky-salary-stat">
-          <span class="sky-label">Est. Monthly TDS</span>
-          <span class="sky-value mono">₹{{ salary.calculate_monthly_tds|floatformat:2 }}</span>
-        </div>
-        <div class="col-6 col-md-3 sky-salary-stat sky-salary-stat--accent">
-          <span class="sky-label">Est. Net Pay</span>
-          <span class="sky-value mono">₹{{ salary.net_monthly_pay|floatformat:2 }}</span>
-        </div>
+  {% if salary %}
+    <div class="salary-stats-grid">
+      <div class="stat-box">
+        <span class="stat-label">Basic Salary</span>
+        <span class="stat-value">₹{{ salary.basic_salary|floatformat:2 }}</span>
       </div>
+      <div class="stat-box">
+        <span class="stat-label">HRA</span>
+        <span class="stat-value">₹{{ salary.hra|floatformat:2 }}</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">PF</span>
+        <span class="stat-value">₹{{ salary.pf|floatformat:2 }}</span>
+      </div>
+      <div class="stat-box accent">
+        <span class="stat-label">Monthly CTC</span>
+        <span class="stat-value">₹{{ salary.ctc_monthly|floatformat:2 }}</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Est. Monthly TDS</span>
+        <span class="stat-value">₹{{ salary.calculate_monthly_tds|floatformat:2 }}</span>
+      </div>
+      <div class="stat-box accent">
+        <span class="stat-label">Est. Net Pay</span>
+        <span class="stat-value">₹{{ salary.net_monthly_pay|floatformat:2 }}</span>
+      </div>
+    </div>
 
-      <p class="sky-note mt-3 mb-2">
-        Annual CTC: <span class="mono">₹{{ salary.ctc_annual|floatformat:2 }}</span>
-        &nbsp;·&nbsp; Effective from {{ salary.effective_date }}
-      </p>
-
-      <a class="btn btn-sm btn-teal"
+    <div class="salary-footer">
+      <div class="salary-meta">
+        Annual CTC: <span class="mono">₹{{ salary.ctc_annual|floatformat:2 }}</span> &nbsp;·&nbsp; 
+        Effective from {{ salary.effective_date }}
+      </div>
+      <a class="btn btn-primary" style="width: auto; padding: 8px 16px; font-size: 0.85rem;" 
          href="{% if can_edit_salary %}{% url 'salarySlipAdmin' uuid=target_uuid year=current_year month=current_month %}{% else %}{% url 'salarySlipSelf' year=current_year month=current_month %}{% endif %}">
-        Download Salary Slip (PDF)
+        Download Payslip
       </a>
-    {% else %}
-      <p class="sky-empty mb-0">
-        No salary has been set up{% if can_edit_salary %} for this employee{% endif %} yet.
-      </p>
-    {% endif %}
+    </div>
+  {% else %}
+    <div class="salary-empty-notice">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>No salary has been set up{% if can_edit_salary %} for this employee{% endif %} yet.</span>
+    </div>
+  {% endif %}
 
-    {% if can_edit_salary %}
-      <div class="collapse {% if not salary %}show{% endif %} mt-3" id="salaryEditForm">
-        <form method="post" action="{% url 'salaryUpdate' uuid=target_uuid %}" class="sky-form">
+  <!-- Collapsible Edit Form -->
+  {% if can_edit_salary %}
+    <div class="collapse {% if not salary %}show{% endif %}" id="salaryEditForm">
+      <div class="salary-form-box">
+        <form method="post" action="{% url 'salaryUpdate' uuid=target_uuid %}">
           {% csrf_token %}
-          {{ salary_form.as_p }}
-          <button type="submit" class="btn btn-teal btn-sm">Save Salary</button>
+          
+          <div class="salary-form-grid mb-3">
+            <div class="salary-field">
+              <label for="{{ salary_form.basic_salary.id_for_label }}">Basic Salary</label>
+              <div class="currency-input">
+                <span class="symbol">₹</span>
+                {{ salary_form.basic_salary }}
+              </div>
+              {% for error in salary_form.basic_salary.errors %}<div class="field-error" style="color: var(--danger);">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="salary-field">
+              <label for="{{ salary_form.hra.id_for_label }}">HRA Allowance</label>
+              <div class="currency-input">
+                <span class="symbol">₹</span>
+                {{ salary_form.hra }}
+              </div>
+              {% for error in salary_form.hra.errors %}<div class="field-error" style="color: var(--danger);">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="salary-field">
+              <label for="{{ salary_form.pf.id_for_label }}">Provident Fund (PF)</label>
+              <div class="currency-input">
+                <span class="symbol">₹</span>
+                {{ salary_form.pf }}
+              </div>
+              {% for error in salary_form.pf.errors %}<div class="field-error" style="color: var(--danger);">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="salary-field">
+              <label for="{{ salary_form.effective_date.id_for_label }}">Effective Date</label>
+              {{ salary_form.effective_date }}
+              {% for error in salary_form.effective_date.errors %}<div class="field-error" style="color: var(--danger);">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div style="text-align: right; margin-top: 16px;">
+            <button type="submit" class="btn btn-primary" style="width: auto; padding: 10px 24px;">
+              {% if salary %}Save Salary Revision{% else %}Save Salary{% endif %}
+            </button>
+          </div>
         </form>
       </div>
-    {% endif %}
-  </div>
+    </div>
+  {% endif %}
 </div>

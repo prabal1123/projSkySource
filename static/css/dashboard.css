@@ -1293,3 +1293,204 @@ a.sky-action-card:hover {
 @media (max-width: 720px) {
     .wage-ledger { min-width: 1100px; }
 }
+/* =========================================================
+   EMPLOYEE PROFILE: two-column boxed layout
+   Append at the very bottom of dashboard.css.
+   Everything is scoped to .sky-profile, nothing existing changes.
+========================================================= */
+
+.sky-profile .sky-profile-container { max-width: 1200px; }
+
+.sky-profile .sky-help-text {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    margin: 0.3rem 0 0;
+}
+.sky-profile .sky-header .sky-help-text { font-size: 0.85rem; margin-top: 0.25rem; }
+
+.sky-profile .sky-panel { height: auto; }
+
+/* ---- Page grid ---- */
+.sky-profile-grid {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-areas:
+        "side employment"
+        "side salary"
+        "side personal"
+        "side docs";
+    gap: 1rem;
+    align-items: start;
+}
+
+/* The main form wraps the left column plus two boxes; display: contents
+   lets those children sit directly in the grid above. */
+.sky-profile-form { display: contents; }
+
+.sky-profile-side {
+    grid-area: side;
+    position: sticky;
+    top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sky-area-employment { grid-area: employment; }
+.sky-area-personal   { grid-area: personal; }
+.sky-area-docs       { grid-area: docs; }
+.sky-area-salary     { grid-area: salary; min-width: 0; }
+.sky-save-mobile     { grid-area: save; display: none; }
+
+/* ---- Field grid ---- */
+.sky-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem 1rem;
+}
+.sky-field { min-width: 0; }
+.sky-field--full { grid-column: 1 / -1; }
+.sky-profile .sky-form-label { display: block; }
+
+/* Input types the base rules don't cover */
+.sky-profile input[type="email"],
+.sky-profile input[type="date"],
+.sky-profile input[type="number"],
+.sky-profile input[type="file"] {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.55rem 0.75rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    background: #fff;
+}
+.sky-profile input[type="file"] { padding: 0.4rem 0.5rem; font-size: 0.85rem; }
+.sky-profile input[type="email"]:focus,
+.sky-profile input[type="date"]:focus,
+.sky-profile input[type="number"]:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px var(--teal-soft);
+}
+.sky-profile .sky-field textarea { min-height: 72px; }
+
+/* ---- Identity box ---- */
+.sky-identity { display: flex; align-items: center; gap: 0.9rem; }
+
+.sky-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sky-identity-role {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+.sky-identity-meta { font-size: 0.8rem; color: var(--ink-soft); margin-top: 0.1rem; }
+
+/* ---- Status checklist ---- */
+.sky-status-body { padding-top: 0.5rem; padding-bottom: 0.75rem; }
+
+.sky-status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.87rem;
+    color: var(--ink);
+    cursor: pointer;
+}
+.sky-status-list .sky-status-item:last-of-type { border-bottom: none; }
+
+.sky-status-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    flex-shrink: 0;
+    accent-color: var(--teal);
+}
+
+.sky-status-default {
+    margin-top: 0.4rem;
+    padding-top: 0.4rem;
+    border-top: 2px solid var(--slate-soft);
+}
+.sky-status-default .sky-status-item { border-bottom: none; padding-bottom: 0.2rem; }
+
+/* ---- Save button ---- */
+.sky-profile .sky-save-btn {
+    width: 100%;
+    border: none;
+    cursor: pointer;
+    padding: 0.7rem 1rem;
+    font-size: 0.92rem;
+}
+
+/* ---- Documents ---- */
+.sky-doc-alert { margin: 1rem 1.25rem 0; }
+
+.sky-upload-toggle {
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+.sky-upload-toggle summary {
+    display: inline-block;
+    list-style: none;
+    cursor: pointer;
+}
+.sky-upload-toggle summary::-webkit-details-marker { display: none; }
+.sky-upload-toggle[open] summary { margin-bottom: 1rem; }
+.sky-upload-toggle summary:focus-visible {
+    outline: 2px solid var(--teal);
+    outline-offset: 2px;
+}
+
+.sky-upload-submit {
+    border: none;
+    cursor: pointer;
+    margin-top: 0.85rem;
+}
+
+.sky-table-scroll { overflow-x: auto; }
+.sky-profile .sky-table a { color: var(--teal); text-decoration: none; font-weight: 500; }
+.sky-profile .sky-table a:hover { text-decoration: underline; }
+
+.sky-doc-empty { padding: 1.25rem; margin: 0; }
+
+/* ---- Responsive ---- */
+@media (max-width: 991px) {
+    .sky-profile-grid {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "side"
+            "employment"
+            "salary"
+            "personal"
+            "save"
+            "docs";
+    }
+    .sky-profile-side { position: static; }
+    .sky-save-desktop { display: none; }
+    .sky-save-mobile  { display: block; }
+}
+
+@media (max-width: 560px) {
+    .sky-fields { grid-template-columns: 1fr; }
+}

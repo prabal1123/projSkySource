@@ -1,0 +1,14 @@
+{% if field %}
+<div class="field {% if span == 'full' %}full{% endif %}">
+    <label for="{{ field.id_for_label }}">{{ label|default:field.label }}</label>
+    {{ field }}
+    {% if help %}
+        <div class="field-help">{{ help }}</div>
+    {% elif field.help_text %}
+        <div class="field-help">{{ field.help_text }}</div>
+    {% endif %}
+    {% for error in field.errors %}
+        <div class="field-error">{{ error }}</div>
+    {% endfor %}
+</div>
+{% endif %}

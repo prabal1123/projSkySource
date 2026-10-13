@@ -1,696 +1,640 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Employee Profile{% endblock %}
+{% block title %}Employee Profile | Numa Lite{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="sky-dashboard">
-    <div class="container" style="max-width: 900px;">
+<style>
+  .pe {
+    /* Numa Lite Color Palette & Variables */
+    --primary: #2d5a43;
+    --primary-hover: #214332;
+    --primary-light: #e6f0eb;
+    --primary-ring: rgba(45, 90, 67, 0.15);
+    --primary-border: #b8d4c5;
+    
+    --surface: #ffffff;
+    --surface-alt: #f8faf9;
+    --surface-hover: #f1f5f3;
+    
+    --text-main: #111827;
+    --text-muted: #4b5563;
+    --text-light: #9ca3af;
+    
+    --border: #e5e7eb;
+    --danger: #ef4444;
+    --danger-light: #fef2f2;
+    --success-light: #dcfce7;
+    --success-text: #166534;
+    --warning-light: #fef9c3;
+    --warning-text: #854d0e;
+    
+    --radius-lg: 16px;
+    --radius-md: 10px;
+    --radius-sm: 6px;
+    
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.05);
+    
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 32px 64px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  
+  html { scroll-behavior: smooth; }
 
-        <div class="sky-header">
-            <div>
-                <span class="sky-eyebrow">Employee / Profile</span>
+  /* Animations */
+  @keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(15px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .pe .animate-block { animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+  .pe .delay-1 { animation-delay: 0.05s; }
+  .pe .delay-2 { animation-delay: 0.1s; }
+  .pe .delay-3 { animation-delay: 0.15s; }
+  .pe .delay-4 { animation-delay: 0.2s; }
+  .pe .delay-5 { animation-delay: 0.25s; }
 
-                <h1>
-    {% if profile.user.first_name or profile.user.last_name %}
-        {{ profile.user.first_name }} {{ profile.user.last_name }}
-    {% else %}
-        {{ profile.user.email }}
+  /* Breadcrumbs */
+  .pe .breadcrumb {
+    display: flex; align-items: center; gap: 10px; color: var(--text-muted);
+    font-size: 0.9rem; margin: 0 0 24px; font-weight: 500;
+  }
+  .pe .breadcrumb span:last-child { color: var(--text-main); font-weight: 600; }
+
+  /* Layout - Top Section (Sidebar + Employment) */
+  .pe .profile-layout { 
+    display: grid; 
+    grid-template-columns: 1fr; 
+    gap: 24px; 
+    margin-bottom: 24px; 
+  }
+  @media (min-width: 1024px) {
+    .pe .profile-layout { 
+      grid-template-columns: 320px 1fr;
+      align-items: start; 
+    }
+  }
+
+  /* Layout - Bottom Section (2-Column Grid) */
+  .pe .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  @media (min-width: 1024px) {
+    .pe .bottom-grid {
+      grid-template-columns: repeat(2, 1fr); 
+      align-items: start;
+    }
+  }
+
+  /* Left Sidebar Container */
+  .pe .sidebar-container {
+    position: sticky; 
+    top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .pe .sidebar-card {
+    background: var(--surface); 
+    border: 1px solid var(--border); 
+    border-radius: var(--radius-lg);
+    padding: 32px 24px; 
+    box-shadow: var(--shadow-md); 
+  }
+  
+  /* Sidebar Identity Profile */
+  .pe .sidebar-top { 
+    text-align: center; 
+    padding-bottom: 24px; 
+    border-bottom: 1px solid var(--border); 
+  }
+  .pe .avatar-xl {
+    width: 88px; height: 88px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #4e8a69); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; font-weight: 700; margin: 0 auto 16px;
+    box-shadow: 0 4px 12px var(--primary-ring);
+  }
+  .pe .sidebar-card h1 { font-size: 1.4rem; font-weight: 700; color: var(--text-main); margin: 0 0 4px; letter-spacing: -0.02em; }
+  .pe .sidebar-card .sub { color: var(--text-muted); font-size: 0.9rem; margin: 0 0 16px; }
+  
+  /* Sidebar Quick Details */
+  .pe .mini-list { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 16px; }
+  .pe .mini-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 0.9rem; }
+  .pe .mini-list span { color: var(--text-muted); }
+  .pe .mini-list strong { color: var(--text-main); font-weight: 600; text-align: right; }
+  
+  /* Sidebar Vertical Navigation */
+  .pe .sidebar-nav {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .pe .sidebar-nav-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-light);
+    font-weight: 700;
+    margin-bottom: 8px;
+    padding-left: 12px;
+  }
+  .pe .sidebar-nav a {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+  }
+  .pe .sidebar-nav a:hover { 
+    background: var(--surface-hover); 
+    color: var(--text-main);
+    transform: translateX(4px);
+  }
+  .pe .sidebar-nav a.active {
+    background: var(--primary-light); 
+    color: var(--primary); 
+    font-weight: 600;
+  }
+
+  /* Content Cards */
+  .pe .content-card {
+    background: var(--surface); 
+    border: 1px solid var(--border); 
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.3s ease, transform 0.3s ease; 
+    scroll-margin-top: 24px;
+  }
+  .pe .content-card:hover { 
+    box-shadow: var(--shadow-lg); 
+  }
+  .pe .card-header { margin: 0 0 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .pe .card-header h2 { font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin: 0 0 4px; letter-spacing: -0.01em; }
+  .pe .card-header p { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
+
+  /* Form Layouts */
+  .pe .form-grid {
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+    gap: 20px 24px; 
+    align-items: start;
+  }
+  .pe .field.full { grid-column: 1 / -1; }
+  .pe .field label {
+    display: block; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.05em; font-weight: 600; margin: 0 0 8px;
+  }
+  .pe .field input[type="text"], .pe .field input[type="email"], .pe .field input[type="tel"],
+  .pe .field input[type="number"], .pe .field input[type="date"], .pe .field input[type="file"],
+  .pe .field select, .pe .field textarea {
+    width: 100%; box-sizing: border-box; padding: 10px 14px; height: 44px; font: inherit; font-size: 0.95rem;
+    color: var(--text-main); background: var(--surface-alt); border: 1px solid var(--border);
+    border-radius: var(--radius-md); transition: all 0.2s ease;
+  }
+  .pe .field input[type="file"] { height: auto; padding: 8px 12px; }
+  .pe .field textarea { height: auto; min-height: 96px; resize: vertical; }
+  
+  .pe .field input:hover, .pe .field select:hover, .pe .field textarea:hover {
+    border-color: #cbd5e1;
+  }
+  .pe .field input:focus, .pe .field select:focus, .pe .field textarea:focus {
+    outline: none; background: var(--surface); border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-ring);
+  }
+  .pe .field-help { font-size: 0.8rem; color: var(--text-light); margin-top: 6px; line-height: 1.4; }
+  .pe .field-error { font-size: 0.8rem; color: var(--danger); margin-top: 6px; font-weight: 500; }
+
+  /* Checkbox & Verification Grid */
+  .pe .check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+  .pe .check-card {
+    display: flex; align-items: center; gap: 12px; margin: 0; padding: 14px 16px;
+    background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--radius-md);
+    cursor: pointer; transition: all 0.2s ease;
+    font-size: 0.95rem; font-weight: 600; color: var(--text-main);
+  }
+  .pe .check-card:hover { background: var(--surface-hover); border-color: #cbd5e1; }
+  .pe .check-card:has(input:checked) { background: var(--primary-light); border-color: var(--primary-border); }
+  .pe .check-card input { width: 18px; height: 18px; accent-color: var(--primary); flex-shrink: 0; margin: 0; cursor: pointer; }
+
+  /* Buttons */
+  .pe .btn {
+    display: inline-flex; align-items: center; justify-content: center; padding: 12px 20px;
+    border-radius: var(--radius-md); font-weight: 600; font-size: 0.95rem; text-decoration: none; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text-main);
+    transition: all 0.2s ease; width: 100%; box-sizing: border-box;
+  }
+  .pe .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: var(--shadow-sm); }
+  .pe .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .pe .btn-inline { width: auto; margin-top: 24px; }
+  
+  .pe .form-footer { display: flex; justify-content: flex-end; margin-top: 12px; padding-top: 24px; border-top: 1px solid var(--border); }
+
+  /* Badges */
+  .pe .badge {
+    display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .pe .badge-neutral { background: #f3f4f6; color: #4b5563; }
+  .pe .badge-success { background: var(--success-light); color: var(--success-text); }
+  .pe .badge-warning { background: var(--warning-light); color: var(--warning-text); }
+
+  /* Tables */
+  .pe .table-container { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); margin-top: 24px; box-shadow: var(--shadow-sm); }
+  .pe table { width: 100%; border-collapse: collapse; text-align: left; margin: 0; background: var(--surface); }
+  .pe th {
+    background: var(--surface-alt); padding: 14px 16px; font-size: 0.8rem; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border);
+  }
+  .pe td { padding: 16px; font-size: 0.95rem; color: var(--text-main); border-bottom: 1px solid var(--border); }
+  .pe tr:last-child td { border-bottom: none; }
+  .pe tbody tr:hover { background: var(--surface-hover); }
+  .pe .text-primary { color: var(--primary); text-decoration: none; font-weight: 600; }
+  .pe .text-primary:hover { text-decoration: underline; }
+
+  /* Empty States & Alerts */
+  .pe .empty-state {
+    text-align: center; padding: 40px 24px; margin-top: 24px; background: var(--surface-alt);
+    border-radius: var(--radius-md); border: 2px dashed #cbd5e1;
+  }
+  .pe .empty-state h3 { font-size: 1.1rem; color: var(--text-main); margin: 0 0 8px; font-weight: 600; }
+  .pe .empty-state p { font-size: 0.95rem; color: var(--text-muted); margin: 0; }
+  
+  .pe .alert {
+    padding: 14px 16px; border-radius: var(--radius-md); margin-bottom: 24px;
+    background: var(--danger-light); color: var(--danger); border: 1px solid #fecaca; font-size: 0.95rem; font-weight: 500;
+  }
+  
+  /* Salary Wrapper */
+  .pe .salary-wrapper {
+    background: var(--surface); 
+    border: 1px solid var(--border); 
+    border-radius: var(--radius-lg);
+    padding: 32px; 
+    box-shadow: var(--shadow-sm);
+    scroll-margin-top: 24px;
+  }
+</style>
+
+<div class="pe">
+
+    <div class="breadcrumb animate-block">
+        <span>Employees</span>
+        <span>/</span>
+        <span>{% if profile.user.first_name or profile.user.last_name %}{{ profile.user.first_name }} {{ profile.user.last_name }}{% else %}{{ profile.user.email }}{% endif %}</span>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert animate-block">{{ message }}</div>
+        {% endfor %}
     {% endif %}
-</h1>
 
-<p class="sky-help-text">
-    {{ profile.user.email }}
-</p>
-            </div>
-        </div>
+    <form method="post" id="profile-form">
+        {% csrf_token %}
 
-        {% if messages %}
-            {% for message in messages %}
-                <div class="sky-auth-error-banner">
-                    {{ message }}
-                </div>
-            {% endfor %}
+        {% if form.non_field_errors %}
+            <div class="alert">{{ form.non_field_errors }}</div>
         {% endif %}
 
-        <div class="sky-panel">
-
-            <div class="sky-panel-head">
-                <h6>Employment Details</h6>
-            </div>
-
-            <div class="sky-panel-body">
-
-                {% if form.non_field_errors %}
-                    <div class="sky-auth-error-banner">
-                        {{ form.non_field_errors }}
-                    </div>
-                {% endif %}
-
-                <form method="post">
-                    {% csrf_token %}
-
-                    <div class="row">
-                        <div class="row">
-
-    <!-- First Name -->
-    {% if form.first_name %}
-        <div class="col-md-6 mb-3">
-
-            <label
-                class="sky-form-label"
-                for="{{ form.first_name.id_for_label }}"
-            >
-                {{ form.first_name.label }}
-            </label>
-
-            {{ form.first_name }}
-
-            {% for error in form.first_name.errors %}
-                <div class="sky-form-error">
-                    {{ error }}
-                </div>
-            {% endfor %}
-
-        </div>
-    {% endif %}
-
-
-    <!-- Last Name -->
-    {% if form.last_name %}
-        <div class="col-md-6 mb-3">
-
-            <label
-                class="sky-form-label"
-                for="{{ form.last_name.id_for_label }}"
-            >
-                {{ form.last_name.label }}
-            </label>
-
-            {{ form.last_name }}
-
-            {% for error in form.last_name.errors %}
-                <div class="sky-form-error">
-                    {{ error }}
-                </div>
-            {% endfor %}
-
-        </div>
-    {% endif %}
-
-
-    <!-- Email -->
-    {% if form.email %}
-        <div class="col-md-6 mb-3">
-
-            <label
-                class="sky-form-label"
-                for="{{ form.email.id_for_label }}"
-            >
-                {{ form.email.label }}
-            </label>
-
-            {{ form.email }}
-            
-
-            {% for error in form.email.errors %}
-                <div class="sky-form-error">
-                    {{ error }}
-                </div>
-            {% endfor %}
-
-        </div>
-    {% endif %}
-
-
-                        <!-- Access Group -->
-                        {% if form.access_group %}
-                            <div class="col-md-6 mb-3">
-
-                                <label
-                                    class="sky-form-label"
-                                    for="{{ form.access_group.id_for_label }}"
-                                >
-                                    {{ form.access_group.label }}
-                                </label>
-
-                                {{ form.access_group }}
-
-                                {% if form.access_group.help_text %}
-                                    <div class="sky-help-text">
-                                        {{ form.access_group.help_text }}
-                                    </div>
-                                {% endif %}
-
-                                {% for error in form.access_group.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
+        <!-- TOP SECTION -->
+        <div class="profile-layout">
+            <aside class="animate-block delay-1">
+                <div class="sidebar-container">
+                    <div class="sidebar-card">
+                        <div class="sidebar-top">
+                            <div class="avatar-xl">
+                                {% if profile.user.first_name %}{{ profile.user.first_name|first|upper }}{% else %}{{ profile.user.email|first|upper }}{% endif %}
                             </div>
-                        {% endif %}
-
-
-                        <!-- Designation -->
-                        {% if form.designation %}
-                            <div class="col-md-6 mb-3">
-
-                                <label
-                                    class="sky-form-label"
-                                    for="{{ form.designation.id_for_label }}"
-                                >
-                                    {{ form.designation.label }}
-                                </label>
-
-                                {{ form.designation }}
-
-                                {% for error in form.designation.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
-                        {% endif %}
-
-
-                        <!-- Manager -->
-                        {% if form.manager %}
-                            <div class="col-md-6 mb-3">
-
-                                <label
-                                    class="sky-form-label"
-                                    for="{{ form.manager.id_for_label }}"
-                                >
-                                    Reporting Manager
-                                </label>
-
-                                {{ form.manager }}
-
-                                {% if form.manager.help_text %}
-                                    <div class="sky-help-text">
-                                        {{ form.manager.help_text }}
-                                    </div>
-                                {% endif %}
-
-                                {% for error in form.manager.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
-                        {% endif %}
-
-
-                        <!-- Shift -->
-                        {% if form.shift %}
-                            <div class="col-md-6 mb-3">
-
-                                <label
-                                    class="sky-form-label"
-                                    for="{{ form.shift.id_for_label }}"
-                                >
-                                    Assigned Shift
-                                </label>
-
-                                {{ form.shift }}
-
-                                {% for error in form.shift.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
-                        {% endif %}
-
-
-                        <!-- Position -->
-                        {% if form.position %}
-                            <div class="col-md-6 mb-3">
-
-                                <label
-                                    class="sky-form-label"
-                                    for="{{ form.position.id_for_label }}"
-                                >
-                                    {{ form.position.label }}
-                                </label>
-
-                                {{ form.position }}
-
-                                {% for error in form.position.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
-                        {% endif %}
-
-
-                        <!-- Date Hired -->
-                        {% if form.date_hired %}
-                            <div class="col-md-6 mb-3">
-
-                                <label
-                                    class="sky-form-label"
-                                    for="{{ form.date_hired.id_for_label }}"
-                                >
-                                    {{ form.date_hired.label }}
-                                </label>
-
-                                {{ form.date_hired }}
-
-                                {% for error in form.date_hired.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
-                        {% endif %}
-
-                    </div>
-
-
-                    <hr>
-
-
-                    <!-- Personal Details -->
-                    <div class="sky-panel-head px-0">
-                        <h6>Personal and Contact Details</h6>
-                    </div>
-
-                    <div class="row">
-
-                        <!-- Phone -->
-                        {% if form.phone_number %}
-                            <div class="col-md-6 mb-3">
-
-                                <label
-                                    class="sky-form-label"
-                                    for="{{ form.phone_number.id_for_label }}"
-                                >
-                                    {{ form.phone_number.label }}
-                                </label>
-
-                                {{ form.phone_number }}
-
-                                {% for error in form.phone_number.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
-                        {% endif %}
-
-
-                        <!-- State -->
-                        {% if form.state %}
-                            <div class="col-md-6 mb-3">
-
-                                <label
-                                    class="sky-form-label"
-                                    for="{{ form.state.id_for_label }}"
-                                >
-                                    {{ form.state.label }}
-                                </label>
-
-                                {{ form.state }}
-
-                                {% for error in form.state.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
-                        {% endif %}
-
-
-                        <!-- Zip -->
-                        {% if form.zip_code %}
-                            <div class="col-md-6 mb-3">
-
-                                <label
-                                    class="sky-form-label"
-                                    for="{{ form.zip_code.id_for_label }}"
-                                >
-                                    {{ form.zip_code.label }}
-                                </label>
-
-                                {{ form.zip_code }}
-
-                                {% for error in form.zip_code.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
-                        {% endif %}
-
-
-                        <!-- Address -->
-                        {% if form.address %}
-                            <div class="col-12 mb-3">
-
-                                <label
-                                    class="sky-form-label"
-                                    for="{{ form.address.id_for_label }}"
-                                >
-                                    {{ form.address.label }}
-                                </label>
-
-                                {{ form.address }}
-
-                                {% for error in form.address.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
-                        {% endif %}
-
-                    </div>
-
-
-                    <hr>
-
-
-                    <!-- Verification -->
-                    <div class="sky-panel-head px-0">
-                        <h6>Verification and Status</h6>
-                    </div>
-
-                    <!-- Default Manager: own full-width row so its help text -->
-                    <!-- never stretches / pushes down the checkbox grid below. -->
-                    {% if form.is_default_manager %}
-                        <div class="row">
-                            <div class="col-12 mb-3">
-
-                                <label class="sky-check">
-
-                                    {{ form.is_default_manager }}
-
-                                    <span>
-                                        Default manager for new employees
-                                    </span>
-
-                                </label>
-
-                                {% if form.is_default_manager.help_text %}
-                                    <div class="sky-help-text">
-                                        {{ form.is_default_manager.help_text }}
-                                    </div>
-                                {% endif %}
-
-                                {% for error in form.is_default_manager.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
+                            <h1>{% if profile.user.first_name or profile.user.last_name %}{{ profile.user.first_name }} {{ profile.user.last_name }}{% else %}{{ profile.user.email }}{% endif %}</h1>
+                            <p class="sub">{{ profile.user.email }}</p>
+                            <span class="badge {% if profile.is_active %}badge-success{% else %}badge-neutral{% endif %}">
+                                {% if profile.is_active %}Active Employee{% else %}Inactive Employee{% endif %}
+                            </span>
                         </div>
+
+                        <ul class="mini-list">
+                            <li><span>Designation</span><strong>{{ form.designation.value|default:"—" }}</strong></li>
+                            <li><span>Phone</span><strong>{{ form.phone_number.value|default:"—" }}</strong></li>
+                            <li><span>Date hired</span><strong>{{ form.date_hired.value|default:"—" }}</strong></li>
+                        </ul>
+
+                        <div style="margin-top: 24px;">
+                            <button type="submit" form="profile-form" class="btn btn-primary">Save Changes</button>
+                        </div>
+
+                        <nav class="sidebar-nav">
+                            <div class="sidebar-nav-title">Profile Sections</div>
+                            <a href="#employment">Employment Details</a>
+                            <a href="#personal">Personal &amp; Contact</a>
+                            <a href="#verification">Verification &amp; Status</a>
+                            <a href="#documents">Documents</a>
+                            <a href="#salary">Salary Metrics</a>
+                        </nav>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="top-content">
+                <section id="employment" class="content-card animate-block delay-2">
+                    <div class="card-header">
+                        <h2>Employment Details</h2>
+                        <p>Role, reporting line and work schedule.</p>
+                    </div>
+                    <div class="form-grid">
+
+                        {% if form.first_name %}
+                        <div class="field">
+                            <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                            {{ form.first_name }}
+                            {% for error in form.first_name.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if form.last_name %}
+                        <div class="field">
+                            <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+                            {{ form.last_name }}
+                            {% for error in form.last_name.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if form.email %}
+                        <div class="field">
+                            <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                            {{ form.email }}
+                            {% for error in form.email.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if form.access_group %}
+                        <div class="field">
+                            <label for="{{ form.access_group.id_for_label }}">{{ form.access_group.label }}</label>
+                            {{ form.access_group }}
+                            {% if form.access_group.help_text %}<div class="field-help">{{ form.access_group.help_text }}</div>{% endif %}
+                            {% for error in form.access_group.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if form.designation %}
+                        <div class="field">
+                            <label for="{{ form.designation.id_for_label }}">{{ form.designation.label }}</label>
+                            {{ form.designation }}
+                            {% for error in form.designation.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if form.manager %}
+                        <div class="field">
+                            <label for="{{ form.manager.id_for_label }}">Reporting Manager</label>
+                            {{ form.manager }}
+                            {% if form.manager.help_text %}<div class="field-help">{{ form.manager.help_text }}</div>{% endif %}
+                            {% for error in form.manager.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if form.shift %}
+                        <div class="field">
+                            <label for="{{ form.shift.id_for_label }}">Assigned Shift</label>
+                            {{ form.shift }}
+                            {% for error in form.shift.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if form.position %}
+                        <div class="field">
+                            <label for="{{ form.position.id_for_label }}">{{ form.position.label }}</label>
+                            {{ form.position }}
+                            {% for error in form.position.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if form.date_hired %}
+                        <div class="field">
+                            <label for="{{ form.date_hired.id_for_label }}">{{ form.date_hired.label }}</label>
+                            {{ form.date_hired }}
+                            {% for error in form.date_hired.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- BOTTOM SECTION ROW 1 -->
+        <div class="bottom-grid">
+            <section id="personal" class="content-card animate-block delay-3">
+                <div class="card-header">
+                    <h2>Personal &amp; Contact Details</h2>
+                    <p>How to reach this employee.</p>
+                </div>
+                <div class="form-grid">
+
+                    {% if form.phone_number %}
+                    <div class="field">
+                        <label for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>
+                        {{ form.phone_number }}
+                        {% for error in form.phone_number.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                    </div>
                     {% endif %}
 
+                    {% if form.state %}
+                    <div class="field">
+                        <label for="{{ form.state.id_for_label }}">{{ form.state.label }}</label>
+                        {{ form.state }}
+                        {% for error in form.state.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                    </div>
+                    {% endif %}
 
-                    <div class="row">
+                    {% if form.zip_code %}
+                    <div class="field">
+                        <label for="{{ form.zip_code.id_for_label }}">{{ form.zip_code.label }}</label>
+                        {{ form.zip_code }}
+                        {% for error in form.zip_code.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                    </div>
+                    {% endif %}
 
-                        <!-- Active -->
-                        {% if form.is_active %}
-                            <div class="col-md-4 mb-3">
+                    {% if form.address %}
+                    <div class="field full">
+                        <label for="{{ form.address.id_for_label }}">{{ form.address.label }}</label>
+                        {{ form.address }}
+                        {% for error in form.address.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                    </div>
+                    {% endif %}
 
-                                <label class="sky-check">
+                </div>
+            </section>
 
-                                    {{ form.is_active }}
+            <section id="verification" class="content-card animate-block delay-4">
+                <div class="card-header">
+                    <h2>Verification &amp; Status</h2>
+                    <p>Account status and completed background checks.</p>
+                </div>
 
-                                    <span>
-                                        {{ form.is_active.label }}
-                                    </span>
+                <div style="margin-bottom: 24px;">
+                    <label class="check-card">
+                        {{ form.is_default_manager }}
+                        <span>Default manager for new employees</span>
+                    </label>
+                    {% if form.is_default_manager.help_text %}<div class="field-help">{{ form.is_default_manager.help_text }}</div>{% endif %}
+                    {% for error in form.is_default_manager.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                </div>
 
-                                </label>
-
-                                {% for error in form.is_active.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
-                        {% endif %}
-
-
-                        <!-- Email -->
-                        {% if form.is_email_verified %}
-                            <div class="col-md-4 mb-3">
-
-                                <label class="sky-check">
-
-                                    {{ form.is_email_verified }}
-
-                                    <span>
-                                        {{ form.is_email_verified.label }}
-                                    </span>
-
-                                </label>
-
-                                {% for error in form.is_email_verified.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
-                        {% endif %}
-
-
-                        <!-- Phone -->
-                        {% if form.is_phone_verified %}
-                            <div class="col-md-4 mb-3">
-
-                                <label class="sky-check">
-
-                                    {{ form.is_phone_verified }}
-
-                                    <span>
-                                        {{ form.is_phone_verified.label }}
-                                    </span>
-
-                                </label>
-
-                                {% for error in form.is_phone_verified.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
-                        {% endif %}
-
-
-                        <!-- Address -->
-                        {% if form.is_address_verified %}
-                            <div class="col-md-4 mb-3">
-
-                                <label class="sky-check">
-
-                                    {{ form.is_address_verified }}
-
-                                    <span>
-                                        {{ form.is_address_verified.label }}
-                                    </span>
-
-                                </label>
-
-                                {% for error in form.is_address_verified.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
-                        {% endif %}
-
-
-                        <!-- Aadhar -->
-                        {% if form.is_aadhar_verified %}
-                            <div class="col-md-4 mb-3">
-
-                                <label class="sky-check">
-
-                                    {{ form.is_aadhar_verified }}
-
-                                    <span>
-                                        {{ form.is_aadhar_verified.label }}
-                                    </span>
-
-                                </label>
-
-                                {% for error in form.is_aadhar_verified.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
-                        {% endif %}
-
-
-                        <!-- Background Check -->
-                        {% if form.is_background_check_completed %}
-                            <div class="col-md-4 mb-3">
-
-                                <label class="sky-check">
-
-                                    {{ form.is_background_check_completed }}
-
-                                    <span>
-                                        {{ form.is_background_check_completed.label }}
-                                    </span>
-
-                                </label>
-
-                                {% for error in form.is_background_check_completed.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-
-                            </div>
-                        {% endif %}
-
+                <div class="check-grid">
+                    <div>
+                        <label class="check-card">{{ form.is_active }}<span>Active Employee</span></label>
+                        {% for error in form.is_active.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
                     </div>
 
+                    <div>
+                        <label class="check-card">{{ form.is_email_verified }}<span>Email Verified</span></label>
+                        {% for error in form.is_email_verified.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                    </div>
 
-                    <button
-                        type="submit"
-                        class="sky-header-btn"
-                    >
-                        Save Changes
-                    </button>
+                    <div>
+                        <label class="check-card">{{ form.is_phone_verified }}<span>Phone Verified</span></label>
+                        {% for error in form.is_phone_verified.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                    </div>
 
-                </form>
+                    <div>
+                        <label class="check-card">{{ form.is_address_verified }}<span>Address Verified</span></label>
+                        {% for error in form.is_address_verified.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                    </div>
 
-            </div>
+                    <div>
+                        <label class="check-card">{{ form.is_aadhar_verified }}<span>Aadhar Verified</span></label>
+                        {% for error in form.is_aadhar_verified.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                    </div>
 
+                    <div>
+                        <label class="check-card">{{ form.is_background_check_completed }}<span>Background Check</span></label>
+                        {% for error in form.is_background_check_completed.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-footer">
+                    <button type="submit" class="btn btn-primary btn-inline">Save Changes</button>
+                </div>
+            </section>
         </div>
+    </form>
 
-        <div class="sky-panel">
-
-            <div class="sky-panel-head">
-                <h6>Documents</h6>
+    <!-- BOTTOM SECTION ROW 2 -->
+    <div class="bottom-grid">
+        <section id="documents" class="content-card animate-block delay-5">
+            <div class="card-header">
+                <h2>Documents</h2>
+                <p>Upload and track identity and employment documents.</p>
             </div>
 
-            <div class="sky-panel-body">
+            {% if document_form.non_field_errors %}
+                <div class="alert">{{ document_form.non_field_errors }}</div>
+            {% endif %}
 
-                {% if document_form.non_field_errors %}
-                    <div class="sky-auth-error-banner">
-                        {{ document_form.non_field_errors }}
+            <!-- FIX: Wrapped the action URL in a conditional block to prevent NoReverseMatch errors -->
+            <form method="post" 
+                  {% if profile and profile.uuid %}
+                      action="{% url 'profile_document_upload' profile.uuid %}" 
+                  {% else %}
+                      action=""
+                  {% endif %}
+                  enctype="multipart/form-data">
+                
+                {% csrf_token %}
+                <div class="form-grid" style="align-items: end;">
+                    <div class="field">
+                        <label for="{{ document_form.document_type.id_for_label }}">{{ document_form.document_type.label }}</label>
+                        {{ document_form.document_type }}
+                        {% for error in document_form.document_type.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
                     </div>
-                {% endif %}
-
-                <form method="post" action="{% url 'profile_document_upload' profile.uuid %}" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    
-
-                    <div class="row">
-
-                        <div class="col-md-6 mb-3">
-                            <label
-                                class="sky-form-label"
-                                for="{{ document_form.document_type.id_for_label }}"
-                            >
-                                {{ document_form.document_type.label }}
-                            </label>
-
-                            {{ document_form.document_type }}
-
-                            {% for error in document_form.document_type.errors %}
-                                <div class="sky-form-error">
-                                    {{ error }}
-                                </div>
-                            {% endfor %}
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label
-                                class="sky-form-label"
-                                for="{{ document_form.file.id_for_label }}"
-                            >
-                                {{ document_form.file.label }}
-                            </label>
-
-                            {{ document_form.file }}
-
-                            <div class="sky-help-text">
-                                PDF, JPG, PNG or DOCX. Max 5MB.
-                            </div>
-
-                            {% for error in document_form.file.errors %}
-                                <div class="sky-form-error">
-                                    {{ error }}
-                                </div>
-                            {% endfor %}
-                        </div>
-
+                    <div class="field">
+                        <label for="{{ document_form.file.id_for_label }}">{{ document_form.file.label }}</label>
+                        {{ document_form.file }}
+                        {% for error in document_form.file.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
                     </div>
+                    <div>
+                        <button type="submit" class="btn btn-primary" {% if not profile or not profile.uuid %}disabled{% endif %}>Upload Document</button>
+                    </div>
+                </div>
+                <div class="field-help" style="margin-top: 12px;">Supported formats: PDF, JPG, PNG or DOCX. Maximum file size: 5MB.</div>
+            </form>
 
-                    <button type="submit" class="sky-header-btn">
-                        Upload Document
-                    </button>
-
-                </form>
-
-                <hr>
-
-                {% if documents %}
-                    <table class="table">
+            {% if documents %}
+                <div class="table-container">
+                    <table>
                         <thead>
-                            <tr>
-                                <th>Type</th>
-                                <th>Uploaded</th>
-                                <th>Status</th>
-                                <th>File</th>
-                            </tr>
+                            <tr><th>Document Type</th><th>Date Uploaded</th><th>Status</th><th>Actions</th></tr>
                         </thead>
                         <tbody>
                         {% for doc in documents %}
                             <tr>
-                                <td>{{ doc.document_type.name }}</td>
+                                <td style="font-weight: 600;">{{ doc.document_type.name }}</td>
                                 <td>{{ doc.uploaded_at|date:"d M Y" }}</td>
                                 <td>
-                                    {% if doc.is_verified %}
-                                        Verified
-                                    {% else %}
-                                        Pending
-                                    {% endif %}
+                                    <span class="badge {% if doc.is_verified %}badge-success{% else %}badge-warning{% endif %}">
+                                        {% if doc.is_verified %}Verified{% else %}Pending Verification{% endif %}
+                                    </span>
                                 </td>
-                                <td>
-                                    <a href="{{ doc.file.url }}" target="_blank">View</a>
-                                </td>
+                                <td><a class="text-primary" href="{{ doc.file.url }}" target="_blank">View File</a></td>
                             </tr>
                         {% endfor %}
                         </tbody>
                     </table>
-                {% else %}
-                    <p class="sky-help-text">No documents uploaded yet.</p>
-                {% endif %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <h3>No Documents Found</h3>
+                    <p>No verification or employment documents have been uploaded for this employee yet.</p>
+                </div>
+            {% endif %}
+        </section>
 
+        <section id="salary" class="salary-wrapper animate-block delay-5">
+            <div class="card-header">
+                <h2>Salary & Compensation</h2>
+                <p>Current payroll metrics and salary breakdown.</p>
             </div>
-
-        </div>
-        {% include "appEmp/_salary_block.html" %}
-
+            {% include "appEmp/_salary_block.html" %}
+        </section>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('.sidebar-nav a');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${entry.target.id}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, { rootMargin: '-20% 0px -70% 0px' });
+
+        sections.forEach(section => observer.observe(section));
+    });
+</script>
 {% endblock %}

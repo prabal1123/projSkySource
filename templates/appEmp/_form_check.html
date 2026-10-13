@@ -1,0 +1,11 @@
+{% if field %}
+<div class="check-wrap">
+    <label class="check-card">
+        {{ field }}
+        <span>{{ field.label }}</span>
+    </label>
+    {% for error in field.errors %}
+        <div class="field-error">{{ error }}</div>
+    {% endfor %}
+</div>
+{% endif %}

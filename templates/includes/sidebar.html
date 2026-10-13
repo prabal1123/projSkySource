@@ -384,6 +384,43 @@
     color: #f87171 !important;
     background: rgba(248, 113, 113, 0.12) !important;
 }
+
+/* =========================================================
+   4. MOBILE RESPONSIVENESS & OVERLAY (ADDED FIX)
+========================================================= */
+@media (max-width: 991px) {
+    #hrSidebar.hr-sidebar {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s ease-in-out !important;
+        z-index: 1050 !important;
+    }
+    
+    #hrSidebar.hr-sidebar.show-mobile {
+        transform: translateX(0) !important;
+    }
+
+    .hr-sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(10, 55, 40, 0.4);
+        backdrop-filter: blur(2px);
+        z-index: 1040;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .hr-sidebar-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+}
 </style>
 
 <aside class="hr-sidebar" id="hrSidebar">
