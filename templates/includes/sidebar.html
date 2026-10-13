@@ -426,11 +426,7 @@
         {% endif %}
 
         <!-- Quick Search -->
-        <div class="hr-sidebar-search">
-            <i class="bi bi-search"></i>
-            <input type="text" placeholder="Search" />
-            <kbd>&#8984;K</kbd>
-        </div>
+
     </div>
 
     <!-- ========================================= -->
@@ -656,10 +652,7 @@
                 </a>
             {% endif %}
 
-            <a href="{% url 'password_change' %}" class="hr-sidebar-link {% if request.resolver_match.url_name == 'password_change' %}active{% endif %}">
-                <i class="bi bi-shield-lock"></i>
-                <span>Change Password</span>
-            </a>
+
         </div>
 
     </nav>
