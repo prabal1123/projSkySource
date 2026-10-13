@@ -53,6 +53,34 @@
             </div>
         </div>
 
+        {% if can_change_status or can_edit %}
+<div class="sky-panel" style="margin-bottom: 1rem;">
+    <div class="pj-body">
+        <h6 style="margin-bottom: .75rem;">Manage</h6>
+        {% if can_change_status %}
+            <form method="post" action="{% url 'projectActionStatus' project.uuid action.uuid %}" style="display: flex; gap: .5rem; align-items: center; margin-bottom: .75rem;">
+                {% csrf_token %}
+                <select name="status" class="form-select" style="max-width: 220px;">
+                    {% for value, label in status_choices %}<option value="{{ value }}"{% if value == action.status %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+                <button type="submit" class="pj-btn">Save status</button>
+            </form>
+        {% endif %}
+        {% if can_edit %}
+            <form method="post" action="{% url 'projectActionReassign' project.uuid action.uuid %}" style="display: flex; gap: .5rem; align-items: center; margin-bottom: .75rem;">
+                {% csrf_token %}
+                <div style="min-width: 220px;">{{ reassign_form.assignee }}</div>
+                <button type="submit" class="pj-btn">Save assignee</button>
+            </form>
+            <form method="post" action="{% url 'projectActionDelete' project.uuid action.uuid %}" onsubmit="return confirm('Delete this action{% if subtasks %} and its {{ subtasks|length }} subtask{{ subtasks|length|pluralize }}{% endif %}? This cannot be undone.');">
+                {% csrf_token %}
+                <button type="submit" class="pj-btn pj-btn-ghost">Delete action</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
         {% if subtasks %}
             <div class="sky-panel" style="margin-bottom: 1rem;">
                 <div class="pj-body">

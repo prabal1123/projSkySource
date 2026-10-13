@@ -34,7 +34,7 @@ def _require_manager(actor, org):
         raise PermissionDenied("You may not manage actions in this project.")
 
 
-def _can_change_status(actor, action):
+def can_change_status(actor, action):
     if can_manage_projects(actor, action.organization):
         return True
     return bool(
@@ -155,7 +155,7 @@ def change_status(action, new_status, actor):
     if not isinstance(new_status, str) or new_status not in dict(Action.STATUS_CHOICES):
         raise ValidationError({"status": "Choose a valid status."})
     action = _lock(action)
-    if not _can_change_status(actor, action):
+    if not can_change_status(actor, action):
         raise PermissionDenied("Only the assignee or a project manager can change the status.")
     _require_writable(action.project)
     old = action.status

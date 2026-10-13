@@ -37,3 +37,20 @@ class ActionForm(forms.Form):
             .order_by("user__first_name", "user__last_name")
         )
         self.fields["assignee"].widget.attrs["class"] = "form-select"
+
+
+class ReassignForm(forms.Form):
+    assignee = LeadChoiceField(
+        queryset=empProfile.objects.none(), required=False, empty_label="Unassigned"
+    )
+
+    def __init__(self, *args, project, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["assignee"].queryset = (
+            empProfile.objects.filter(
+                organization=project.organization, project=project, is_active=True
+            )
+            .select_related("user")
+            .order_by("user__first_name", "user__last_name")
+        )
+        self.fields["assignee"].widget.attrs["class"] = "form-select"

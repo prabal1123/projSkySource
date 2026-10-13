@@ -15,4 +15,7 @@ urlpatterns = [
     path("<uuid:uuid>/actions/new/", action_views.action_create_view, name="projectActionCreate"),
     path("<uuid:uuid>/actions/<uuid:action_uuid>/", action_views.action_detail_view, name="projectActionDetail"),
     path("<uuid:uuid>/actions/<uuid:action_uuid>/edit/", action_views.action_edit_view, name="projectActionEdit"),
+    path("<uuid:uuid>/actions/<uuid:action_uuid>/status/", action_views.action_status_view, name="projectActionStatus"),
+    path("<uuid:uuid>/actions/<uuid:action_uuid>/reassign/", action_views.action_reassign_view, name="projectActionReassign"),
+    path("<uuid:uuid>/actions/<uuid:action_uuid>/delete/", action_views.action_delete_view, name="projectActionDelete"),
 ]

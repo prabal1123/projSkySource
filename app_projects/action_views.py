@@ -8,6 +8,7 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, F
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 from django.urls import reverse
 from django.utils import timezone
 
@@ -15,7 +16,7 @@ from appEmp.models import empProfile
 
 from . import services
 from .access import can_manage_projects, get_visible_project_or_404, visible_projects
-from .action_forms import ActionForm
+from .action_forms import ActionForm, ReassignForm
 from .models import Action
 from .views import _current_org, _require_manage
 
@@ -181,6 +182,9 @@ def action_detail_view(request, uuid, action_uuid):
         "action": action,
         "subtasks": subtasks,
         "history": _history(events, org),
+        "can_change_status": services.can_change_status(request.user, action) and not project.is_archived,
+        "status_choices": Action.STATUS_CHOICES,
+        "reassign_form": ReassignForm(project=project, initial={"assignee": action.assignee_id}) if _can_edit(request, org, project) else None,
         "can_edit": _can_edit(request, org, project),
         "today": timezone.localdate(),
     })
@@ -296,3 +300,54 @@ def my_actions_view(request):
         "show_done": show_done,
         "today": timezone.localdate(),
     })
+
+
+
+@login_required
+@require_POST
+def action_status_view(request, uuid, action_uuid):
+    project = get_visible_project_or_404(request, uuid)
+    action = _get_action(project, action_uuid)
+    try:
+        services.change_status(action, request.POST.get("status"), request.user)
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+    else:
+        messages.success(request, "Status updated.")
+    return redirect(_detail_url(project, action))
+
+
+@login_required
+@require_POST
+def action_reassign_view(request, uuid, action_uuid):
+    org = _current_org(request)
+    project = get_visible_project_or_404(request, uuid)
+    action = _get_action(project, action_uuid)
+    _require_manage(request, org)
+    form = ReassignForm(request.POST, project=project)
+    if not form.is_valid():
+        messages.error(request, "Choose a person on this project's team, or Unassigned.")
+        return redirect(_detail_url(project, action))
+    try:
+        services.reassign(action, form.cleaned_data["assignee"], request.user)
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+    else:
+        messages.success(request, "Assignee updated.")
+    return redirect(_detail_url(project, action))
+
+
+@login_required
+@require_POST
+def action_delete_view(request, uuid, action_uuid):
+    org = _current_org(request)
+    project = get_visible_project_or_404(request, uuid)
+    action = _get_action(project, action_uuid)
+    _require_manage(request, org)
+    try:
+        services.delete_action(action, request.user)
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+        return redirect(_detail_url(project, action))
+    messages.success(request, "Action deleted.")
+    return redirect(_list_url(project))
