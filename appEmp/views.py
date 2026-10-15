@@ -281,6 +281,25 @@ def employee_bulk_import_view(request):
             messages.error(request, "No validated employees are available for import.")
             return redirect("employeeBulkImport")
 
+        from app_organizations.entitlements import seats_left
+
+        left = seats_left(request.current_org)
+        if left is not None:
+            new_rows = sum(
+                1 for r in import_rows
+                if r["user_fields"].get("email")
+                and not User.objects.filter(
+                    email__iexact=r["user_fields"]["email"]
+                ).exists()
+            )
+            if new_rows > left:
+                messages.error(
+                    request,
+                    f"Your plan allows {left} more employee(s); this file would add {new_rows}. "
+                    "Nothing was imported.",
+                )
+                return redirect("employeeBulkImport")
+
         created_count, skipped_count, project_skipped_count = 0, 0, 0
 
         project_ids = {r.get("project_id") for r in import_rows if r.get("project_id")}

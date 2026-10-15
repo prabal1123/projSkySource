@@ -233,6 +233,17 @@ def register_view(request):
             messages.error(request, "An account with this email already exists.")
             return render(request, "appAuth/register.html", {"form": form})
 
+        from app_organizations.entitlements import seats_left
+
+        left = seats_left(request.current_org)
+        if left is not None and left < 1:
+            messages.error(
+                request,
+                "Your plan's employee limit has been reached. "
+                "Please contact support to add more employees.",
+            )
+            return render(request, "appAuth/register.html", {"form": form})
+
         user = User(
             username=email,  # email doubles as username since login is email/OTP-based
             email=email,

@@ -10,6 +10,10 @@ class Organization(models.Model):
         related_name="organizations_created",
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    max_employees = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text="Most active employees this organization may have. Empty means unlimited.",
+    )
 
     def __str__(self):
         return self.name

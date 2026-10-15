@@ -3,8 +3,6 @@ from django.utils import timezone
 
 from .models import OrganizationModule
 from .modules import CORE, MODULES, effective_modules
-from .models import OrganizationModule
-from .modules import CORE, MODULES, effective_modules
 
 def direct_module_keys(org):
     """Modules with their own enabled, unexpired row."""
@@ -49,3 +47,14 @@ def grant_modules(org, keys=None, source="manual"):
             module_key=key,
             defaults={"is_enabled": True, "expires_at": None, "source": source},
         )
+
+
+def seats_left(org):
+    """Seats left under the plan limit, or None if the org is unlimited."""
+    limit = getattr(org, "max_employees", None)
+    if limit is None:
+        return None
+    from appEmp.models import empProfile
+
+    used = empProfile.objects.filter(organization=org, is_active=True).count()
+    return max(limit - used, 0)
