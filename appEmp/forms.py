@@ -643,6 +643,8 @@ class SalaryForm(forms.ModelForm):
             "basic_salary",
             "hra",
             "pf",
+            "esi",
+            "other_deductions",
             "effective_date",
         ]
 
@@ -668,6 +670,20 @@ class SalaryForm(forms.ModelForm):
                 }
             ),
             "pf": forms.NumberInput(
+                attrs={
+                    "step": "0.01",
+                    "min": "0",
+                    "class": "form-control",
+                }
+            ),
+            "esi": forms.NumberInput(
+                attrs={
+                    "step": "0.01",
+                    "min": "0",
+                    "class": "form-control",
+                }
+            ),
+            "other_deductions": forms.NumberInput(
                 attrs={
                     "step": "0.01",
                     "min": "0",

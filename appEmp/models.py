@@ -664,6 +664,14 @@ class Salary(models.Model):
     basic_salary = EncryptedDecimalField(max_digits=12, decimal_places=2)
     hra = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
     pf = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)  # employee contribution, deducted not added
+    esi = EncryptedDecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Monthly ESI employee contribution (deducted, not added to CTC).",
+    )
+    other_deductions = EncryptedDecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Any other fixed monthly deduction (advances, professional tax, etc.).",
+    )
 
     # ── Wage-basis fields (for daily-wage register support) ────────────
     WAGE_TYPE_CHOICES = (
@@ -776,9 +784,18 @@ class Salary(models.Model):
         return (self.calculate_annual_tax() / Decimal('12')).quantize(Decimal('0.01'))
 
     @property
+    def fixed_deductions_monthly(self):
+        """PF + ESI + other fixed deductions (everything except TDS)."""
+        return self.pf + self.esi + self.other_deductions
+
+    @property
+    def total_deductions_monthly(self):
+        return self.fixed_deductions_monthly + self.calculate_monthly_tds()
+
+    @property
     def net_monthly_pay(self):
-        """Net Pay = Gross (Basic + HRA) minus PF (employee contribution) minus TDS."""
-        return self.gross_monthly - self.pf - self.calculate_monthly_tds()
+        """Net Pay = Gross (Basic + HRA) minus PF, ESI, other deductions and TDS."""
+        return self.gross_monthly - self.total_deductions_monthly
 
 
 class WageRegisterEntry(models.Model):
@@ -995,6 +1012,135 @@ class WageRegisterEntry(models.Model):
         self.mode_of_payment = mode
         self.payment_date = paid_on or date.today()
         self.save(update_fields=['mode_of_payment', 'payment_date', 'updated_at'])
+
+
+class PayrollRecord(models.Model):
+    """
+    Frozen monthly payroll snapshot for MONTHLY-wage employees (DAILY-wage staff
+    stay on WageRegisterEntry).
+
+    Why stored instead of derived: once HR locks a month, the figures on the
+    payslip must never change, even if attendance is edited later or the
+    salary is revised. Every amount and day-count is therefore a snapshot.
+    Amounts are encrypted like Salary; sum them in Python, not in the database.
+    """
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        editable=False,
+        related_name="payroll_records",
+    )
+    employee = models.ForeignKey(
+        empProfile, on_delete=models.PROTECT, related_name="payroll_records",
+    )
+    salary = models.ForeignKey(
+        Salary, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="payroll_records",
+        help_text="The salary revision that was active when this record was generated.",
+    )
+    year = models.PositiveIntegerField()
+    month = models.PositiveSmallIntegerField()  # 1-12
+    period_start = models.DateField()
+    period_end = models.DateField()
+
+    # ── Day breakdown (snapshot) ───────────────────────────────────────
+    days_in_period = models.PositiveSmallIntegerField()
+    working_days = models.PositiveSmallIntegerField(default=0)
+    present_days = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    paid_leave_days = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    holiday_days = models.PositiveSmallIntegerField(default=0)
+    weekly_off_days = models.PositiveSmallIntegerField(default=0)
+    unpaid_leave_days = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    absent_days = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+    lop_days = models.DecimalField(
+        max_digits=5, decimal_places=1, default=0,
+        help_text="Loss-of-pay days = unpaid leave + absent (+ half-day shortfalls).",
+    )
+    payable_days = models.DecimalField(max_digits=5, decimal_places=1, default=0)
+
+    # ── Money (snapshot, encrypted) ────────────────────────────────────
+    basic_salary = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    hra = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    gross_monthly = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    gross_earned = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    pf = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    esi = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    other_deductions = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    tds = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    total_deductions = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    net_pay = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+
+    # ── Lock state ─────────────────────────────────────────────────────
+    is_locked = models.BooleanField(default=False)
+    locked_by = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="payroll_records_locked",
+    )
+    locked_at = models.DateTimeField(null=True, blank=True)
+
+    mode_of_payment = models.CharField(max_length=100, blank=True)
+    payment_date = models.DateField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    LOCK_FIELDS = {
+        "is_locked", "locked_by", "locked_at",
+        "mode_of_payment", "payment_date", "updated_at",
+    }
+
+    class Meta:
+        ordering = ["-year", "-month", "employee__user__first_name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["employee", "year", "month"],
+                name="unique_payroll_record_per_employee_month",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["organization", "year", "month"]),
+        ]
+
+    def __str__(self):
+        return f"{self.employee} - {self.year}-{self.month:02d}"
+
+    def save(self, *args, **kwargs):
+        self.organization_id = self.employee.organization_id
+        # A locked record is a legal/financial snapshot: only lock-state and
+        # payment fields may change on it. Unlock first to recalculate.
+        if self.pk:
+            persisted_locked = PayrollRecord.objects.filter(
+                pk=self.pk, is_locked=True
+            ).exists()
+            if persisted_locked:
+                update_fields = kwargs.get("update_fields")
+                if not update_fields or not set(update_fields) <= self.LOCK_FIELDS:
+                    raise ValidationError(
+                        "This payroll record is locked. Unlock it before changing it."
+                    )
+        super().save(*args, **kwargs)
+
+    def lock(self, user):
+        self.is_locked = True
+        self.locked_by = user
+        self.locked_at = timezone.now()
+        self.save(update_fields=["is_locked", "locked_by", "locked_at", "updated_at"])
+
+    def unlock(self):
+        self.is_locked = False
+        self.locked_by = None
+        self.locked_at = None
+        self.save(update_fields=["is_locked", "locked_by", "locked_at", "updated_at"])
+
+    def delete(self, *args, **kwargs):
+        if self.is_locked:
+            raise ValidationError("A locked payroll record cannot be deleted.")
+        return super().delete(*args, **kwargs)
+
+    @property
+    def period_label(self):
+        return date(self.year, self.month, 1).strftime("%B %Y")
 
 
 class WorkSchedule(models.Model):

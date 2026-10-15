@@ -155,6 +155,24 @@
             </div>
 
             <div class="salary-field">
+              <label for="{{ salary_form.esi.id_for_label }}">ESI</label>
+              <div class="currency-input">
+                <span class="symbol">₹</span>
+                {{ salary_form.esi }}
+              </div>
+              {% for error in salary_form.esi.errors %}<div class="field-error" style="color: var(--danger);">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="salary-field">
+              <label for="{{ salary_form.other_deductions.id_for_label }}">Other Deductions</label>
+              <div class="currency-input">
+                <span class="symbol">₹</span>
+                {{ salary_form.other_deductions }}
+              </div>
+              {% for error in salary_form.other_deductions.errors %}<div class="field-error" style="color: var(--danger);">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="salary-field">
               <label for="{{ salary_form.effective_date.id_for_label }}">Effective Date</label>
               {{ salary_form.effective_date }}
               {% for error in salary_form.effective_date.errors %}<div class="field-error" style="color: var(--danger);">{{ error }}</div>{% endfor %}

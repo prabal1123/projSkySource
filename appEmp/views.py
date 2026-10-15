@@ -2364,8 +2364,10 @@ def _build_salary_slip_pdf(salary, profile, month, year):
     deductions = [
         ['Deductions', 'Amount (INR)'],
         ['Provident Fund (PF)', f"{salary.pf:,.2f}"],
+        ['ESI', f"{salary.esi:,.2f}"],
+        ['Other Deductions', f"{salary.other_deductions:,.2f}"],
         ['TDS (Tax Deducted at Source)', f"{tds_monthly:,.2f}"],
-        ['Total Deductions', f"{(salary.pf + tds_monthly):,.2f}"],
+        ['Total Deductions', f"{salary.total_deductions_monthly:,.2f}"],
     ]
 
     t2 = Table(earnings, colWidths=[110 * mm, 50 * mm])
