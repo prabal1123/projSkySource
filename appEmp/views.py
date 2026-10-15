@@ -1465,16 +1465,31 @@ def dashboard_view(request):
             .count()
         )
 
-        pending_hr_actions_count = (
-            pending_leave_requests_count
-            + pending_attendance_exceptions_count
-            + pending_optional_holiday_requests_count
-            + pending_resignations_count
-            + pending_manager_noc_count
-            + pending_finance_noc_count
-            + ready_for_finalization_count
-            + pending_document_reviews_count
+        from app_organizations.entitlements import modules_for_request
+        mods = modules_for_request(request)
+
+        pending_hr_actions_count = 0
+        if "leave" in mods:
+            pending_hr_actions_count += pending_leave_requests_count
+        if "holidays" in mods:
+            pending_hr_actions_count += pending_optional_holiday_requests_count
+        if "attendance" in mods:
+            pending_hr_actions_count += pending_attendance_exceptions_count
+        if "documents" in mods:
+            pending_hr_actions_count += pending_document_reviews_count
+        if "exit_clearance" in mods:
+            pending_hr_actions_count += (
+                pending_resignations_count
+                + pending_manager_noc_count
+                + pending_finance_noc_count
+                + ready_for_finalization_count
+            )
+
+        show_pending_panel = any(
+            m in mods
+            for m in ("leave", "holidays", "attendance", "documents", "exit_clearance")
         )
+        show_admin_left_col = "projects" in mods or "holidays" in mods
 
         # -----------------------------------------------------
         # LEAVE OVERVIEW
@@ -1526,6 +1541,9 @@ def dashboard_view(request):
 
         context = {
             "is_admin_view": True,
+
+            "show_pending_panel": show_pending_panel,
+            "show_admin_left_col": show_admin_left_col,
 
             "total_employees":
                 total_employees,
@@ -1687,8 +1705,17 @@ def dashboard_view(request):
             )[:3]
         )
 
+        from app_organizations.entitlements import modules_for_request
+        mods = modules_for_request(request)
+        show_employee_overview = any(
+            m in mods
+            for m in ("leave", "exit_clearance", "attendance", "holidays", "documents")
+        )
+
         context = {
             "is_admin_view": False,
+
+            "show_employee_overview": show_employee_overview,
 
             "profile": profile,
 
@@ -1725,7 +1752,8 @@ def dashboard_view(request):
         exit_clearance_context
     )
 
-    if is_admin_view:
+    from app_organizations.entitlements import modules_for_request
+    if is_admin_view and "projects" in modules_for_request(request):
         from appEmp.dashboard_stats import project_overview
         context['admin_projects'] = project_overview(
             request.current_org, today

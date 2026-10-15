@@ -70,6 +70,7 @@
         </a>
 
 
+        {% if 'attendance' in org_modules %}
         <!-- Present Today -->
 
         <div class="hr-metric-card metric-green">
@@ -96,6 +97,8 @@
         </div>
 
 
+        {% endif %}
+        {% if 'leave' in org_modules %}
         <!-- On Leave -->
 
         <div class="hr-metric-card">
@@ -109,6 +112,8 @@
         </div>
 
 
+        {% endif %}
+        {% if show_pending_panel %}
         <!-- Pending Actions -->
 
         <div class="hr-metric-card metric-pending{% if pending_hr_actions_count %} has-items{% endif %}">
@@ -121,6 +126,7 @@
             <span class="hr-metric-note">Items waiting for review</span>
         </div>
 
+    {% endif %}
     </section>
 
 
@@ -130,10 +136,13 @@
 
         <!-- ROW 1: PROJECTS + HOLIDAYS (left)  |  PENDING HR WORK (right) -->
 
-        <div class="hr-row-split">
+        {% if show_admin_left_col or show_pending_panel %}
+        <div class="hr-row-split{% if not show_admin_left_col or not show_pending_panel %} hr-row-split-single{% endif %}">
 
+            {% if show_admin_left_col %}
             <div class="hr-attendance-col">
 
+                {% if 'projects' in org_modules %}
                 <!-- PROJECTS OVERVIEW -->
 
                 <article class="hr-card">
@@ -198,6 +207,8 @@
 
 
 
+                {% endif %}
+                {% if 'holidays' in org_modules %}
                 <!-- UPCOMING HOLIDAYS -->
 
                 <article class="hr-card">
@@ -247,9 +258,12 @@
 
                 </article>
 
+            {% endif %}
             </div>
+            {% endif %}
 
 
+            {% if show_pending_panel %}
             <!-- PENDING HR ACTIONS -->
 
             <article class="hr-card hr-actions-panel">
@@ -267,6 +281,7 @@
 
                     {% if can_review_leave %}
 
+                        {% if 'leave' in org_modules %}
                         <!-- Leave -->
 
                         <a href="{% url 'pendingLeaveRequests' %}" class="hr-action-row">
@@ -278,6 +293,8 @@
                             <b>{{ pending_leave_requests_count }}</b>
                         </a>
 
+                        {% endif %}
+                        {% if 'holidays' in org_modules %}
                         <!-- Optional Holiday -->
 
                         <a href="{% url 'pendingOptionalHolidayRequests' %}" class="hr-action-row">
@@ -290,9 +307,10 @@
                         </a>
 
                     {% endif %}
+                    {% endif %}
 
 
-                    {% if can_review_attendance_exception %}
+                    {% if can_review_attendance_exception and 'attendance' in org_modules %}
 
                         <a href="{% url 'pendingAttendanceExceptions' %}" class="hr-action-row">
                             <span class="action-row-icon">A</span>
@@ -306,7 +324,7 @@
                     {% endif %}
 
 
-                    {% if can_manage_employees %}
+                    {% if can_manage_employees and 'documents' in org_modules %}
 
                         <!-- Document Review -->
 
@@ -322,7 +340,7 @@
                     {% endif %}
 
 
-                    {% if can_view_all_clearance_requests %}
+                    {% if can_view_all_clearance_requests and 'exit_clearance' in org_modules %}
 
                         <a href="{% url 'pendingResignations' %}" class="hr-action-row">
                             <span class="action-row-icon coral">X</span>
@@ -336,7 +354,7 @@
                     {% endif %}
 
 
-                    {% if can_review_manager_noc %}
+                    {% if can_review_manager_noc and 'exit_clearance' in org_modules %}
 
                         <a href="{% url 'managerClearanceQueue' %}" class="hr-action-row">
                             <span class="action-row-icon">M</span>
@@ -350,7 +368,7 @@
                     {% endif %}
 
 
-                    {% if can_review_finance_noc %}
+                    {% if can_review_finance_noc and 'exit_clearance' in org_modules %}
 
                         <a href="{% url 'financeClearanceQueue' %}" class="hr-action-row">
                             <span class="action-row-icon">F</span>
@@ -364,7 +382,7 @@
                     {% endif %}
 
 
-                    {% if can_finalize_employee_exit %}
+                    {% if can_finalize_employee_exit and 'exit_clearance' in org_modules %}
 
                         <a href="{% url 'readyForFinalization' %}" class="hr-action-row">
                             <span class="action-row-icon coral">✓</span>
@@ -380,10 +398,13 @@
                 </div>
 
             </article>
+            {% endif %}
 
         </div>
+        {% endif %}
 
 
+        {% if 'attendance' in org_modules %}
         <!-- ATTENDANCE HISTORY -->
 
         <article class="hr-card hr-wide-card">
@@ -529,6 +550,8 @@
         </article>
 
 
+        {% endif %}
+        {% if 'leave' in org_modules %}
         <!-- LEAVE OVERVIEW -->
 
         <article class="hr-card hr-wide-card">
@@ -579,6 +602,7 @@
 
         </article>
 
+    {% endif %}
     </section>
 
 
@@ -618,6 +642,7 @@
 
     <section class="employee-dashboard-grid">
 
+        {% if 'attendance' in org_modules %}
         <!-- TODAY / CHECK IN -->
 
         <article class="employee-punch-card">
@@ -751,6 +776,8 @@
         </article>
 
 
+        {% endif %}
+        {% if show_employee_overview %}
         <!-- EMPLOYEE OVERVIEW -->
 
         <article class="hr-card">
@@ -764,33 +791,41 @@
 
             <div class="employee-overview-grid">
 
+                {% if 'leave' in org_modules %}
                 <div>
                     <strong>{{ my_pending_leave_requests }}</strong>
                     <span>Pending Leaves</span>
                 </div>
+                {% endif %}
 
+                {% if 'exit_clearance' in org_modules %}
                 <div>
                     <strong>{{ active_resignation_count }}</strong>
                     <span>Active Exit Requests</span>
                 </div>
+                {% endif %}
 
+                {% if 'attendance' in org_modules %}
                 <div>
                     <strong>{{ recent_attendance|length }}</strong>
                     <span>Recent Records</span>
                 </div>
+                {% endif %}
 
             </div>
 
             <div class="employee-shortcuts">
-                <a href="{% url 'attendanceCalendarSelf' %}">Attendance Calendar →</a>
-                <a href="{% url 'applyLeave' %}">Apply Leave →</a>
-                <a href="{% url 'optionalHolidayApply' %}">Optional Holidays →</a>
-                <a href="{% url 'upload_document' %}">My Documents →</a>
+                {% if 'attendance' in org_modules %}<a href="{% url 'attendanceCalendarSelf' %}">Attendance Calendar →</a>{% endif %}
+                {% if 'leave' in org_modules %}<a href="{% url 'applyLeave' %}">Apply Leave →</a>{% endif %}
+                {% if 'holidays' in org_modules %}<a href="{% url 'optionalHolidayApply' %}">Optional Holidays →</a>{% endif %}
+                {% if 'documents' in org_modules %}<a href="{% url 'upload_document' %}">My Documents →</a>{% endif %}
             </div>
 
         </article>
 
 
+        {% endif %}
+        {% if 'attendance' in org_modules %}
         <!-- RECENT ATTENDANCE -->
 
         <article class="hr-card employee-wide-card">
@@ -854,6 +889,8 @@
         </article>
 
 
+        {% endif %}
+        {% if 'leave' in org_modules %}
         <!-- MY UPCOMING LEAVE -->
 
         <article class="hr-card">
@@ -896,6 +933,8 @@
         </article>
 
 
+        {% endif %}
+        {% if 'holidays' in org_modules %}
         <!-- MY HOLIDAYS -->
 
         <article class="hr-card">
@@ -954,12 +993,13 @@
 
         </article>
 
+    {% endif %}
     </section>
 
 
     <!-- MANAGER / FINANCE ACTIONS -->
 
-    {% if can_review_manager_noc or can_review_finance_noc %}
+    {% if 'exit_clearance' in org_modules %}{% if can_review_manager_noc or can_review_finance_noc %}
 
         <section class="employee-role-actions">
 
@@ -1001,7 +1041,7 @@
 
         </section>
 
-    {% endif %}
+    {% endif %}{% endif %}
 
 
 {% endif %}
