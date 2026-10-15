@@ -115,6 +115,8 @@ from appEmp.whatsapp_router import (
     get_leave_balance_reply,
     get_attendance_reply,
     get_payroll_reply,
+    category_enabled,
+    NOT_ENABLED_REPLY,
 )
 import re
 from .models import EmployeeImportFieldConfig
@@ -6348,21 +6350,33 @@ def whatsapp_webhook(request):
                 if category == "leave":
                     employee = find_employee_by_phone(sender_wa_id)
                     if employee:
-                        reply_text = get_leave_balance_reply(employee)
+                        reply_text = (
+                            get_leave_balance_reply(employee)
+                            if category_enabled(employee, category)
+                            else NOT_ENABLED_REPLY
+                        )
                         ticket.status = "auto_resolved"
                         ticket.save(update_fields=["status"])
 
                 elif category == "attendance":
                     employee = find_employee_by_phone(sender_wa_id)
                     if employee:
-                        reply_text = get_attendance_reply(employee)
+                        reply_text = (
+                            get_attendance_reply(employee)
+                            if category_enabled(employee, category)
+                            else NOT_ENABLED_REPLY
+                        )
                         ticket.status = "auto_resolved"
                         ticket.save(update_fields=["status"])
 
                 elif category == "payroll":
                     employee = find_employee_by_phone(sender_wa_id)
                     if employee:
-                        reply_text = get_payroll_reply(employee)
+                        reply_text = (
+                            get_payroll_reply(employee)
+                            if category_enabled(employee, category)
+                            else NOT_ENABLED_REPLY
+                        )
                         ticket.status = "auto_resolved"
                         ticket.save(update_fields=["status"])
 

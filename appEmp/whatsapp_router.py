@@ -99,3 +99,23 @@ def get_payroll_reply(employee) -> str:
         return "We couldn't find active salary records for you. Please contact HR."
 
     return f"Your net pay this month is ₹{salary.net_monthly_pay:,.2f}."
+
+
+NOT_ENABLED_REPLY = "This feature isn't enabled for your organization. Please contact HR."
+
+CATEGORY_MODULES = {
+    "leave": "leave",
+    "attendance": "attendance",
+    "payroll": "payroll",
+}
+
+
+def category_enabled(employee, category):
+    """True if the employee's organization has the module this category needs.
+    Categories with no module (such as general) are always allowed."""
+    key = CATEGORY_MODULES.get(category)
+    if key is None:
+        return True
+    from app_organizations.entitlements import org_modules
+
+    return key in org_modules(employee.organization)
