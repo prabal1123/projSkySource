@@ -106,8 +106,8 @@
         Effective from {{ salary.effective_date }}
       </div>
       <a class="btn btn-primary" style="width: auto; padding: 8px 16px; font-size: 0.85rem;" 
-         href="{% if can_edit_salary %}{% url 'salarySlipAdmin' uuid=target_uuid year=current_year month=current_month %}{% else %}{% url 'salarySlipSelf' year=current_year month=current_month %}{% endif %}">
-        Download Payslip
+         href="{% if can_edit_salary %}{% url 'payrollEmployee' year=current_year month=current_month uuid=target_uuid %}{% else %}{% url 'myPayslips' %}{% endif %}">
+        {% if can_edit_salary %}View Payroll{% else %}My Payslips{% endif %}
       </a>
     </div>
   {% else %}

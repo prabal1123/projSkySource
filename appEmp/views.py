@@ -2314,178 +2314,21 @@ def salary_update_view(request, uuid):
     )
 
 
-def _build_salary_slip_pdf(salary, profile, month, year):
-    """Renders a salary slip to an in-memory PDF buffer using ReportLab
-    (no system dependencies needed, unlike WeasyPrint)."""
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(
-        buffer, pagesize=A4,
-        topMargin=20 * mm, bottomMargin=20 * mm,
-        leftMargin=20 * mm, rightMargin=20 * mm,
-    )
-    styles = getSampleStyleSheet()
-    elements = []
-
-    NAVY = colors.HexColor('#0F172A')
-    TEAL = colors.HexColor('#0F9E96')
-    ROSE = colors.HexColor('#9F1239')
-    GRID = colors.HexColor('#CBD5E1')
-
-    title_style = ParagraphStyle('SlipTitle', parent=styles['Heading1'], textColor=NAVY, spaceAfter=2)
-    elements.append(Paragraph("Salary Slip", title_style))
-    elements.append(Paragraph(f"{calendar.month_name[month]} {year}", styles['Normal']))
-    elements.append(Spacer(1, 8 * mm))
-
-    emp_info = [
-        ['Employee Name', profile.user.get_full_name() or profile.user.username],
-        ['Employee ID', str(profile.uuid)[:8].upper()],
-        ['Position', profile.position or '—'],
-        ['Date of Joining', str(profile.date_hired) if profile.date_hired else '—'],
-    ]
-    t1 = Table(emp_info, colWidths=[55 * mm, 105 * mm])
-    t1.setStyle(TableStyle([
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('TEXTCOLOR', (0, 0), (0, -1), TEAL),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-    ]))
-    elements.append(t1)
-    elements.append(Spacer(1, 8 * mm))
-
-    tds_monthly = salary.calculate_monthly_tds()
-    net_pay = salary.net_monthly_pay
-
-    earnings = [
-        ['Earnings', 'Amount (INR)'],
-        ['Basic Salary', f"{salary.basic_salary:,.2f}"],
-        ['HRA', f"{salary.hra:,.2f}"],
-        ['Gross Earnings', f"{salary.gross_monthly:,.2f}"],
-    ]
-    deductions = [
-        ['Deductions', 'Amount (INR)'],
-        ['Provident Fund (PF)', f"{salary.pf:,.2f}"],
-        ['ESI', f"{salary.esi:,.2f}"],
-        ['Other Deductions', f"{salary.other_deductions:,.2f}"],
-        ['TDS (Tax Deducted at Source)', f"{tds_monthly:,.2f}"],
-        ['Total Deductions', f"{salary.total_deductions_monthly:,.2f}"],
-    ]
-
-    t2 = Table(earnings, colWidths=[110 * mm, 50 * mm])
-    t2.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), NAVY),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('GRID', (0, 0), (-1, -1), 0.5, GRID),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-    ]))
-    elements.append(t2)
-    elements.append(Spacer(1, 6 * mm))
-
-    t3 = Table(deductions, colWidths=[110 * mm, 50 * mm])
-    t3.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), ROSE),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('GRID', (0, 0), (-1, -1), 0.5, GRID),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-    ]))
-    elements.append(t3)
-    elements.append(Spacer(1, 8 * mm))
-
-    net_table = Table([['Net Pay', f"Rs. {net_pay:,.2f}"]], colWidths=[110 * mm, 50 * mm])
-    net_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), TEAL),
-        ('TEXTCOLOR', (0, 0), (-1, -1), colors.white),
-        ('FONTSIZE', (0, 0), (-1, -1), 12),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-    ]))
-    elements.append(net_table)
-    elements.append(Spacer(1, 10 * mm))
-
-    elements.append(
-        Paragraph(
-            "This is a system-generated salary slip. "
-            "Tax figures shown are an estimate; "
-            "refer to Form 16 issued by HR for final tax liability.",
-            styles["Italic"],
-        )
-    )
-
-    doc.build(elements)
-    buffer.seek(0)
-    return buffer
-
-
+# The old salary slip (full current salary, attendance ignored) was replaced by
+# payslips generated from finalised payroll. These URLs are kept so existing
+# links and bookmarks keep working; they now hand over to the payroll flow.
 @login_required
 def salary_slip_self_view(request, year, month):
-    profile = request.user.empprofile
-    salary = profile.salary_records.filter(is_active=True).first()
-    if not salary:
-        messages.error(request, "No salary record found. Contact HR.")
-        return redirect('myProfile')  # adjust to your actual self-profile url name
-
-    buffer = _build_salary_slip_pdf(salary, profile, month, year)
-    filename = f"salary_slip_{profile.user.username}_{year}_{month:02d}.pdf"
-    response = HttpResponse(buffer, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    return response
+    return redirect("myPayslipPdf", year=year, month=month)
 
 
 @login_required
 def salary_slip_admin_view(request, uuid, year, month):
     if not user_has_permission(request.user, "manage_salary"):
-        messages.error(
-            request,
-            "You don't have permission to do this."
-        )
+        messages.error(request, "You don't have permission to do this.")
         return redirect("dashboard")
+    return redirect("payrollPayslip", year=year, month=month, uuid=uuid)
 
-    profile = get_object_or_404(
-        empProfile,
-        uuid=uuid,
-        organization=request.current_org,
-    )
-
-    salary = profile.salary_records.filter(
-        is_active=True
-    ).first()
-
-    if not salary:
-        messages.error(
-            request,
-            "No salary record found for this employee."
-        )
-        return redirect(
-            "editProfile",
-            uuid=profile.uuid,
-        )
-
-    buffer = _build_salary_slip_pdf(
-        salary,
-        profile,
-        month,
-        year,
-    )
-
-    filename = (
-        f"salary_slip_{profile.user.username}_{year}_{month:02d}.pdf"
-    )
-
-    response = HttpResponse(
-        buffer,
-        content_type="application/pdf",
-    )
-
-    response["Content-Disposition"] = (
-        f'attachment; filename="{filename}"'
-    )
-
-    return response
 
 def _build_attendance_calendar(employee, year, month):
     month_calendar = calendar.Calendar(
