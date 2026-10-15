@@ -5,6 +5,7 @@ from django.core.management import call_command
 from django.http import Http404
 from django.test import RequestFactory, TestCase
 
+from app_organizations.entitlements import grant_modules
 from app_organizations.models import Organization, OrganizationMember
 from app_organizations.seed import (
     ORG_ADMIN_GROUP,
@@ -27,6 +28,8 @@ class AccessBase(TestCase):
         cls.su = User.objects.get(username="zz_su")
         cls.org1 = Organization.objects.create(name="ZZ Org One", created_by=cls.su)
         cls.org2 = Organization.objects.create(name="ZZ Org Two", created_by=cls.su)
+        grant_modules(cls.org1)
+        grant_modules(cls.org2)
         cls.pa = Project.objects.create(organization=cls.org1, name="Alpha", code="AL")
         cls.pb = Project.objects.create(organization=cls.org1, name="Beta", code="BE")
         cls.pc = Project.objects.create(organization=cls.org2, name="Gamma", code="GA")

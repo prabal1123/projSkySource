@@ -14,7 +14,6 @@ class Organization(models.Model):
     def __str__(self):
         return self.name
 
-
 class OrganizationMember(models.Model):
     ROLE_CHOICES = [
         ("owner", "Owner"),
@@ -37,3 +36,33 @@ class OrganizationMember(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.organization.name} ({self.role})"
+
+
+class OrganizationModule(models.Model):
+    SOURCE_CHOICES = [
+        ("manual", "Manual"),
+        ("trial", "Trial"),
+        ("plan", "Plan"),
+    ]
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name="modules"
+    )
+    # Validated against modules.MODULES in the admin form, not via
+    # field choices, so adding a module never needs a migration.
+    module_key = models.CharField(max_length=40)
+    is_enabled = models.BooleanField(default=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default="manual")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["module_key"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "module_key"], name="uniq_org_module"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.organization.name}: {self.module_key}"

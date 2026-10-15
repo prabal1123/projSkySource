@@ -9,6 +9,7 @@ from django.test import TestCase
 from app_organizations.models import Organization
 from app_projects.models import Project
 from appEmp.models import empProfile as P
+from app_organizations.entitlements import grant_modules
 
 
 class Base(TestCase):
@@ -20,6 +21,8 @@ class Base(TestCase):
         cls.su = User.objects.get(username="zz_su")
         cls.org1 = Organization.objects.create(name="ZZ Org One", created_by=cls.su)
         cls.org2 = Organization.objects.create(name="ZZ Org Two", created_by=cls.su)
+        grant_modules(cls.org1)
+        grant_modules(cls.org2)
 
     def make(self, org, email, **fields):
         user = User(username=email, email=email, first_name="Zz", last_name="Test")

@@ -147,6 +147,8 @@ MIDDLEWARE = [
 
     "app_organizations.middleware.CurrentOrganizationMiddleware",
 
+    "app_organizations.module_middleware.ModuleAccessMiddleware",
+
     "django.contrib.messages.middleware.MessageMiddleware",
 
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
