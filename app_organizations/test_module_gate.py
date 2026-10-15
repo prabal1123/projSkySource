@@ -85,6 +85,8 @@ class AppEmpGateTests(TestCase):
                      "upload_document", "employeeBulkImport"]:
             self.assertEqual(self.status(name), 403, name)
         self.assertEqual(self.status("salarySlipSelf", 2026, 1), 403)
+        self.assertEqual(self.status("payroll"), 403)
+        self.assertEqual(self.status("payrollCycle", 2026, 9), 403)
 
     def test_leave_brings_holidays_but_not_attendance(self):
         grant_modules(self.org, ["leave"])
