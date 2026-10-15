@@ -7,7 +7,11 @@ FILTER_UNASSIGNED = "unassigned"
 
 
 def can_use_project_filter(user, org):
-    """Who sees the project dropdown. Admin-level only for now."""
+    """Who sees the project dropdown. Admin-level, and only if the org bought Projects."""
+    from app_organizations.entitlements import org_modules
+
+    if "projects" not in org_modules(org):
+        return False
     return can_manage_projects(user, org)
 
 
