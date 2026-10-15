@@ -14,7 +14,8 @@ class ModuleAccessMiddleware:
         return self.get_response(request)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        key = module_for_view(view_func)
+        url_name = getattr(request.resolver_match, "url_name", None)
+        key = module_for_view(view_func, url_name)
         if key is None:
             return None  # not gated
 
