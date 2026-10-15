@@ -90,6 +90,7 @@
                         </button>
                     </form>
                     {% if counts.locked %}
+                    <a class="pay-btn" href="{% url 'payrollSummaryPdf' year=year month=month %}{{ querystring }}">Summary PDF</a>
                     <form method="post">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="unlock">

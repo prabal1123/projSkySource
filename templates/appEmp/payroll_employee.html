@@ -55,6 +55,7 @@
                 </form>
                 {% endif %}
                 {% if row.locked %}
+                <a class="pay-btn is-primary" href="{% url 'payrollPayslip' year=year month=month uuid=employee.uuid %}">Payslip PDF</a>
                 <form method="post">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="unlock">

@@ -72,14 +72,21 @@
             {% endif %}
 
             {% if has_employee_profile %}
-                {% if 'attendance' in org_modules %}<a href="{% url 'attendanceCalendarSelf' %}" class="hr-sidebar-link {% if request.resolver_match.url_name == 'attendanceCalendarSelf' %}active{% endif %}
-{% if 'payroll' in org_modules %}
-<li class="nav-item"><a href="{% url 'payroll' %}" class="nav-link">Payroll</a></li>
-{% endif %}">
+                {% if 'attendance' in org_modules %}<a href="{% url 'attendanceCalendarSelf' %}" class="hr-sidebar-link {% if request.resolver_match.url_name == 'attendanceCalendarSelf' %}active{% endif %}">
                     <i class="bi bi-calendar-check"></i>
                     <span>My Attendance</span>
                     <span class="hr-pill-badge">Punch</span>
                 </a>{% endif %}
+                {% if 'payroll' in org_modules %}<a href="{% url 'myPayslips' %}" class="hr-sidebar-link {% if request.resolver_match.url_name == 'myPayslips' %}active{% endif %}">
+                    <i class="bi bi-receipt"></i>
+                    <span>My Payslips</span>
+                </a>{% endif %}
+            {% endif %}
+            {% if can_manage_salary and 'payroll' in org_modules %}
+                <a href="{% url 'payroll' %}" class="hr-sidebar-link {% if request.resolver_match.url_name in 'payroll payrollCycle payrollEmployee payrollPayslip payrollSummaryPdf' %}active{% endif %}">
+                    <i class="bi bi-cash-stack"></i>
+                    <span>Payroll</span>
+                </a>
             {% endif %}
         </div>
 

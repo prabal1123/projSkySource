@@ -22,14 +22,16 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.text import slugify
 
 from app_projects.filters import apply_project_filter, project_filter_context
 
 from .models import PayrollRecord, empProfile
+from .payslip_pdf import build_payroll_summary_pdf, build_payslip_pdf
 from .payroll_service import (
     calculate_payroll_for_employees,
     earned_split,
@@ -415,3 +417,133 @@ def payroll_employee_view(request, year, month, uuid):
             "back_url": reverse("payrollCycle", args=[year, month]),
         },
     )
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# PDFs and employee self-service (Phase 4)
+# Payslips and the summary are built from LOCKED records only.
+# ──────────────────────────────────────────────────────────────────────────
+def _pdf_response(buffer, filename):
+    response = HttpResponse(buffer, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+def _payslip_filename(employee, year, month):
+    who = slugify(employee.user.get_full_name() or employee.user.username) or "employee"
+    return f"payslip_{who}_{year}_{month:02d}.pdf"
+
+
+@login_required
+def payroll_payslip_view(request, year, month, uuid):
+    """Payslip PDF for any employee in the organization (payroll managers)."""
+    denied = _guard(request)
+    if denied:
+        return denied
+    _validate_month(year, month)
+
+    employee = get_object_or_404(
+        empProfile.objects.select_related("user", "designation"),
+        uuid=uuid,
+        organization=request.current_org,
+    )
+    record = (
+        PayrollRecord.objects.select_related(
+            "organization", "employee__user", "employee__designation"
+        )
+        .filter(employee=employee, year=year, month=month, is_locked=True)
+        .first()
+    )
+    if record is None:
+        messages.error(
+            request,
+            "A payslip is available only after payroll for this month has been locked.",
+        )
+        return redirect("payrollEmployee", year=year, month=month, uuid=employee.uuid)
+
+    return _pdf_response(build_payslip_pdf(record), _payslip_filename(employee, year, month))
+
+
+@login_required
+def payroll_summary_pdf_view(request, year, month):
+    """Month register of locked payroll, respecting the project filter."""
+    denied = _guard(request)
+    if denied:
+        return denied
+    _validate_month(year, month)
+
+    project_ctx = project_filter_context(request)
+    selected = project_ctx["project_filter_selected"]
+    records = list(
+        apply_project_filter(
+            PayrollRecord.objects.filter(
+                organization=request.current_org, year=year, month=month, is_locked=True
+            ).select_related("employee__user", "employee__designation", "organization"),
+            selected,
+            path="employee__project",
+        ).order_by("employee__user__first_name", "employee__user__last_name", "pk")
+    )
+    if not records:
+        messages.error(request, "There is no locked payroll to summarise for this month.")
+        target = reverse("payrollCycle", args=[year, month])
+        return redirect(f"{target}?project={selected}" if selected else target)
+
+    project_label = "Selected project filter" if selected else "All projects"
+    buffer = build_payroll_summary_pdf(
+        records, request.current_org.name, year, month, project_label
+    )
+    return _pdf_response(buffer, f"payroll_summary_{year}_{month:02d}.pdf")
+
+
+def _own_profile(request):
+    qs = empProfile.objects.select_related("organization", "user", "designation").filter(
+        user=request.user
+    )
+    org = getattr(request, "current_org", None)
+    if org is not None:
+        qs = qs.filter(organization=org)
+    return qs.first()
+
+
+@login_required
+def my_payslips_view(request):
+    """The signed-in employee's own finalised payslips, newest first."""
+    profile = _own_profile(request)
+    if profile is None:
+        messages.error(request, "You don't have an employee profile.")
+        return redirect("dashboard")
+
+    records = PayrollRecord.objects.filter(employee=profile, is_locked=True).order_by(
+        "-year", "-month"
+    )
+    return render(
+        request,
+        "appEmp/my_payslips.html",
+        {"records": list(records), "profile": profile},
+    )
+
+
+@login_required
+def my_payslip_pdf_view(request, year, month):
+    """Download the signed-in employee's own payslip for a finalised month."""
+    _validate_month(year, month)
+    profile = _own_profile(request)
+    if profile is None:
+        messages.error(request, "You don't have an employee profile.")
+        return redirect("dashboard")
+
+    record = (
+        PayrollRecord.objects.select_related(
+            "organization", "employee__user", "employee__designation"
+        )
+        .filter(employee=profile, year=year, month=month, is_locked=True)
+        .first()
+    )
+    if record is None:
+        messages.error(
+            request,
+            "That payslip isn't available yet. Payslips appear here once HR finalises payroll.",
+        )
+        return redirect("myPayslips")
+
+    return _pdf_response(build_payslip_pdf(record), _payslip_filename(profile, year, month))

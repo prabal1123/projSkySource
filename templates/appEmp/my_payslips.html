@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}My Payslips{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/payroll.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container-fluid">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Payroll</span>
+                <h1>My Payslips</h1>
+            </div>
+        </div>
+
+        <div class="sky-panel">
+            <div class="sky-panel-head">
+                <h6>Finalised payslips</h6>
+                <span class="sky-count">{{ records|length }} available</span>
+            </div>
+            <div class="sky-table-scroll">
+                <table class="sky-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th class="pay-num">Payable days</th>
+                            <th class="pay-num">Gross earned</th>
+                            <th class="pay-num">Deductions</th>
+                            <th class="pay-num">Net pay</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in records %}
+                        <tr>
+                            <td><strong>{{ r.period_label }}</strong></td>
+                            <td class="pay-num sky-mono">{{ r.payable_days|floatformat:"-1" }} / {{ r.days_in_period }}</td>
+                            <td class="pay-num sky-mono">₹{{ r.gross_earned|floatformat:2|intcomma }}</td>
+                            <td class="pay-num sky-mono">₹{{ r.total_deductions|floatformat:2|intcomma }}</td>
+                            <td class="pay-num sky-mono pay-emph">₹{{ r.net_pay|floatformat:2|intcomma }}</td>
+                            <td class="pay-num">
+                                <a class="pay-btn" href="{% url 'myPayslipPdf' year=r.year month=r.month %}">Download PDF</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="sky-empty">
+                                No payslips yet. They appear here once HR finalises payroll for a month.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

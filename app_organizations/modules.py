@@ -60,6 +60,8 @@ MODULES = {
             "salaryUpdate", "salarySlipSelf", "salarySlipAdmin",
             "wageRegisterBulk",
             "payroll", "payrollCycle", "payrollEmployee",
+            "payrollPayslip", "payrollSummaryPdf",
+            "myPayslips", "myPayslipPdf",
         ],
     },
     "projects": {
