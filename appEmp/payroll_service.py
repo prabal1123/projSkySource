@@ -76,6 +76,20 @@ HALF_UNPAID_LEAVE = "HALF_UNPAID_LEAVE"
 ABSENT = "ABSENT"
 PENDING = "PENDING"
 
+DAY_LABELS = {
+    "NOT_EMPLOYED": "Not employed",
+    "WEEKLY_OFF": "Weekly off",
+    "HOLIDAY": "Holiday",
+    "PRESENT": "Present",
+    "HALF_DAY": "Half day",
+    "PAID_LEAVE": "Paid leave",
+    "UNPAID_LEAVE": "Unpaid leave",
+    "HALF_PAID_LEAVE": "Half paid leave",
+    "HALF_UNPAID_LEAVE": "Half unpaid leave",
+    "ABSENT": "Absent",
+    "PENDING": "Upcoming",
+}
+
 
 def get_month_range(year, month):
     """First and last date of a calendar month."""
@@ -96,6 +110,10 @@ class DayResult:
     @property
     def weekday(self):
         return self.date.strftime("%a")
+
+    @property
+    def label(self):
+        return DAY_LABELS.get(self.status, self.status)
 
 
 @dataclass

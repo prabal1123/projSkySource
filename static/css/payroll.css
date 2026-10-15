@@ -1,0 +1,72 @@
+/* Payroll screens. Scoped to .sky-dashboard like dashboard.css. */
+
+.sky-dashboard .pay-toolbar {
+    display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+    padding: 0.85rem 1.25rem; margin-bottom: 1rem;
+}
+.sky-dashboard .pay-toolbar .pay-month-nav {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+}
+.sky-dashboard .pay-toolbar .pay-month-nav a {
+    border: 1px solid var(--border); background: var(--card); color: var(--ink);
+    border-radius: 6px; padding: 0.3rem 0.65rem; text-decoration: none; font-size: 0.85rem;
+}
+.sky-dashboard .pay-toolbar .pay-month-nav a:hover { background: var(--slate-soft); }
+.sky-dashboard .pay-spacer { flex: 1 1 auto; }
+.sky-dashboard .pay-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.sky-dashboard .pay-actions form { margin: 0; }
+
+.sky-dashboard .pay-btn {
+    border: 1px solid var(--border); background: var(--card); color: var(--ink);
+    border-radius: 6px; padding: 0.4rem 0.9rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+}
+.sky-dashboard .pay-btn:hover { background: var(--slate-soft); }
+.sky-dashboard .pay-btn.is-primary { background: var(--navy); color: #fff; border-color: var(--navy); }
+.sky-dashboard .pay-btn.is-primary:hover { opacity: 0.92; }
+.sky-dashboard .pay-btn.is-danger { color: var(--rose); border-color: var(--rose); }
+.sky-dashboard .pay-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+.sky-dashboard .pay-note {
+    font-size: 0.8rem; color: var(--ink-soft); margin: 0 0 0.75rem;
+}
+
+/* State and day pills */
+.sky-dashboard .pay-pill {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 600;
+    padding: 0.15rem 0.5rem; border-radius: 999px; white-space: nowrap; display: inline-block;
+}
+.sky-dashboard .pay-pill.locked  { background: var(--teal-soft);  color: var(--teal); }
+.sky-dashboard .pay-pill.draft   { background: var(--amber-soft); color: var(--amber); }
+.sky-dashboard .pay-pill.new     { background: var(--slate-soft); color: var(--slate); }
+.sky-dashboard .pay-pill.skipped { background: var(--rose-soft);  color: var(--rose); }
+.sky-dashboard .pay-pill.provisional { background: var(--amber-soft); color: var(--amber); }
+.sky-dashboard .pay-pill.stale   { background: var(--rose-soft);  color: var(--rose); }
+
+.sky-dashboard .pay-day.present, .sky-dashboard .pay-day.holiday { background: var(--teal-soft); color: var(--teal); }
+.sky-dashboard .pay-day.paid_leave, .sky-dashboard .pay-day.half_paid_leave,
+.sky-dashboard .pay-day.weekly_off { background: var(--slate-soft); color: var(--slate); }
+.sky-dashboard .pay-day.half_day, .sky-dashboard .pay-day.half_unpaid_leave,
+.sky-dashboard .pay-day.pending { background: var(--amber-soft); color: var(--amber); }
+.sky-dashboard .pay-day.absent, .sky-dashboard .pay-day.unpaid_leave { background: var(--rose-soft); color: var(--rose); }
+.sky-dashboard .pay-day.not_employed { background: var(--bg); color: var(--ink-soft); }
+
+.sky-dashboard .pay-num { text-align: right; font-variant-numeric: tabular-nums; }
+.sky-dashboard .pay-emph { font-weight: 700; }
+.sky-dashboard .pay-muted { color: var(--ink-soft); font-size: 0.78rem; }
+.sky-dashboard .pay-warn { color: var(--amber); cursor: help; margin-left: 0.25rem; }
+.sky-dashboard .pay-skip-reason { color: var(--rose); font-size: 0.82rem; }
+.sky-dashboard .pay-name { font-weight: 600; color: var(--ink); text-decoration: none; }
+.sky-dashboard .pay-name:hover { text-decoration: underline; }
+
+.sky-dashboard .pay-warnings {
+    background: var(--amber-soft); color: var(--amber); border-radius: 8px;
+    padding: 0.7rem 1rem; margin-bottom: 1rem; font-size: 0.85rem;
+}
+.sky-dashboard .pay-warnings ul { margin: 0.25rem 0 0 1.1rem; padding: 0; }
+
+.sky-dashboard .pay-lines { width: 100%; border-collapse: collapse; }
+.sky-dashboard .pay-lines td { padding: 0.45rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.sky-dashboard .pay-lines td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.sky-dashboard .pay-lines tr.is-total td { font-weight: 700; border-bottom: 2px solid var(--navy); }
+.sky-dashboard .pay-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 800px) { .sky-dashboard .pay-two-col { grid-template-columns: 1fr; } }

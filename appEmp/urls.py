@@ -2,6 +2,7 @@
 from django.urls import path
 
 from . import views
+from . import payroll_views
 from .views import (
     empProfile_view,
     empList_view,
@@ -31,6 +32,9 @@ from .views import (
 
 
 urlpatterns = [
+    path("payroll/", payroll_views.payroll_index_view, name="payroll"),
+    path("payroll/<int:year>/<int:month>/", payroll_views.payroll_cycle_view, name="payrollCycle"),
+    path("payroll/<int:year>/<int:month>/<uuid:uuid>/", payroll_views.payroll_employee_view, name="payrollEmployee"),
     path(
         "profile/<uuid:uuid>/",
         profileDetail_view,

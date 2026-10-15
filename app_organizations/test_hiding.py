@@ -99,3 +99,7 @@ class ProfileHidingTests(HidingBase):
         self.assertContains(r, 'href="#documents"')
         self.assertNotContains(r, 'id="salary"')
         self.assertNotContains(r, 'href="#salary"')
+
+
+
+

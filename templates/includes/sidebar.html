@@ -72,7 +72,10 @@
             {% endif %}
 
             {% if has_employee_profile %}
-                {% if 'attendance' in org_modules %}<a href="{% url 'attendanceCalendarSelf' %}" class="hr-sidebar-link {% if request.resolver_match.url_name == 'attendanceCalendarSelf' %}active{% endif %}">
+                {% if 'attendance' in org_modules %}<a href="{% url 'attendanceCalendarSelf' %}" class="hr-sidebar-link {% if request.resolver_match.url_name == 'attendanceCalendarSelf' %}active{% endif %}
+{% if 'payroll' in org_modules %}
+<li class="nav-item"><a href="{% url 'payroll' %}" class="nav-link">Payroll</a></li>
+{% endif %}">
                     <i class="bi bi-calendar-check"></i>
                     <span>My Attendance</span>
                     <span class="hr-pill-badge">Punch</span>

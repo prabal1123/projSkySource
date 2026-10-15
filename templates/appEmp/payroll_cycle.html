@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Payroll — {{ month_label }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/payroll.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container-fluid">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Payroll</span>
+                <h1>Payroll — {{ month_label }}</h1>
+            </div>
+            <a href="{% url 'wageRegisterBulk' year=year month=month %}" class="sky-edit-link">
+                Daily-wage staff: Wage Register →
+            </a>
+        </div>
+
+        <div class="sky-stat-row">
+            <div class="sky-stat">
+                <div class="sky-stat-value">{{ rows|length }}</div>
+                <div class="sky-stat-label">Employees</div>
+            </div>
+            <div class="sky-stat is-teal">
+                <div class="sky-stat-value sky-mono">₹{{ totals.gross|floatformat:2|intcomma }}</div>
+                <div class="sky-stat-label">Total Gross Earned</div>
+            </div>
+            <div class="sky-stat is-rose">
+                <div class="sky-stat-value sky-mono">₹{{ totals.deductions|floatformat:2|intcomma }}</div>
+                <div class="sky-stat-label">Total Deductions</div>
+            </div>
+            <div class="sky-stat is-amber">
+                <div class="sky-stat-value sky-mono">₹{{ totals.net|floatformat:2|intcomma }}</div>
+                <div class="sky-stat-label">Total Net Pay</div>
+            </div>
+        </div>
+
+        <form method="get" action="{% url 'payroll' %}" class="sky-panel pay-toolbar">
+            <div class="pay-month-nav">
+                <a href="{{ prev_url }}{{ querystring }}" title="Previous month">←</a>
+                <input type="month" name="month" value="{{ month_value }}" class="form-control" style="width: auto;">
+                <a href="{{ next_url }}{{ querystring }}" title="Next month">→</a>
+            </div>
+            {% include "app_projects/_project_filter.html" %}
+            <button type="submit" class="pay-btn">Go</button>
+
+            <span class="pay-spacer"></span>
+
+            <span class="pay-pill locked">{{ counts.locked }} locked</span>
+            <span class="pay-pill draft">{{ counts.draft }} draft</span>
+            <span class="pay-pill new">{{ counts.new }} not calculated</span>
+            {% if counts.skipped %}<span class="pay-pill skipped">{{ counts.skipped }} skipped</span>{% endif %}
+        </form>
+
+        {% if not month_over %}
+        <div class="pay-warnings">
+            {{ month_label }} has not ended yet. Figures are provisional: days still to come are assumed payable.
+            You can calculate drafts now, but locking opens after {{ period_end|date:"d M Y" }}.
+        </div>
+        {% endif %}
+
+        <div class="sky-panel">
+            <div class="sky-panel-head">
+                <h6>Payroll roster</h6>
+                <span class="sky-count">{{ period_start|date:"d M" }} – {{ period_end|date:"d M Y" }}</span>
+            </div>
+
+            {% if rows %}
+            <div class="sky-panel-body">
+                <p class="pay-note">Actions below apply to the {{ rows|length }} employee{{ rows|length|pluralize }} shown (respecting the project filter).</p>
+                <div class="pay-actions">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="calculate">
+                        <button type="submit" class="pay-btn">Calculate &amp; save drafts</button>
+                    </form>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="lock">
+                        <button type="submit" class="pay-btn is-primary"
+                                {% if not month_over %}disabled title="Available after {{ period_end|date:'d M Y' }}"{% endif %}
+                                onclick="return confirm('Lock payroll for {{ month_label }}? Locked figures stay fixed even if attendance changes later.');">
+                            Lock month
+                        </button>
+                    </form>
+                    {% if counts.locked %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="unlock">
+                        <button type="submit" class="pay-btn is-danger"
+                                onclick="return confirm('Unlock {{ counts.locked }} locked record(s)? Their figures will follow current attendance again.');">
+                            Unlock
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="sky-table-scroll">
+                <table class="sky-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th class="pay-num">Present</th>
+                            <th class="pay-num">Paid leave</th>
+                            <th class="pay-num">Loss of pay</th>
+                            <th class="pay-num">Payable days</th>
+                            <th class="pay-num">Gross earned</th>
+                            <th class="pay-num">Deductions</th>
+                            <th class="pay-num">Net pay</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                        <tr>
+                            <td>
+                                <a class="pay-name" href="{% url 'payrollEmployee' year=year month=month uuid=row.employee.uuid %}{{ querystring }}">
+                                    {{ row.employee.user.get_full_name|default:row.employee.user.username }}
+                                </a>
+                                <div class="pay-muted">
+                                    {{ row.employee.designation|default:"—" }}{% if row.employee.project %} · {{ row.employee.project.name }}{% endif %}
+                                </div>
+                            </td>
+                            {% if row.figures %}
+                            <td class="pay-num sky-mono">{{ row.figures.present_days|floatformat:"-1" }}</td>
+                            <td class="pay-num sky-mono">{{ row.figures.leave_days|floatformat:"-1" }}</td>
+                            <td class="pay-num sky-mono">{{ row.figures.lop_days|floatformat:"-1" }}</td>
+                            <td class="pay-num sky-mono">{{ row.figures.payable_days|floatformat:"-1" }}</td>
+                            <td class="pay-num sky-mono">₹{{ row.figures.gross_earned|floatformat:2|intcomma }}</td>
+                            <td class="pay-num sky-mono">₹{{ row.figures.total_deductions|floatformat:2|intcomma }}</td>
+                            <td class="pay-num sky-mono pay-emph">₹{{ row.figures.net_pay|floatformat:2|intcomma }}</td>
+                            {% else %}
+                            <td colspan="7" class="pay-skip-reason">{{ row.result.skip_reason }}</td>
+                            {% endif %}
+                            <td>
+                                <span class="pay-pill {{ row.state }}">
+                                    {% if row.state == "locked" %}Locked{% elif row.state == "draft" %}Draft{% elif row.state == "new" %}Not calculated{% else %}Skipped{% endif %}
+                                </span>
+                                {% if row.locked and row.stale %}
+                                    <span class="pay-pill stale" title="Attendance or leave changed after this month was locked. The locked figures are unchanged.">Changed since lock</span>
+                                {% elif row.stale %}
+                                    <span class="pay-pill stale" title="The saved draft differs from the current calculation. Recalculate to refresh it.">Out of date</span>
+                                {% endif %}
+                                {% if row.result.provisional and not row.locked %}
+                                    <span class="pay-pill provisional" title="Days still to come are assumed payable.">Provisional</span>
+                                {% endif %}
+                                {% if row.result.warnings and not row.result.skipped %}
+                                    <span class="pay-warn" title="{{ row.result.warnings|join:' • ' }}">⚠</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="sky-empty">
+                                No employees found for {{ month_label }}{% if project_filter_selected %} in this project{% endif %}.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Payroll — {{ employee.user.get_full_name|default:employee.user.username }} — {{ month_label }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/payroll.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sky-dashboard">
+    <div class="container-fluid">
+
+        <div class="sky-header">
+            <div>
+                <span class="sky-eyebrow">Payroll / {{ month_label }}</span>
+                <h1>{{ employee.user.get_full_name|default:employee.user.username }}</h1>
+                <div class="pay-muted">
+                    {{ employee.designation|default:"—" }}{% if employee.project %} · {{ employee.project.name }}{% endif %}
+                    · {{ period_start|date:"d M" }} – {{ period_end|date:"d M Y" }}
+                </div>
+            </div>
+            <a href="{{ back_url }}" class="sky-edit-link">← Back to roster</a>
+        </div>
+
+        <div class="sky-panel pay-toolbar">
+            <span class="pay-pill {{ row.state }}">
+                {% if row.state == "locked" %}Locked{% elif row.state == "draft" %}Draft{% elif row.state == "new" %}Not calculated{% else %}Skipped{% endif %}
+            </span>
+            {% if row.locked and row.stale %}
+                <span class="pay-pill stale">Changed since lock</span>
+            {% elif row.stale %}
+                <span class="pay-pill stale">Out of date</span>
+            {% endif %}
+            {% if result.provisional and not row.locked %}<span class="pay-pill provisional">Provisional</span>{% endif %}
+
+            <span class="pay-spacer"></span>
+
+            <div class="pay-actions">
+                {% if not row.locked and not result.skipped %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="calculate">
+                    <button type="submit" class="pay-btn">Calculate &amp; save draft</button>
+                </form>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="lock">
+                    <button type="submit" class="pay-btn is-primary"
+                            {% if not month_over %}disabled title="Available after {{ period_end|date:'d M Y' }}"{% endif %}
+                            onclick="return confirm('Lock this payroll? The figures stay fixed even if attendance changes later.');">
+                        Lock
+                    </button>
+                </form>
+                {% endif %}
+                {% if row.locked %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="unlock">
+                    <button type="submit" class="pay-btn is-danger"
+                            onclick="return confirm('Unlock this payroll? Its figures will follow current attendance again.');">
+                        Unlock
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if row.locked and row.stale %}
+        <div class="pay-warnings">
+            Attendance or leave has changed since this payroll was locked. The amounts below are the locked figures.
+            The day-by-day table shows current attendance and may differ. Unlock to recalculate.
+        </div>
+        {% endif %}
+
+        {% if result.warnings and not result.skipped %}
+        <div class="pay-warnings">
+            <strong>Please review:</strong>
+            <ul>{% for w in result.warnings %}<li>{{ w }}</li>{% endfor %}</ul>
+        </div>
+        {% endif %}
+
+        {% if result.skipped %}
+        <div class="sky-panel"><div class="sky-panel-body">
+            <p class="pay-skip-reason" style="margin: 0;">{{ result.skip_reason }}</p>
+        </div></div>
+        {% else %}
+
+        <div class="pay-two-col mb-4">
+            <div class="sky-panel">
+                <div class="sky-panel-head"><h6>Attendance summary</h6></div>
+                <div class="sky-panel-body">
+                    <table class="pay-lines">
+                        <tr><td>Days in month</td><td class="sky-mono">{{ result.days_in_period }}</td></tr>
+                        {% if result.not_employed_days %}<tr><td>Not employed</td><td class="sky-mono">{{ result.not_employed_days }}</td></tr>{% endif %}
+                        <tr><td>Weekly offs</td><td class="sky-mono">{{ result.weekly_off_days }}</td></tr>
+                        <tr><td>Holidays</td><td class="sky-mono">{{ result.holiday_days }}</td></tr>
+                        <tr><td>Present</td><td class="sky-mono">{{ row.figures.present_days|floatformat:"-1" }}</td></tr>
+                        <tr><td>Paid leave</td><td class="sky-mono">{{ row.figures.leave_days|floatformat:"-1" }}</td></tr>
+                        <tr><td>Unpaid leave</td><td class="sky-mono">{{ result.unpaid_leave_days|floatformat:"-1" }}</td></tr>
+                        <tr><td>Absent</td><td class="sky-mono">{{ result.absent_days|floatformat:"-1" }}</td></tr>
+                        <tr><td>Loss of pay</td><td class="sky-mono">{{ row.figures.lop_days|floatformat:"-1" }}</td></tr>
+                        <tr class="is-total"><td>Payable days</td><td class="sky-mono">{{ row.figures.payable_days|floatformat:"-1" }} / {{ result.days_in_period }}</td></tr>
+                    </table>
+                    {% if row.locked %}
+                    <p class="pay-note" style="margin-top: .75rem;">Counts above are current attendance; the payable days total is the locked figure.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="sky-panel">
+                <div class="sky-panel-head"><h6>Earnings &amp; deductions</h6></div>
+                <div class="sky-panel-body">
+                    <table class="pay-lines">
+                        <tr><td>Basic (earned)</td><td class="sky-mono">₹{{ money.basic_earned|floatformat:2|intcomma }}</td></tr>
+                        <tr><td>HRA (earned)</td><td class="sky-mono">₹{{ money.hra_earned|floatformat:2|intcomma }}</td></tr>
+                        <tr class="is-total"><td>Gross earned <span class="pay-muted">of ₹{{ money.gross_monthly|floatformat:2|intcomma }}</span></td><td class="sky-mono">₹{{ money.gross_earned|floatformat:2|intcomma }}</td></tr>
+                        <tr><td>Provident Fund</td><td class="sky-mono">₹{{ money.pf|floatformat:2|intcomma }}</td></tr>
+                        <tr><td>ESI</td><td class="sky-mono">₹{{ money.esi|floatformat:2|intcomma }}</td></tr>
+                        <tr><td>Other deductions</td><td class="sky-mono">₹{{ money.other_deductions|floatformat:2|intcomma }}</td></tr>
+                        <tr><td>TDS</td><td class="sky-mono">₹{{ money.tds|floatformat:2|intcomma }}</td></tr>
+                        <tr class="is-total"><td>Total deductions</td><td class="sky-mono">₹{{ money.total_deductions|floatformat:2|intcomma }}</td></tr>
+                        <tr class="is-total"><td>Net pay</td><td class="sky-mono">₹{{ money.net_pay|floatformat:2|intcomma }}</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="sky-panel">
+            <div class="sky-panel-head"><h6>Day by day</h6><span class="sky-count">Current attendance</span></div>
+            <div class="sky-table-scroll">
+                <table class="sky-table">
+                    <thead>
+                        <tr><th>Date</th><th>Day</th><th>Status</th><th class="pay-num">Paid share</th><th>Note</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for d in result.days %}
+                        <tr>
+                            <td class="sky-mono">{{ d.date|date:"d M Y" }}</td>
+                            <td>{{ d.weekday }}</td>
+                            <td><span class="pay-pill pay-day {{ d.status|lower }}">{{ d.label }}</span></td>
+                            <td class="pay-num sky-mono">{{ d.paid|floatformat:"-1" }}</td>
+                            <td class="pay-muted">{{ d.note }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

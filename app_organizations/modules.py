@@ -59,6 +59,7 @@ MODULES = {
         "url_names": [
             "salaryUpdate", "salarySlipSelf", "salarySlipAdmin",
             "wageRegisterBulk",
+            "payroll", "payrollCycle", "payrollEmployee",
         ],
     },
     "projects": {
