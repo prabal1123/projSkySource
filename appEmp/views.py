@@ -866,9 +866,13 @@ def profileDetail_view(request, uuid):
             request_user=request.user,
         )
 
-    target_salary = employee.salary_records.filter(
-        is_active=True
-    ).first()
+    from app_organizations.entitlements import modules_for_request
+    mods = modules_for_request(request)
+    target_salary = None
+    if "payroll" in mods:
+        target_salary = employee.salary_records.filter(
+            is_active=True
+        ).first()
 
     return render(
         request,
@@ -880,14 +884,21 @@ def profileDetail_view(request, uuid):
             "salary": target_salary,
             "can_edit_salary": user_has_permission(request.user, "manage_salary"),
             "can_edit_profile": True,
-            "salary_form": SalaryForm(
-                instance=target_salary
+            "salary_form": (
+                SalaryForm(instance=target_salary)
+                if "payroll" in mods else None
             ),
             "target_uuid": employee.uuid,
             "current_year": timezone.now().year,
             "current_month": timezone.now().month,
-            "document_form": empDocumentForm(org=request.current_org),
-            "documents": employee.documents.all(),
+            "document_form": (
+                empDocumentForm(org=request.current_org)
+                if "documents" in mods else None
+            ),
+            "documents": (
+                employee.documents.all()
+                if "documents" in mods else None
+            ),
         },
     )
 
@@ -920,7 +931,11 @@ def empProfile_view(request):
     else:
         form = EmployeeForm(instance=profile)
 
-    self_salary = profile.salary_records.filter(is_active=True).first()
+    from app_organizations.entitlements import modules_for_request
+    self_salary = (
+        profile.salary_records.filter(is_active=True).first()
+        if "payroll" in modules_for_request(request) else None
+    )
 
     return render(
         request,

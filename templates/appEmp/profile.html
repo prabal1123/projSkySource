@@ -424,8 +424,8 @@
                     <a href="#employment">Employment</a>
                     <a href="#personal">Personal &amp; Contact</a>
                     <a href="#verification">Verification</a>
-                    <a href="#documents">Documents</a>
-                    <a href="#salary">Salary</a>
+                    {% if 'documents' in org_modules %}<a href="#documents">Documents</a>{% endif %}
+                    {% if 'payroll' in org_modules %}<a href="#salary">Salary</a>{% endif %}
                 </nav>
 
             </div>
@@ -626,6 +626,7 @@
             </form>
 
 
+            {% if 'documents' in org_modules %}
             <section id="documents" class="pe-card pe-doc">
                 <div class="pe-head">
                     <h2>Documents</h2>
@@ -698,8 +699,10 @@
                     </div>
                 {% endif %}
             </section>
+            {% endif %}
 
 
+            {% if 'payroll' in org_modules %}
             <section id="salary" class="pe-card pe-salary">
                 <div class="pe-head">
                     <h2>Salary &amp; Compensation</h2>
@@ -707,6 +710,7 @@
                 </div>
                 {% include "appEmp/_salary_block.html" %}
             </section>
+            {% endif %}
 
         </div>
 
