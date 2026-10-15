@@ -17,6 +17,10 @@ class SeatLimitBase(TestCase):
             name="Org A", owner_email="a@x.com",
             owner_first_name="A", created_by=self.root,
         )
+        from appEmp.models import empProfile as _P
+        _P.objects.get_or_create(
+            user=self.root, defaults={"organization": self.org}
+        )
         self.client.force_login(self.root)
         session = self.client.session
         session["switched_org_id"] = self.org.id
@@ -50,10 +54,9 @@ class SeatsLeftTests(SeatLimitBase):
     def test_deactivated_employee_frees_a_seat(self):
         self.set_limit(0)
         self.assertEqual(seats_left(self.org), 0)
-        empProfile.objects.filter(organization=self.org).first().__class__.objects.filter(
+        empProfile.objects.filter(
             organization=self.org, user=self.owner
         ).update(is_active=False)
-        self.org.max_employees = self.used() + 1
         self.assertEqual(seats_left(self.org), 1)
 
 
