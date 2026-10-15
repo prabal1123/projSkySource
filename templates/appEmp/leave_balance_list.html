@@ -1,440 +1,201 @@
 {% extends "base.html" %}
 
-{% load static %}
-
-
 {% block title %}Leave Balances{% endblock %}
 
-{% block extra_css %}
-
-<link
-    rel="stylesheet"
-    href="{% static 'css/dashboard.css' %}"
->
-
-{% endblock %}
-
-
 {% block content %}
+<style>
+    .lb-page { max-width: 1240px; margin: 0 auto; animation: lbIn .4s ease-out; }
+    @keyframes lbIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-<div class="sky-dashboard">
+    .lb-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
+    .lb-eyebrow { color: var(--green, #2F6B4F); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+    .lb-head h1 { margin: 0; font-size: 30px; letter-spacing: -.03em; color: var(--navy, #183D2F); }
 
-    <div class="container">
+    .lb-btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 18px; border-radius: 9px; border: 1px solid var(--green, #2F6B4F); background: var(--green, #2F6B4F); color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; white-space: nowrap; transition: .2s ease; }
+    .lb-btn:hover { background: var(--green-dark, #214F3B); border-color: var(--green-dark, #214F3B); color: #fff; }
+    .lb-btn-ghost { background: #fff; color: var(--green-dark, #214F3B); border-color: var(--border, #E1E7E3); }
+    .lb-btn-ghost:hover { background: var(--green-soft-2, #EEF6F1); color: var(--green-dark, #214F3B); }
 
+    .lb-card { background: #fff; border: 1px solid var(--border, #E1E7E3); border-radius: 18px; box-shadow: 0 6px 22px rgba(24,61,47,.04); margin-bottom: 18px; overflow: hidden; }
+    .lb-card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--border, #E1E7E3); }
+    .lb-card-head h2 { margin: 0; font-size: 16px; color: #111827; }
+    .lb-card-head p { margin: 4px 0 0; font-size: 12px; color: var(--ink-soft, #69756E); }
+    .lb-card-body { padding: 20px 22px; }
+    .lb-count { font-size: 12px; font-weight: 600; color: var(--ink-soft, #69756E); background: #F1F4F2; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
 
-        <!-- ====================================== -->
-        <!-- HEADER -->
-        <!-- ====================================== -->
+    /* Filters */
+    .lb-filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+    .lb-field { min-width: 0; }
+    .lb-label { display: block; margin-bottom: 6px; font-size: 12.5px; font-weight: 600; color: #374151; }
+    .lb-field select, .lb-field input { display: block; width: 100%; max-width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #D9E1DC; border-radius: 9px; font-size: 14px; font-family: inherit; background: #fff; color: var(--ink, #1C2B24); }
+    .lb-field select:focus, .lb-field input:focus { outline: none; border-color: #8CB59B; box-shadow: 0 0 0 3px rgba(47,107,79,.12); }
+    .lb-filter-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
 
-        <div class="sky-header">
+    /* Table */
+    .lb-table { width: 100%; border-collapse: collapse; }
+    .lb-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8a93a1; padding: 12px 16px; border-bottom: 1px solid #edf0ef; background: #FAFCFB; }
+    .lb-table td { padding: 14px 16px; border-bottom: 1px solid #f0f2f1; font-size: 14px; color: #374151; vertical-align: top; overflow-wrap: anywhere; }
+    .lb-table tbody tr:last-child td { border-bottom: 0; }
+    .lb-table tbody tr:hover { background: #F7FAF8; }
+    .lb-emp { font-weight: 600; color: #1f2937; }
+    .lb-avail { font-weight: 700; color: var(--green-dark, #214F3B); }
+    .lb-date { font-size: 13px; color: var(--ink-soft, #69756E); margin-bottom: 5px; }
+    .lb-empty { text-align: center; padding: 40px 20px !important; color: var(--ink-soft, #69756E); }
 
-            <div>
+    .lb-pill { display: inline-flex; padding: 4px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; background: #F1F4F2; color: #536159; white-space: nowrap; }
+    .lb-pill-approved { background: #E4F0E8; color: #214F3B; }
+    .lb-pill-pending { background: #FBF3E8; color: #B47A37; }
+    .lb-pill-rejected { background: var(--rose-soft, #FAEEEB); color: var(--rose-dark, #A95345); }
 
-                <span class="sky-eyebrow">
-                    Leaves / Administration
-                </span>
+    @media (max-width: 991.98px) {
+        .lb-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
 
-                <h1>
-                    Leave Balances
-                </h1>
+    @media (max-width: 700px) {
+        .lb-head { flex-direction: column; align-items: flex-start; }
+        .lb-head h1 { font-size: 26px; }
+        .lb-head .lb-btn { width: 100%; }
+        .lb-card-head { padding: 14px 16px; align-items: flex-start; }
+        .lb-card-body { padding: 16px; }
+        .lb-filter-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+        .lb-filter-actions .lb-btn { flex: 1; }
+        .lb-field select, .lb-field input { font-size: 16px; }
 
-            </div>
+        /* each balance becomes a card; Allotted / Used / Available share one row */
+        .lb-table thead { display: none; }
+        .lb-table, .lb-table tbody { display: block; width: 100%; }
+        .lb-table tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 10px; padding: 14px 16px; border-bottom: 1px solid #edf0ef; }
+        .lb-table tbody tr:last-child { border-bottom: 0; }
+        .lb-table td { display: block; padding: 0; border: 0; }
+        .lb-table td::before { content: attr(data-label); display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: #8a93a1; margin-bottom: 2px; }
+        .lb-table td.lb-td-emp { grid-column: 1 / -1; font-size: 15px; }
+        .lb-table td.lb-td-emp::before { display: none; }
+        .lb-table td.lb-td-type, .lb-table td.lb-td-elig { grid-column: 1 / -1; margin-top: 6px; }
+        .lb-table td.lb-td-year { grid-column: 1 / -1; margin-top: 6px; }
+        .lb-table td.lb-td-num { margin-top: 8px; }
+        .lb-table td.lb-td-num strong, .lb-table td.lb-td-num { font-size: 16px; }
+        .lb-table td.lb-empty { display: block; grid-column: 1 / -1; text-align: center; }
+        .lb-table td.lb-empty::before { display: none; }
+        .lb-table tr:has(td.lb-empty) { display: block; }
+    }
+</style>
 
+<div class="lb-page">
 
-            <a
-                href="{% url 'addLeaveBalance' %}"
-                class="sky-header-btn"
-            >
-                + Assign Leave
-            </a>
-
+    <div class="lb-head">
+        <div>
+            <div class="lb-eyebrow">Leaves / Administration</div>
+            <h1>Leave Balances</h1>
         </div>
+        <a href="{% url 'addLeaveBalance' %}" class="lb-btn">+ Assign Leave</a>
+    </div>
 
+    <div class="lb-card">
+        <div class="lb-card-head"><h2>Filters</h2></div>
+        <div class="lb-card-body">
+            <form method="get">
+                <div class="lb-filter-grid">
 
-        <!-- ====================================== -->
-        <!-- FILTERS -->
-        <!-- ====================================== -->
-
-        <div class="sky-panel mb-4">
-
-            <div class="sky-panel-head">
-
-                <h6>
-                    Filters
-                </h6>
-
-            </div>
-
-
-            <div class="sky-panel-body">
-
-                <form method="get">
-
-                    <div class="row">
-
-
-                        <!-- Employee Filter -->
-
-                        <div class="col-md-4 mb-3">
-
-                            <label class="sky-form-label">
-                                Employee
-                            </label>
-
-
-                            <select
-                                name="employee"
-                                class="form-control"
-                            >
-
-                                <option value="">
-                                    All Employees
+                    <div class="lb-field">
+                        <label class="lb-label">Employee</label>
+                        <select name="employee">
+                            <option value="">All Employees</option>
+                            {% for employee in employees %}
+                                <option value="{{ employee.id }}" {% if selected_employee == employee.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ employee.user.get_full_name|default:employee.user.username }}
                                 </option>
-
-
-                                {% for employee in employees %}
-
-                                    <option
-                                        value="{{ employee.id }}"
-                                        {% if selected_employee == employee.id|stringformat:"s" %}
-                                            selected
-                                        {% endif %}
-                                    >
-
-                                        {{ employee.user.get_full_name|default:employee.user.username }}
-
-                                    </option>
-
-                                {% endfor %}
-
-                            </select>
-
-                        </div>
-
-
-                        <!-- Leave Type Filter -->
-
-                        <div class="col-md-4 mb-3">
-
-                            <label class="sky-form-label">
-                                Leave Type
-                            </label>
-
-
-                            <select
-                                name="leave_type"
-                                class="form-control"
-                            >
-
-                                <option value="">
-                                    All Leave Types
-                                </option>
-
-
-                                {% for leave_type in leave_types %}
-
-                                    <option
-                                        value="{{ leave_type.id }}"
-                                        {% if selected_leave_type == leave_type.id|stringformat:"s" %}
-                                            selected
-                                        {% endif %}
-                                    >
-
-                                        {{ leave_type.name }}
-
-                                    </option>
-
-                                {% endfor %}
-
-                            </select>
-
-                        </div>
-
-
-                        <!-- Year Filter -->
-
-                        <div class="col-md-4 mb-3">
-
-                            <label class="sky-form-label">
-                                Year
-                            </label>
-
-
-                            <select
-                                name="year"
-                                class="form-control"
-                            >
-
-                                <option value="">
-                                    All Years
-                                </option>
-
-
-                                {% for item_year in years %}
-
-                                    <option
-                                        value="{{ item_year }}"
-                                        {% if selected_year == item_year|stringformat:"s" %}
-                                            selected
-                                        {% endif %}
-                                    >
-
-                                        {{ item_year }}
-
-                                    </option>
-
-                                {% endfor %}
-
-                            </select>
-
-                        </div>
-
-
+                            {% endfor %}
+                        </select>
                     </div>
 
+                    <div class="lb-field">
+                        <label class="lb-label">Leave Type</label>
+                        <select name="leave_type">
+                            <option value="">All Leave Types</option>
+                            {% for leave_type in leave_types %}
+                                <option value="{{ leave_type.id }}" {% if selected_leave_type == leave_type.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ leave_type.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="lb-field">
+                        <label class="lb-label">Year</label>
+                        <select name="year">
+                            <option value="">All Years</option>
+                            {% for item_year in years %}
+                                <option value="{{ item_year }}" {% if selected_year == item_year|stringformat:"s" %}selected{% endif %}>{{ item_year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
                     {% if project_filter_show %}
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <label class="sky-form-label">Project</label>
+                        <div class="lb-field">
+                            <label class="lb-label">Project</label>
                             {% include "app_projects/_project_filter.html" %}
                         </div>
-                    </div>
                     {% endif %}
-
-                    <div class="d-flex gap-2">
-
-                        <button
-                            type="submit"
-                            class="sky-header-btn"
-                        >
-                            Apply Filters
-                        </button>
-
-
-                        <a
-                            href="{% url 'leaveBalanceList' %}"
-                            class="sky-edit-link"
-                        >
-                            Clear
-                        </a>
-
-                    </div>
-
-                </form>
-
-            </div>
-
-        </div>
-
-
-        <!-- ====================================== -->
-        <!-- LEAVE BALANCE LIST -->
-        <!-- ====================================== -->
-
-        <div class="sky-panel">
-
-            <div class="sky-panel-head">
-
-                <div>
-
-                    <h6>
-                        Employee Leave Balances
-                    </h6>
-
-                    <span class="sky-help-text">
-                        Leave availability depends on the
-                        employee's configured eligibility date.
-                    </span>
 
                 </div>
 
+                <div class="lb-filter-actions">
+                    <button type="submit" class="lb-btn">Apply Filters</button>
+                    <a href="{% url 'leaveBalanceList' %}" class="lb-btn lb-btn-ghost">Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
 
-                <span class="sky-count">
-                    {{ balances|length }} record(s)
-                </span>
-
+    <div class="lb-card">
+        <div class="lb-card-head">
+            <div>
+                <h2>Employee Leave Balances</h2>
+                <p>Leave availability depends on the employee's configured eligibility date.</p>
             </div>
-
-
-            <div class="table-responsive">
-
-                <table class="sky-table">
-
-                    <thead>
-
-                        <tr>
-
-                            <th>
-                                Employee
-                            </th>
-
-                            <th>
-                                Leave Type
-                            </th>
-
-                            <th>
-                                Year
-                            </th>
-
-                            <th>
-                                Allotted
-                            </th>
-
-                            <th>
-                                Used
-                            </th>
-
-                            <th>
-                                Available
-                            </th>
-
-                            <th>
-                                Leave Facility From
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody>
-
-                        {% for balance in balances %}
-
-                            <tr>
-
-
-                                <!-- Employee -->
-
-                                <td>
-
-                                    {{ balance.employee.user.get_full_name|default:balance.employee.user.username }}
-
-                                </td>
-
-
-                                <!-- Leave Type -->
-
-                                <td>
-
-                                    {{ balance.leave_type.name }}
-
-                                </td>
-
-
-                                <!-- Year -->
-
-                                <td>
-
-                                    {{ balance.year }}
-
-                                </td>
-
-
-                                <!-- Total Allotted -->
-
-                                <td>
-
-                                    {{ balance.total_allotted }}
-
-                                </td>
-
-
-                                <!-- Used -->
-
-                                <td>
-
-                                    {{ balance.used }}
-
-                                </td>
-
-
-                                <!-- Available -->
-
-                                <td>
-
-                                    <strong>
-                                        {{ balance.available_balance }}
-                                    </strong>
-
-                                </td>
-
-
-                                <!-- Leave Eligibility -->
-
-                                <td>
-
-                                    {% if balance.employee.effective_leave_eligible_from %}
-
-                                        <div>
-
-                                            {{ balance.employee.effective_leave_eligible_from|date:"d M Y" }}
-
-                                        </div>
-
-
-                                        <div class="mt-1">
-
-                                            {% if balance.employee.is_leave_eligible %}
-
-                                                <span class="sky-pill approved">
-                                                    Available
-                                                </span>
-
-                                            {% else %}
-
-                                                <span class="sky-pill pending">
-                                                    Probation
-                                                </span>
-
-                                            {% endif %}
-
-                                        </div>
-
-
-                                    {% else %}
-
-                                        <span class="sky-pill rejected">
-                                            Joining Date Required
-                                        </span>
-
-                                    {% endif %}
-
-                                </td>
-
-
-                            </tr>
-
-
-                        {% empty %}
-
-                            <tr>
-
-                                <td
-                                    colspan="7"
-                                    class="sky-empty"
-                                >
-
-                                    No leave balances found.
-
-                                </td>
-
-                            </tr>
-
-                        {% endfor %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
+            <span class="lb-count">{{ balances|length }} record(s)</span>
         </div>
 
-
+        <table class="lb-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Leave Type</th>
+                    <th>Year</th>
+                    <th>Allotted</th>
+                    <th>Used</th>
+                    <th>Available</th>
+                    <th>Leave Facility From</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for balance in balances %}
+                    <tr>
+                        <td class="lb-td-emp lb-emp" data-label="Employee">{{ balance.employee.user.get_full_name|default:balance.employee.user.username }}</td>
+                        <td class="lb-td-type" data-label="Leave Type">{{ balance.leave_type.name }}</td>
+                        <td class="lb-td-year" data-label="Year">{{ balance.year }}</td>
+                        <td class="lb-td-num" data-label="Allotted">{{ balance.total_allotted }}</td>
+                        <td class="lb-td-num" data-label="Used">{{ balance.used }}</td>
+                        <td class="lb-td-num" data-label="Available"><span class="lb-avail">{{ balance.available_balance }}</span></td>
+                        <td class="lb-td-elig" data-label="Leave Facility From">
+                            {% if balance.employee.effective_leave_eligible_from %}
+                                <div class="lb-date">{{ balance.employee.effective_leave_eligible_from|date:"d M Y" }}</div>
+                                {% if balance.employee.is_leave_eligible %}
+                                    <span class="lb-pill lb-pill-approved">Available</span>
+                                {% else %}
+                                    <span class="lb-pill lb-pill-pending">Probation</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="lb-pill lb-pill-rejected">Joining Date Required</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7" class="lb-empty">No leave balances found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
 </div>
-
 {% endblock %}

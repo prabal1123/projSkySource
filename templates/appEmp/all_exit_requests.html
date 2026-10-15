@@ -3,462 +3,441 @@
 
 {% block title %}All Exit Requests{% endblock %}
 
-{% block extra_css %}
-<link
-    rel="stylesheet"
-    href="{% static 'css/dashboard.css' %}"
->
-{% endblock %}
-
 {% block content %}
 
-<div class="sky-dashboard">
+<style>
+    .ae-wrap { max-width: 1400px; margin: 0 auto; }
 
-    <div
-        class="container"
-        style="max-width: 1400px;"
-    >
+    .ae-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    .ae-eyebrow {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--green-dark);
+        background: var(--green-soft-2);
+        padding: 4px 10px;
+        border-radius: 999px;
+        margin-bottom: 10px;
+    }
+    .ae-header h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        line-height: 1.2;
+        color: var(--navy);
+    }
+    .ae-help { margin: 0; font-size: 14px; color: var(--ink-soft); max-width: 640px; }
+    .ae-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-        <!-- ============================== -->
-        <!-- HEADER -->
-        <!-- ============================== -->
+    .ae-panel {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    .ae-panel:last-child { margin-bottom: 0; }
+    .ae-panel-head {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        background: var(--green-soft-2);
+    }
+    .ae-panel-head h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--green-dark);
+    }
+    .ae-panel-body { padding: 0; }
+    .ae-panel-body.ae-pad { padding: 20px; }
 
-        <div class="sky-header">
+    .ae-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 16px;
+        align-items: end;
+    }
+    .ae-field label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+    }
+    .ae-field select {
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 14px;
+        color: var(--navy);
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+    }
+    .ae-field select:focus {
+        outline: none;
+        border-color: var(--green);
+        box-shadow: 0 0 0 3px var(--green-soft-2);
+    }
+    .ae-form-actions { display: flex; align-items: center; gap: 8px; }
 
-            <div>
+    .ae-btn {
+        display: inline-block;
+        padding: 9px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--green);
+        border: 1px solid var(--green);
+        border-radius: 8px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background .15s ease;
+    }
+    .ae-btn:hover { background: var(--green-dark); border-color: var(--green-dark); color: #fff; text-decoration: none; }
+    .ae-btn-ghost { color: var(--green-dark); background: #fff; border-color: var(--border); }
+    .ae-btn-ghost:hover { color: var(--green-dark); background: var(--green-soft-2); border-color: var(--green); }
 
-                <span class="sky-eyebrow">
-                    HR / Employee Exit
-                </span>
+    .ae-table { width: 100%; border-collapse: collapse; }
+    .ae-table th {
+        text-align: left;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+    .ae-table td {
+        padding: 14px 16px;
+        font-size: 14px;
+        color: var(--navy);
+        vertical-align: top;
+    }
+    .ae-table tr.ae-main td { border-top: 1px solid var(--border); }
+    .ae-table tbody.ae-rec:first-of-type tr.ae-main td { border-top: 0; }
+    .ae-table tr.ae-main td { padding-bottom: 8px; }
+    .ae-table tr.ae-detail td { padding: 0 16px 14px; }
 
-                <h1>All Exit Requests</h1>
+    .ae-name { font-weight: 700; color: var(--navy); }
+    .ae-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
 
-                <p class="sky-help-text">
-                    View resignation and termination
-                    requests across all stages of the
-                    employee exit process.
-                </p>
+    .ae-pill {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: var(--green-soft-2);
+        color: var(--green-dark);
+        white-space: nowrap;
+    }
+    .ae-pill-muted { background: #f1f3f5; color: var(--ink-soft); }
 
-            </div>
+    .ae-detailbox {
+        background: #fafcfb;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--ink-soft);
+    }
+    .ae-detailbox strong { color: var(--navy); }
+
+    .ae-empty {
+        padding: 40px 20px;
+        text-align: center;
+        font-size: 14px;
+        color: var(--ink-soft);
+    }
+
+    @media (max-width: 700px) {
+        .ae-header h1 { font-size: 22px; }
+        .ae-header-actions { width: 100%; }
+        .ae-header-actions .ae-btn { flex: 1 1 100%; text-align: center; padding: 12px 18px; font-size: 16px; }
+
+        .ae-panel-body.ae-pad { padding: 16px; }
+        .ae-form { grid-template-columns: 1fr; gap: 14px; }
+        .ae-field select { font-size: 16px; padding: 12px; }
+        .ae-form-actions .ae-btn { flex: 1; text-align: center; padding: 12px 18px; font-size: 16px; }
+
+        .ae-panel-body { padding: 12px; }
+        .ae-panel-body.ae-pad { padding: 16px; }
+
+        .ae-table, .ae-table tbody, .ae-table tr, .ae-table td { display: block; width: 100%; }
+        .ae-table thead { display: none; }
+
+        .ae-table tbody.ae-rec {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 6px 14px 12px;
+            margin-bottom: 12px;
+            background: #fff;
+        }
+        .ae-table tbody.ae-rec:last-child { margin-bottom: 0; }
+
+        .ae-table tr.ae-main td,
+        .ae-table tbody.ae-rec:first-of-type tr.ae-main td {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 10px 0;
+            border-top: 0;
+            border-bottom: 1px solid var(--border);
+            text-align: right;
+        }
+        .ae-table tr.ae-main td:last-child { border-bottom: 0; }
+        .ae-table tr.ae-main td::before {
+            content: attr(data-label);
+            flex: 0 0 38%;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+        .ae-table tr.ae-detail td { padding: 4px 0 0; }
+    }
+</style>
+
+<div class="ae-wrap">
+
+    <div class="ae-header">
+
+        <div>
+            <span class="ae-eyebrow">HR / Employee Exit</span>
+            <h1>All Exit Requests</h1>
+            <p class="ae-help">
+                View resignation and termination requests across all stages of the employee exit process.
+            </p>
+        </div>
+
+        <div class="ae-header-actions">
+            <a href="{% url 'pendingResignations' %}" class="ae-btn">Pending Resignations</a>
+            <a href="{% url 'readyForFinalization' %}" class="ae-btn">Ready for Finalization</a>
+        </div>
+
+    </div>
 
 
-            <div class="d-flex gap-2">
+    <div class="ae-panel">
 
-                <a
-                    href="{% url 'pendingResignations' %}"
-                    class="sky-header-btn"
-                >
-                    Pending Resignations
-                </a>
+        <div class="ae-panel-head">
+            <h2>Filters</h2>
+        </div>
 
-                <a
-                    href="{% url 'readyForFinalization' %}"
-                    class="sky-header-btn"
-                >
-                    Ready for Finalization
-                </a>
+        <div class="ae-panel-body ae-pad">
 
-            </div>
+            <form method="get" class="ae-form">
+
+                <div class="ae-field">
+                    <label for="ae-type">Exit Type</label>
+                    <select name="type" id="ae-type">
+                        <option value="">All Types</option>
+                        {% for value, label in type_choices %}
+                            <option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="ae-field">
+                    <label for="ae-status">Status</label>
+                    <select name="status" id="ae-status">
+                        <option value="">All Statuses</option>
+                        {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="ae-form-actions">
+                    <button type="submit" class="ae-btn">Apply Filters</button>
+                    <a href="{% url 'allExitRequests' %}" class="ae-btn ae-btn-ghost">Clear</a>
+                </div>
+
+            </form>
 
         </div>
 
-
-        <!-- ============================== -->
-        <!-- FILTERS -->
-        <!-- ============================== -->
-
-        <div class="sky-panel mb-4">
-
-            <div class="sky-panel-head">
-                <h6>Filters</h6>
-            </div>
+    </div>
 
 
-            <div class="sky-panel-body">
+    <div class="ae-panel">
 
-                <form
-                    method="get"
-                    class="row g-3 align-items-end"
-                >
-
-                    <!-- Exit Type -->
-                    <div class="col-md-4">
-
-                        <label class="sky-form-label">
-                            Exit Type
-                        </label>
-
-                        <select
-                            name="type"
-                            class="form-control"
-                        >
-
-                            <option value="">
-                                All Types
-                            </option>
-
-                            {% for value, label in type_choices %}
-
-                                <option
-                                    value="{{ value }}"
-                                    {% if selected_type == value %}
-                                        selected
-                                    {% endif %}
-                                >
-                                    {{ label }}
-                                </option>
-
-                            {% endfor %}
-
-                        </select>
-
-                    </div>
-
-
-                    <!-- Status -->
-                    <div class="col-md-4">
-
-                        <label class="sky-form-label">
-                            Status
-                        </label>
-
-                        <select
-                            name="status"
-                            class="form-control"
-                        >
-
-                            <option value="">
-                                All Statuses
-                            </option>
-
-                            {% for value, label in status_choices %}
-
-                                <option
-                                    value="{{ value }}"
-                                    {% if selected_status == value %}
-                                        selected
-                                    {% endif %}
-                                >
-                                    {{ label }}
-                                </option>
-
-                            {% endfor %}
-
-                        </select>
-
-                    </div>
-
-
-                    <!-- Buttons -->
-                    <div class="col-md-4">
-
-                        <button
-                            type="submit"
-                            class="sky-header-btn"
-                        >
-                            Apply Filters
-                        </button>
-
-                        <a
-                            href="{% url 'allExitRequests' %}"
-                            class="btn btn-outline-secondary ms-2"
-                        >
-                            Clear
-                        </a>
-
-                    </div>
-
-                </form>
-
-            </div>
-
+        <div class="ae-panel-head">
+            <h2>Employee Exit History</h2>
         </div>
 
+        <div class="ae-panel-body">
 
-        <!-- ============================== -->
-        <!-- EXIT HISTORY -->
-        <!-- ============================== -->
+            {% if request_rows %}
 
-        <div class="sky-panel">
+                <table class="ae-table">
 
-            <div class="sky-panel-head">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Exit Type</th>
+                            <th>Submitted</th>
+                            <th>Last Working Date</th>
+                            <th>Manager NOC</th>
+                            <th>Finance NOC</th>
+                            <th>Status</th>
+                            <th>Initiated By</th>
+                        </tr>
+                    </thead>
 
-                <h6>
-                    Employee Exit History
-                </h6>
+                    {% for row in request_rows %}
 
-            </div>
+                        <tbody class="ae-rec">
 
+                            <tr class="ae-main">
 
-            <div class="sky-panel-body">
+                                <td data-label="Employee">
+                                    <div>
+                                        <div class="ae-name">
+                                            {{ row.exit_request.employee.user.get_full_name|default:row.exit_request.employee.user.username }}
+                                        </div>
+                                        <div class="ae-sub">
+                                            {{ row.exit_request.employee.user.username }}
+                                        </div>
+                                    </div>
+                                </td>
 
-                {% if request_rows %}
+                                <td data-label="Exit Type">
+                                    <strong>{{ row.exit_request.get_exit_type_display }}</strong>
+                                </td>
 
-                    <div class="table-responsive">
+                                <td data-label="Submitted">
+                                    <div>
+                                        {{ row.exit_request.created_at|date:"d M Y" }}
+                                        <div class="ae-sub">{{ row.exit_request.created_at|date:"h:i A" }}</div>
+                                    </div>
+                                </td>
 
-                        <table
-                            class="table align-middle"
-                        >
+                                <td data-label="Last Working Date">
+                                    {% if row.exit_request.final_last_working_date %}
+                                        {{ row.exit_request.final_last_working_date|date:"d M Y" }}
+                                    {% elif row.exit_request.proposed_last_working_date %}
+                                        <div>
+                                            {{ row.exit_request.proposed_last_working_date|date:"d M Y" }}
+                                            <div class="ae-sub">Proposed</div>
+                                        </div>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
 
-                            <thead>
-
-                                <tr>
-                                    <th>Employee</th>
-                                    <th>Exit Type</th>
-                                    <th>Submitted</th>
-                                    <th>Last Working Date</th>
-                                    <th>Manager NOC</th>
-                                    <th>Finance NOC</th>
-                                    <th>Status</th>
-                                    <th>Initiated By</th>
-                                </tr>
-
-                            </thead>
-
-
-                            <tbody>
-
-                                {% for row in request_rows %}
-
-                                    <tr>
-
-                                        <!-- Employee -->
-                                        <td>
-
-                                            <strong>
-                                                {{ row.exit_request.employee.user.get_full_name|default:row.exit_request.employee.user.username }}
-                                            </strong>
-
-                                            <div class="sky-help-text">
-                                                {{ row.exit_request.employee.user.username }}
-                                            </div>
-
-                                        </td>
-
-
-                                        <!-- Exit Type -->
-                                        <td>
-
-                                            <strong>
-                                                {{ row.exit_request.get_exit_type_display }}
-                                            </strong>
-
-                                        </td>
-
-
-                                        <!-- Created -->
-                                        <td>
-
-                                            {{ row.exit_request.created_at|date:"d M Y" }}
-
-                                            <div class="sky-help-text">
-                                                {{ row.exit_request.created_at|date:"h:i A" }}
-                                            </div>
-
-                                        </td>
-
-
-                                        <!-- Last Working Date -->
-                                        <td>
-
-                                            {% if row.exit_request.final_last_working_date %}
-
-                                                {{ row.exit_request.final_last_working_date|date:"d M Y" }}
-
-                                            {% elif row.exit_request.proposed_last_working_date %}
-
-                                                {{ row.exit_request.proposed_last_working_date|date:"d M Y" }}
-
-                                                <div class="sky-help-text">
-                                                    Proposed
+                                <td data-label="Manager NOC">
+                                    {% if row.manager_approval %}
+                                        <div>
+                                            <span class="ae-pill">{{ row.manager_approval.get_status_display }}</span>
+                                            {% if row.manager_approval.decided_by %}
+                                                <div class="ae-sub">
+                                                    By: {{ row.manager_approval.decided_by.get_full_name|default:row.manager_approval.decided_by.username }}
                                                 </div>
-
-                                            {% else %}
-
-                                                —
-
                                             {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span class="ae-pill ae-pill-muted">Not Started</span>
+                                    {% endif %}
+                                </td>
 
-                                        </td>
-
-
-                                        <!-- Manager Approval -->
-                                        <td>
-
-                                            {% if row.manager_approval %}
-
-                                                <strong>
-                                                    {{ row.manager_approval.get_status_display }}
-                                                </strong>
-
-                                                {% if row.manager_approval.decided_by %}
-
-                                                    <div class="sky-help-text">
-
-                                                        By:
-                                                        {{ row.manager_approval.decided_by.get_full_name|default:row.manager_approval.decided_by.username }}
-
-                                                    </div>
-
-                                                {% endif %}
-
-                                            {% else %}
-
-                                                Not Started
-
+                                <td data-label="Finance NOC">
+                                    {% if row.finance_approval %}
+                                        <div>
+                                            <span class="ae-pill">{{ row.finance_approval.get_status_display }}</span>
+                                            {% if row.finance_approval.decided_by %}
+                                                <div class="ae-sub">
+                                                    By: {{ row.finance_approval.decided_by.get_full_name|default:row.finance_approval.decided_by.username }}
+                                                </div>
                                             {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span class="ae-pill ae-pill-muted">Not Started</span>
+                                    {% endif %}
+                                </td>
 
-                                        </td>
+                                <td data-label="Status">
+                                    <span class="ae-pill">{{ row.exit_request.get_status_display }}</span>
+                                </td>
 
+                                <td data-label="Initiated By">
+                                    {% if row.exit_request.initiated_by %}
+                                        {{ row.exit_request.initiated_by.get_full_name|default:row.exit_request.initiated_by.username }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
 
-                                        <!-- Finance Approval -->
-                                        <td>
+                            </tr>
 
-                                            {% if row.finance_approval %}
+                            <tr class="ae-detail">
 
-                                                <strong>
-                                                    {{ row.finance_approval.get_status_display }}
-                                                </strong>
+                                <td colspan="8">
 
-                                                {% if row.finance_approval.decided_by %}
+                                    <div class="ae-detailbox">
 
-                                                    <div class="sky-help-text">
+                                        <strong>Reason:</strong>
+                                        {{ row.exit_request.reason }}
 
-                                                        By:
-                                                        {{ row.finance_approval.decided_by.get_full_name|default:row.finance_approval.decided_by.username }}
+                                        {% if row.exit_request.hr_reviewed_by %}
+                                            <br>
+                                            <strong>HR Reviewed By:</strong>
+                                            {{ row.exit_request.hr_reviewed_by.get_full_name|default:row.exit_request.hr_reviewed_by.username }}
+                                        {% endif %}
 
-                                                    </div>
+                                        {% if row.exit_request.hr_remarks %}
+                                            <br>
+                                            <strong>HR Remarks:</strong>
+                                            {{ row.exit_request.hr_remarks }}
+                                        {% endif %}
 
-                                                {% endif %}
+                                        {% if row.exit_request.finalized_by %}
+                                            <br>
+                                            <strong>Finalized By:</strong>
+                                            {{ row.exit_request.finalized_by.get_full_name|default:row.exit_request.finalized_by.username }}
+                                        {% endif %}
 
-                                            {% else %}
+                                        {% if row.exit_request.finalized_at %}
+                                            <br>
+                                            <strong>Finalized At:</strong>
+                                            {{ row.exit_request.finalized_at|date:"d M Y, h:i A" }}
+                                        {% endif %}
 
-                                                Not Started
+                                    </div>
 
-                                            {% endif %}
+                                </td>
 
-                                        </td>
+                            </tr>
 
+                        </tbody>
 
-                                        <!-- Overall Exit Status -->
-                                        <td>
+                    {% endfor %}
 
-                                            <strong>
-                                                {{ row.exit_request.get_status_display }}
-                                            </strong>
+                </table>
 
-                                        </td>
+            {% else %}
 
+                <div class="ae-empty">
+                    No employee exit requests match the selected filters.
+                </div>
 
-                                        <!-- Initiated By -->
-                                        <td>
-
-                                            {% if row.exit_request.initiated_by %}
-
-                                                {{ row.exit_request.initiated_by.get_full_name|default:row.exit_request.initiated_by.username }}
-
-                                            {% else %}
-
-                                                —
-
-                                            {% endif %}
-
-                                        </td>
-
-                                    </tr>
-
-
-                                    <!-- DETAILS -->
-                                    <tr>
-
-                                        <td colspan="8">
-
-                                            <div class="sky-help-text">
-
-                                                <strong>
-                                                    Reason:
-                                                </strong>
-
-                                                {{ row.exit_request.reason }}
-
-
-                                                {% if row.exit_request.hr_reviewed_by %}
-
-                                                    <br>
-
-                                                    <strong>
-                                                        HR Reviewed By:
-                                                    </strong>
-
-                                                    {{ row.exit_request.hr_reviewed_by.get_full_name|default:row.exit_request.hr_reviewed_by.username }}
-
-                                                {% endif %}
-
-
-                                                {% if row.exit_request.hr_remarks %}
-
-                                                    <br>
-
-                                                    <strong>
-                                                        HR Remarks:
-                                                    </strong>
-
-                                                    {{ row.exit_request.hr_remarks }}
-
-                                                {% endif %}
-
-
-                                                {% if row.exit_request.finalized_by %}
-
-                                                    <br>
-
-                                                    <strong>
-                                                        Finalized By:
-                                                    </strong>
-
-                                                    {{ row.exit_request.finalized_by.get_full_name|default:row.exit_request.finalized_by.username }}
-
-                                                {% endif %}
-
-
-                                                {% if row.exit_request.finalized_at %}
-
-                                                    <br>
-
-                                                    <strong>
-                                                        Finalized At:
-                                                    </strong>
-
-                                                    {{ row.exit_request.finalized_at|date:"d M Y, h:i A" }}
-
-                                                {% endif %}
-
-                                            </div>
-
-                                        </td>
-
-                                    </tr>
-
-                                {% endfor %}
-
-                            </tbody>
-
-                        </table>
-
-                    </div>
-
-                {% else %}
-
-                    <div class="sky-empty">
-
-                        No employee exit requests match
-                        the selected filters.
-
-                    </div>
-
-                {% endif %}
-
-            </div>
+            {% endif %}
 
         </div>
 

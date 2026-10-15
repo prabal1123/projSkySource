@@ -3,656 +3,729 @@
 
 {% block title %}Employee Profile | Numa Lite{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-{% endblock %}
-
 {% block content %}
+
 <style>
-  .pe {
-    /* Numa Lite Color Palette & Variables */
-    --primary: #2d5a43;
-    --primary-hover: #214332;
-    --primary-light: #e6f0eb;
-    --primary-ring: rgba(45, 90, 67, 0.15);
-    --primary-border: #b8d4c5;
-    
-    --surface: #ffffff;
-    --surface-alt: #f8faf9;
-    --surface-hover: #f1f5f3;
-    
-    --text-main: #111827;
-    --text-muted: #4b5563;
-    --text-light: #9ca3af;
-    
-    --border: #e5e7eb;
-    --danger: #ef4444;
-    --danger-light: #fef2f2;
-    --success-light: #dcfce7;
-    --success-text: #166534;
-    --warning-light: #fef9c3;
-    --warning-text: #854d0e;
-    
-    --radius-lg: 16px;
-    --radius-md: 10px;
-    --radius-sm: 6px;
-    
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
-    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.05);
-    
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 24px 32px 64px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  }
-  
-  html { scroll-behavior: smooth; }
-
-  /* Animations */
-  @keyframes slideUpFade {
-    from { opacity: 0; transform: translateY(15px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .pe .animate-block { animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
-  .pe .delay-1 { animation-delay: 0.05s; }
-  .pe .delay-2 { animation-delay: 0.1s; }
-  .pe .delay-3 { animation-delay: 0.15s; }
-  .pe .delay-4 { animation-delay: 0.2s; }
-  .pe .delay-5 { animation-delay: 0.25s; }
-
-  /* Breadcrumbs */
-  .pe .breadcrumb {
-    display: flex; align-items: center; gap: 10px; color: var(--text-muted);
-    font-size: 0.9rem; margin: 0 0 24px; font-weight: 500;
-  }
-  .pe .breadcrumb span:last-child { color: var(--text-main); font-weight: 600; }
-
-  /* Layout - Top Section (Sidebar + Employment) */
-  .pe .profile-layout { 
-    display: grid; 
-    grid-template-columns: 1fr; 
-    gap: 24px; 
-    margin-bottom: 24px; 
-  }
-  @media (min-width: 1024px) {
-    .pe .profile-layout { 
-      grid-template-columns: 320px 1fr;
-      align-items: start; 
-    }
-  }
-
-  /* Layout - Bottom Section (2-Column Grid) */
-  .pe .bottom-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 24px;
-    margin-bottom: 24px;
-  }
-  @media (min-width: 1024px) {
-    .pe .bottom-grid {
-      grid-template-columns: repeat(2, 1fr); 
-      align-items: start;
-    }
-  }
-
-  /* Left Sidebar Container */
-  .pe .sidebar-container {
-    position: sticky; 
-    top: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .pe .sidebar-card {
-    background: var(--surface); 
-    border: 1px solid var(--border); 
-    border-radius: var(--radius-lg);
-    padding: 32px 24px; 
-    box-shadow: var(--shadow-md); 
-  }
-  
-  /* Sidebar Identity Profile */
-  .pe .sidebar-top { 
-    text-align: center; 
-    padding-bottom: 24px; 
-    border-bottom: 1px solid var(--border); 
-  }
-  .pe .avatar-xl {
-    width: 88px; height: 88px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), #4e8a69); color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 36px; font-weight: 700; margin: 0 auto 16px;
-    box-shadow: 0 4px 12px var(--primary-ring);
-  }
-  .pe .sidebar-card h1 { font-size: 1.4rem; font-weight: 700; color: var(--text-main); margin: 0 0 4px; letter-spacing: -0.02em; }
-  .pe .sidebar-card .sub { color: var(--text-muted); font-size: 0.9rem; margin: 0 0 16px; }
-  
-  /* Sidebar Quick Details */
-  .pe .mini-list { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 16px; }
-  .pe .mini-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 0.9rem; }
-  .pe .mini-list span { color: var(--text-muted); }
-  .pe .mini-list strong { color: var(--text-main); font-weight: 600; text-align: right; }
-  
-  /* Sidebar Vertical Navigation */
-  .pe .sidebar-nav {
-    margin-top: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .pe .sidebar-nav-title {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-light);
-    font-weight: 700;
-    margin-bottom: 8px;
-    padding-left: 12px;
-  }
-  .pe .sidebar-nav a {
-    display: flex;
-    align-items: center;
-    padding: 10px 14px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--text-muted);
-    text-decoration: none;
-    border-radius: var(--radius-md);
-    transition: all 0.2s ease;
-  }
-  .pe .sidebar-nav a:hover { 
-    background: var(--surface-hover); 
-    color: var(--text-main);
-    transform: translateX(4px);
-  }
-  .pe .sidebar-nav a.active {
-    background: var(--primary-light); 
-    color: var(--primary); 
-    font-weight: 600;
-  }
-
-  /* Content Cards */
-  .pe .content-card {
-    background: var(--surface); 
-    border: 1px solid var(--border); 
-    border-radius: var(--radius-lg);
-    padding: 32px;
-    box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.3s ease, transform 0.3s ease; 
-    scroll-margin-top: 24px;
-  }
-  .pe .content-card:hover { 
-    box-shadow: var(--shadow-lg); 
-  }
-  .pe .card-header { margin: 0 0 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
-  .pe .card-header h2 { font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin: 0 0 4px; letter-spacing: -0.01em; }
-  .pe .card-header p { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
-
-  /* Form Layouts */
-  .pe .form-grid {
-    display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
-    gap: 20px 24px; 
-    align-items: start;
-  }
-  .pe .field.full { grid-column: 1 / -1; }
-  .pe .field label {
-    display: block; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;
-    letter-spacing: 0.05em; font-weight: 600; margin: 0 0 8px;
-  }
-  .pe .field input[type="text"], .pe .field input[type="email"], .pe .field input[type="tel"],
-  .pe .field input[type="number"], .pe .field input[type="date"], .pe .field input[type="file"],
-  .pe .field select, .pe .field textarea {
-    width: 100%; box-sizing: border-box; padding: 10px 14px; height: 44px; font: inherit; font-size: 0.95rem;
-    color: var(--text-main); background: var(--surface-alt); border: 1px solid var(--border);
-    border-radius: var(--radius-md); transition: all 0.2s ease;
-  }
-  .pe .field input[type="file"] { height: auto; padding: 8px 12px; }
-  .pe .field textarea { height: auto; min-height: 96px; resize: vertical; }
-  
-  .pe .field input:hover, .pe .field select:hover, .pe .field textarea:hover {
-    border-color: #cbd5e1;
-  }
-  .pe .field input:focus, .pe .field select:focus, .pe .field textarea:focus {
-    outline: none; background: var(--surface); border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-ring);
-  }
-  .pe .field-help { font-size: 0.8rem; color: var(--text-light); margin-top: 6px; line-height: 1.4; }
-  .pe .field-error { font-size: 0.8rem; color: var(--danger); margin-top: 6px; font-weight: 500; }
-
-  /* Checkbox & Verification Grid */
-  .pe .check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-  .pe .check-card {
-    display: flex; align-items: center; gap: 12px; margin: 0; padding: 14px 16px;
-    background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--radius-md);
-    cursor: pointer; transition: all 0.2s ease;
-    font-size: 0.95rem; font-weight: 600; color: var(--text-main);
-  }
-  .pe .check-card:hover { background: var(--surface-hover); border-color: #cbd5e1; }
-  .pe .check-card:has(input:checked) { background: var(--primary-light); border-color: var(--primary-border); }
-  .pe .check-card input { width: 18px; height: 18px; accent-color: var(--primary); flex-shrink: 0; margin: 0; cursor: pointer; }
-
-  /* Buttons */
-  .pe .btn {
-    display: inline-flex; align-items: center; justify-content: center; padding: 12px 20px;
-    border-radius: var(--radius-md); font-weight: 600; font-size: 0.95rem; text-decoration: none; cursor: pointer;
-    border: 1px solid var(--border); background: var(--surface); color: var(--text-main);
-    transition: all 0.2s ease; width: 100%; box-sizing: border-box;
-  }
-  .pe .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: var(--shadow-sm); }
-  .pe .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
-  .pe .btn-inline { width: auto; margin-top: 24px; }
-  
-  .pe .form-footer { display: flex; justify-content: flex-end; margin-top: 12px; padding-top: 24px; border-top: 1px solid var(--border); }
-
-  /* Badges */
-  .pe .badge {
-    display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 20px;
-    font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
-  }
-  .pe .badge-neutral { background: #f3f4f6; color: #4b5563; }
-  .pe .badge-success { background: var(--success-light); color: var(--success-text); }
-  .pe .badge-warning { background: var(--warning-light); color: var(--warning-text); }
-
-  /* Tables */
-  .pe .table-container { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); margin-top: 24px; box-shadow: var(--shadow-sm); }
-  .pe table { width: 100%; border-collapse: collapse; text-align: left; margin: 0; background: var(--surface); }
-  .pe th {
-    background: var(--surface-alt); padding: 14px 16px; font-size: 0.8rem; text-transform: uppercase;
-    letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--border);
-  }
-  .pe td { padding: 16px; font-size: 0.95rem; color: var(--text-main); border-bottom: 1px solid var(--border); }
-  .pe tr:last-child td { border-bottom: none; }
-  .pe tbody tr:hover { background: var(--surface-hover); }
-  .pe .text-primary { color: var(--primary); text-decoration: none; font-weight: 600; }
-  .pe .text-primary:hover { text-decoration: underline; }
-
-  /* Empty States & Alerts */
-  .pe .empty-state {
-    text-align: center; padding: 40px 24px; margin-top: 24px; background: var(--surface-alt);
-    border-radius: var(--radius-md); border: 2px dashed #cbd5e1;
-  }
-  .pe .empty-state h3 { font-size: 1.1rem; color: var(--text-main); margin: 0 0 8px; font-weight: 600; }
-  .pe .empty-state p { font-size: 0.95rem; color: var(--text-muted); margin: 0; }
-  
-  .pe .alert {
-    padding: 14px 16px; border-radius: var(--radius-md); margin-bottom: 24px;
-    background: var(--danger-light); color: var(--danger); border: 1px solid #fecaca; font-size: 0.95rem; font-weight: 500;
-  }
-  
-  /* Salary Wrapper */
-  .pe .salary-wrapper {
-    background: var(--surface); 
-    border: 1px solid var(--border); 
-    border-radius: var(--radius-lg);
-    padding: 32px; 
-    box-shadow: var(--shadow-sm);
-    scroll-margin-top: 24px;
-  }
-
-  /* =========================================================
-     MOBILE RESPONSIVENESS FIX (Remove massive side gaps)
-  ========================================================= */
-  @media (max-width: 768px) {
-    /* Shrink the outer wrapper padding */
     .pe {
-      padding: 16px 12px 64px !important; 
-    }
-    
-    /* Shrink the massive internal padding inside the cards */
-    .pe .sidebar-card,
-    .pe .content-card,
-    .pe .salary-wrapper {
-      padding: 24px 16px !important;
+        max-width: 1400px;
+        margin: 0 auto;
+        container-type: inline-size;
+        container-name: pe;
+
+        /* Aliases for the old variable names, so _salary_block.html keeps working */
+        --primary: var(--green-dark);
+        --primary-hover: var(--green-dark);
+        --primary-light: var(--green-soft-2);
+        --primary-border: var(--green);
+        --surface: #ffffff;
+        --surface-alt: #f8faf9;
+        --surface-hover: #f1f5f3;
+        --text-main: var(--navy);
+        --text-muted: var(--ink-soft);
+        --text-light: #9ca3af;
+        --danger: var(--rose-dark);
+        --danger-light: var(--rose-soft);
     }
 
-    /* Make grid inputs span full width easier on phones */
-    .pe .form-grid {
-      grid-template-columns: 1fr !important; 
+    /* ---------- Breadcrumb ---------- */
+    .pe-crumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 14px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink-soft);
     }
-    
-    /* Align the document upload button vertically on phones */
-    #documents .form-grid {
-       align-items: stretch !important;
+    .pe-crumb span:last-child { color: var(--navy); font-weight: 700; }
+
+    /* ---------- Layout ---------- */
+    .pe-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .pe-main {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+        gap: 16px;
+        min-width: 0;
     }
-  }
+    .pe-form { display: contents; }
+    .pe-span { grid-column: 1 / -1; }
+
+    @container pe (min-width: 880px) {
+        .pe-layout { grid-template-columns: 260px minmax(0, 1fr); align-items: start; }
+        .pe-side { position: sticky; top: 16px; }
+    }
+
+    /* ---------- Sidebar ---------- */
+    .pe-sidecard {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+    }
+    .pe-id { display: flex; align-items: center; gap: 12px; }
+    .pe-avatar {
+        flex: 0 0 56px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+        background: var(--green);
+    }
+    .pe-id-text { min-width: 0; }
+    .pe-id-text h1 {
+        margin: 0;
+        font-size: 17px;
+        line-height: 1.25;
+        font-weight: 700;
+        color: var(--navy);
+        overflow-wrap: anywhere;
+    }
+    .pe-id-text .pe-sub {
+        margin: 2px 0 6px;
+        font-size: 12px;
+        color: var(--ink-soft);
+        overflow-wrap: anywhere;
+    }
+
+    .pe-badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        border-radius: 999px;
+        white-space: nowrap;
+    }
+    .pe-badge-ok { background: var(--green-soft-2); color: var(--green-dark); }
+    .pe-badge-off { background: #f1f3f5; color: var(--ink-soft); }
+    .pe-badge-wait { background: #fef9c3; color: #854d0e; }
+
+    .pe-mini {
+        list-style: none;
+        margin: 14px 0 0;
+        padding: 12px 0 0;
+        border-top: 1px solid var(--border);
+        display: grid;
+        gap: 8px;
+    }
+    .pe-mini li {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+    }
+    .pe-mini span { color: var(--ink-soft); }
+    .pe-mini strong { color: var(--navy); font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+
+    .pe-nav-title {
+        margin: 14px 0 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+    }
+    .pe-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pe-nav a {
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ink-soft);
+        background: #f8faf9;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        text-decoration: none;
+        transition: background .15s ease, color .15s ease, border-color .15s ease;
+    }
+    .pe-nav a:hover { color: var(--navy); background: var(--green-soft-2); }
+    .pe-nav a.active { color: var(--green-dark); background: var(--green-soft-2); border-color: var(--green); }
+
+    @container pe (min-width: 880px) {
+        .pe-nav { flex-direction: column; flex-wrap: nowrap; gap: 4px; }
+        .pe-nav a { border-radius: 8px; border-color: transparent; background: transparent; padding: 8px 12px; }
+        .pe-nav a:hover { background: #f1f5f3; }
+        .pe-nav a.active { background: var(--green-soft-2); }
+    }
+
+    /* ---------- Cards ---------- */
+    .pe-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+        min-width: 0;
+        scroll-margin-top: 16px;
+    }
+    .pe-head {
+        margin: 0 0 14px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+    }
+    .pe-head h2 { margin: 0 0 2px; font-size: 16px; font-weight: 700; color: var(--navy); }
+    .pe-head p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+
+    .pe-alert {
+        grid-column: 1 / -1;
+        padding: 10px 14px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--rose-dark);
+        background: var(--rose-soft);
+        border: 1px solid var(--rose-dark);
+        border-radius: 10px;
+    }
+    .pe-card .pe-alert { margin-bottom: 14px; }
+
+    /* ---------- Fields ---------- */
+    .pe-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 14px 16px;
+        align-items: start;
+    }
+    .pe-grid-sm { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .pe-field { min-width: 0; }
+    .pe-full { grid-column: 1 / -1; }
+    .pe-field label {
+        display: block;
+        margin: 0 0 5px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+    }
+    .pe-field select,
+    .pe-field textarea,
+    .pe-field input[type="text"],
+    .pe-field input[type="email"],
+    .pe-field input[type="tel"],
+    .pe-field input[type="number"],
+    .pe-field input[type="date"],
+    .pe-field input[type="file"] {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        height: 40px;
+        padding: 8px 12px;
+        font: inherit;
+        font-size: 14px;
+        color: var(--navy);
+        background: #f8faf9;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+    }
+    .pe-field input[type="file"] { height: auto; padding: 7px 10px; }
+    .pe-field textarea { height: auto; min-height: 72px; resize: vertical; }
+    .pe-field select:focus,
+    .pe-field textarea:focus,
+    .pe-field input:focus {
+        outline: none;
+        background: #fff;
+        border-color: var(--green);
+        box-shadow: 0 0 0 3px var(--green-soft-2);
+    }
+    .pe-help { margin-top: 4px; font-size: 12px; line-height: 1.4; color: var(--ink-soft); }
+    .pe-error { margin-top: 4px; font-size: 12px; font-weight: 600; color: var(--rose-dark); }
+
+    /* ---------- Checks ---------- */
+    .pe-checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+    .pe-check {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        padding: 10px 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--navy);
+        background: #f8faf9;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background .15s ease, border-color .15s ease;
+    }
+    .pe-check:hover { background: #f1f5f3; }
+    .pe-check:has(input:checked) { background: var(--green-soft-2); border-color: var(--green); }
+    .pe-check input { flex: 0 0 auto; width: 18px; height: 18px; margin: 0; accent-color: var(--green); cursor: pointer; }
+    .pe-checks-top { margin-bottom: 10px; }
+
+    /* ---------- Buttons ---------- */
+    .pe-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--green);
+        border: 1px solid var(--green);
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        box-sizing: border-box;
+        transition: background .15s ease;
+    }
+    .pe-btn:hover { background: var(--green-dark); border-color: var(--green-dark); color: #fff; }
+    .pe-btn[disabled] { opacity: .5; cursor: not-allowed; }
+    .pe-btn-block { width: 100%; }
+    .pe-foot {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+    }
+    .pe-save { margin-top: 14px; }
+
+    /* ---------- Documents ---------- */
+    .pe-doc { container-type: inline-size; container-name: doc; }
+    .pe-docform { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px 16px; align-items: end; }
+    .pe-docform .pe-btn { grid-column: 1 / -1; }
+    .pe-doc-note { margin-top: 8px; font-size: 12px; color: var(--ink-soft); }
+
+    .pe-tablewrap {
+        margin-top: 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .pe-table { width: 100%; border-collapse: collapse; background: #fff; }
+    .pe-table th {
+        text-align: left;
+        padding: 10px 14px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        background: #f8faf9;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+    .pe-table td {
+        padding: 10px 14px;
+        font-size: 14px;
+        color: var(--navy);
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
+    .pe-table tbody tr:last-child td { border-bottom: 0; }
+    .pe-table th.pe-r, .pe-table td.pe-r { text-align: right; }
+    .pe-link { font-weight: 600; color: var(--green-dark); text-decoration: none; }
+    .pe-link:hover { text-decoration: underline; }
+
+    .pe-empty {
+        margin-top: 14px;
+        padding: 24px 16px;
+        text-align: center;
+        background: #f8faf9;
+        border: 2px dashed var(--border);
+        border-radius: 10px;
+    }
+    .pe-empty h3 { margin: 0 0 4px; font-size: 15px; font-weight: 700; color: var(--navy); }
+    .pe-empty p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+
+    @container doc (max-width: 520px) {
+        .pe-table, .pe-table tbody, .pe-table tr, .pe-table td { display: block; width: 100%; }
+        .pe-table thead { display: none; }
+        .pe-table tr { padding: 4px 12px; border-bottom: 1px solid var(--border); }
+        .pe-table tbody tr:last-child { border-bottom: 0; }
+        .pe-table td,
+        .pe-table td.pe-r {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 8px 0;
+            border-bottom: 0;
+            text-align: right;
+        }
+        .pe-table td::before {
+            content: attr(data-label);
+            flex: 0 0 40%;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+    }
+
+    /* ---------- Salary ---------- */
+    .pe-salary { overflow-x: auto; }
+
+    /* ---------- Phones ---------- */
+    @media (max-width: 700px) {
+        .pe-card, .pe-sidecard { padding: 14px; }
+        .pe-grid, .pe-grid-sm, .pe-checks, .pe-docform { grid-template-columns: 1fr; }
+        .pe-field select,
+        .pe-field textarea,
+        .pe-field input[type="text"],
+        .pe-field input[type="email"],
+        .pe-field input[type="tel"],
+        .pe-field input[type="number"],
+        .pe-field input[type="date"],
+        .pe-field input[type="file"] {
+            font-size: 16px;
+        }
+        .pe-field select, .pe-field input:not([type="file"]) { height: 44px; }
+        .pe-btn { width: 100%; padding: 12px 18px; font-size: 16px; }
+        .pe-foot { justify-content: stretch; }
+    }
 </style>
 
 <div class="pe">
 
-    <div class="breadcrumb animate-block">
+    <div class="pe-crumb">
         <span>Employees</span>
         <span>/</span>
         <span>{% if profile.user.first_name or profile.user.last_name %}{{ profile.user.first_name }} {{ profile.user.last_name }}{% else %}{{ profile.user.email }}{% endif %}</span>
     </div>
 
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert animate-block">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
+    <div class="pe-layout">
 
-    <form method="post" id="profile-form">
-        {% csrf_token %}
+        <aside class="pe-side">
+            <div class="pe-sidecard">
 
-        {% if form.non_field_errors %}
-            <div class="alert">{{ form.non_field_errors }}</div>
-        {% endif %}
-
-        <!-- TOP SECTION -->
-        <div class="profile-layout">
-            <aside class="animate-block delay-1">
-                <div class="sidebar-container">
-                    <div class="sidebar-card">
-                        <div class="sidebar-top">
-                            <div class="avatar-xl">
-                                {% if profile.user.first_name %}{{ profile.user.first_name|first|upper }}{% else %}{{ profile.user.email|first|upper }}{% endif %}
-                            </div>
-                            <h1>{% if profile.user.first_name or profile.user.last_name %}{{ profile.user.first_name }} {{ profile.user.last_name }}{% else %}{{ profile.user.email }}{% endif %}</h1>
-                            <p class="sub">{{ profile.user.email }}</p>
-                            <span class="badge {% if profile.is_active %}badge-success{% else %}badge-neutral{% endif %}">
-                                {% if profile.is_active %}Active Employee{% else %}Inactive Employee{% endif %}
-                            </span>
-                        </div>
-
-                        <ul class="mini-list">
-                            <li><span>Designation</span><strong>{{ form.designation.value|default:"—" }}</strong></li>
-                            <li><span>Phone</span><strong>{{ form.phone_number.value|default:"—" }}</strong></li>
-                            <li><span>Date hired</span><strong>{{ form.date_hired.value|default:"—" }}</strong></li>
-                        </ul>
-
-                        <div style="margin-top: 24px;">
-                            <button type="submit" form="profile-form" class="btn btn-primary">Save Changes</button>
-                        </div>
-
-                        <nav class="sidebar-nav">
-                            <div class="sidebar-nav-title">Profile Sections</div>
-                            <a href="#employment">Employment Details</a>
-                            <a href="#personal">Personal &amp; Contact</a>
-                            <a href="#verification">Verification &amp; Status</a>
-                            <a href="#documents">Documents</a>
-                            <a href="#salary">Salary Metrics</a>
-                        </nav>
+                <div class="pe-id">
+                    <div class="pe-avatar">
+                        {% if profile.user.first_name %}{{ profile.user.first_name|first|upper }}{% else %}{{ profile.user.email|first|upper }}{% endif %}
+                    </div>
+                    <div class="pe-id-text">
+                        <h1>{% if profile.user.first_name or profile.user.last_name %}{{ profile.user.first_name }} {{ profile.user.last_name }}{% else %}{{ profile.user.email }}{% endif %}</h1>
+                        <p class="pe-sub">{{ profile.user.email }}</p>
+                        <span class="pe-badge {% if profile.is_active %}pe-badge-ok{% else %}pe-badge-off{% endif %}">
+                            {% if profile.is_active %}Active Employee{% else %}Inactive Employee{% endif %}
+                        </span>
                     </div>
                 </div>
-            </aside>
 
-            <div class="top-content">
-                <section id="employment" class="content-card animate-block delay-2">
-                    <div class="card-header">
+                <ul class="pe-mini">
+                    <li><span>Designation</span><strong>{{ form.designation.value|default:"—" }}</strong></li>
+                    <li><span>Phone</span><strong>{{ form.phone_number.value|default:"—" }}</strong></li>
+                    <li><span>Date hired</span><strong>{{ form.date_hired.value|default:"—" }}</strong></li>
+                </ul>
+
+                <div class="pe-save">
+                    <button type="submit" form="profile-form" class="pe-btn pe-btn-block">Save Changes</button>
+                </div>
+
+                <div class="pe-nav-title">Profile Sections</div>
+                <nav class="pe-nav">
+                    <a href="#employment">Employment</a>
+                    <a href="#personal">Personal &amp; Contact</a>
+                    <a href="#verification">Verification</a>
+                    <a href="#documents">Documents</a>
+                    <a href="#salary">Salary</a>
+                </nav>
+
+            </div>
+        </aside>
+
+
+        <div class="pe-main">
+
+            <form method="post" id="profile-form" class="pe-form">
+
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="pe-alert">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+
+                <section id="employment" class="pe-card pe-span">
+                    <div class="pe-head">
                         <h2>Employment Details</h2>
                         <p>Role, reporting line and work schedule.</p>
                     </div>
-                    <div class="form-grid">
+                    <div class="pe-grid">
 
                         {% if form.first_name %}
-                        <div class="field">
+                        <div class="pe-field">
                             <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
                             {{ form.first_name }}
-                            {% for error in form.first_name.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                            {% for error in form.first_name.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
                         </div>
                         {% endif %}
 
                         {% if form.last_name %}
-                        <div class="field">
+                        <div class="pe-field">
                             <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
                             {{ form.last_name }}
-                            {% for error in form.last_name.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                            {% for error in form.last_name.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
                         </div>
                         {% endif %}
 
                         {% if form.email %}
-                        <div class="field">
+                        <div class="pe-field">
                             <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
                             {{ form.email }}
-                            {% for error in form.email.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                            {% for error in form.email.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
                         </div>
                         {% endif %}
 
                         {% if form.access_group %}
-                        <div class="field">
+                        <div class="pe-field">
                             <label for="{{ form.access_group.id_for_label }}">{{ form.access_group.label }}</label>
                             {{ form.access_group }}
-                            {% if form.access_group.help_text %}<div class="field-help">{{ form.access_group.help_text }}</div>{% endif %}
-                            {% for error in form.access_group.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                            {% if form.access_group.help_text %}<div class="pe-help">{{ form.access_group.help_text }}</div>{% endif %}
+                            {% for error in form.access_group.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
                         </div>
                         {% endif %}
 
                         {% if form.designation %}
-                        <div class="field">
+                        <div class="pe-field">
                             <label for="{{ form.designation.id_for_label }}">{{ form.designation.label }}</label>
                             {{ form.designation }}
-                            {% for error in form.designation.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                            {% for error in form.designation.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
                         </div>
                         {% endif %}
 
                         {% if form.manager %}
-                        <div class="field">
+                        <div class="pe-field">
                             <label for="{{ form.manager.id_for_label }}">Reporting Manager</label>
                             {{ form.manager }}
-                            {% if form.manager.help_text %}<div class="field-help">{{ form.manager.help_text }}</div>{% endif %}
-                            {% for error in form.manager.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                            {% if form.manager.help_text %}<div class="pe-help">{{ form.manager.help_text }}</div>{% endif %}
+                            {% for error in form.manager.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
                         </div>
                         {% endif %}
 
                         {% if form.shift %}
-                        <div class="field">
+                        <div class="pe-field">
                             <label for="{{ form.shift.id_for_label }}">Assigned Shift</label>
                             {{ form.shift }}
-                            {% for error in form.shift.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                            {% for error in form.shift.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
                         </div>
                         {% endif %}
 
                         {% if form.position %}
-                        <div class="field">
+                        <div class="pe-field">
                             <label for="{{ form.position.id_for_label }}">{{ form.position.label }}</label>
                             {{ form.position }}
-                            {% for error in form.position.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                            {% for error in form.position.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
                         </div>
                         {% endif %}
 
                         {% if form.date_hired %}
-                        <div class="field">
+                        <div class="pe-field">
                             <label for="{{ form.date_hired.id_for_label }}">{{ form.date_hired.label }}</label>
                             {{ form.date_hired }}
-                            {% for error in form.date_hired.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                            {% for error in form.date_hired.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
                         </div>
                         {% endif %}
 
                     </div>
                 </section>
-            </div>
-        </div>
 
-        <!-- BOTTOM SECTION ROW 1 -->
-        <div class="bottom-grid">
-            <section id="personal" class="content-card animate-block delay-3">
-                <div class="card-header">
-                    <h2>Personal &amp; Contact Details</h2>
-                    <p>How to reach this employee.</p>
-                </div>
-                <div class="form-grid">
 
-                    {% if form.phone_number %}
-                    <div class="field">
-                        <label for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>
-                        {{ form.phone_number }}
-                        {% for error in form.phone_number.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                <section id="personal" class="pe-card">
+                    <div class="pe-head">
+                        <h2>Personal &amp; Contact Details</h2>
+                        <p>How to reach this employee.</p>
                     </div>
-                    {% endif %}
+                    <div class="pe-grid pe-grid-sm">
 
-                    {% if form.state %}
-                    <div class="field">
-                        <label for="{{ form.state.id_for_label }}">{{ form.state.label }}</label>
-                        {{ form.state }}
-                        {% for error in form.state.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                        {% if form.phone_number %}
+                        <div class="pe-field">
+                            <label for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>
+                            {{ form.phone_number }}
+                            {% for error in form.phone_number.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if form.state %}
+                        <div class="pe-field">
+                            <label for="{{ form.state.id_for_label }}">{{ form.state.label }}</label>
+                            {{ form.state }}
+                            {% for error in form.state.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if form.zip_code %}
+                        <div class="pe-field">
+                            <label for="{{ form.zip_code.id_for_label }}">{{ form.zip_code.label }}</label>
+                            {{ form.zip_code }}
+                            {% for error in form.zip_code.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if form.address %}
+                        <div class="pe-field pe-full">
+                            <label for="{{ form.address.id_for_label }}">{{ form.address.label }}</label>
+                            {{ form.address }}
+                            {% for error in form.address.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+
                     </div>
-                    {% endif %}
+                </section>
 
-                    {% if form.zip_code %}
-                    <div class="field">
-                        <label for="{{ form.zip_code.id_for_label }}">{{ form.zip_code.label }}</label>
-                        {{ form.zip_code }}
-                        {% for error in form.zip_code.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-                    </div>
-                    {% endif %}
 
-                    {% if form.address %}
-                    <div class="field full">
-                        <label for="{{ form.address.id_for_label }}">{{ form.address.label }}</label>
-                        {{ form.address }}
-                        {% for error in form.address.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-                    </div>
-                    {% endif %}
-
-                </div>
-            </section>
-
-            <section id="verification" class="content-card animate-block delay-4">
-                <div class="card-header">
-                    <h2>Verification &amp; Status</h2>
-                    <p>Account status and completed background checks.</p>
-                </div>
-
-                <div style="margin-bottom: 24px;">
-                    <label class="check-card">
-                        {{ form.is_default_manager }}
-                        <span>Default manager for new employees</span>
-                    </label>
-                    {% if form.is_default_manager.help_text %}<div class="field-help">{{ form.is_default_manager.help_text }}</div>{% endif %}
-                    {% for error in form.is_default_manager.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-                </div>
-
-                <div class="check-grid">
-                    <div>
-                        <label class="check-card">{{ form.is_active }}<span>Active Employee</span></label>
-                        {% for error in form.is_active.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                <section id="verification" class="pe-card">
+                    <div class="pe-head">
+                        <h2>Verification &amp; Status</h2>
+                        <p>Account status and completed background checks.</p>
                     </div>
 
-                    <div>
-                        <label class="check-card">{{ form.is_email_verified }}<span>Email Verified</span></label>
-                        {% for error in form.is_email_verified.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                    <div class="pe-checks-top">
+                        <label class="pe-check">
+                            {{ form.is_default_manager }}
+                            <span>Default manager for new employees</span>
+                        </label>
+                        {% if form.is_default_manager.help_text %}<div class="pe-help">{{ form.is_default_manager.help_text }}</div>{% endif %}
+                        {% for error in form.is_default_manager.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
                     </div>
 
-                    <div>
-                        <label class="check-card">{{ form.is_phone_verified }}<span>Phone Verified</span></label>
-                        {% for error in form.is_phone_verified.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                    <div class="pe-checks">
+                        <div>
+                            <label class="pe-check">{{ form.is_active }}<span>Active Employee</span></label>
+                            {% for error in form.is_active.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div>
+                            <label class="pe-check">{{ form.is_email_verified }}<span>Email Verified</span></label>
+                            {% for error in form.is_email_verified.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div>
+                            <label class="pe-check">{{ form.is_phone_verified }}<span>Phone Verified</span></label>
+                            {% for error in form.is_phone_verified.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div>
+                            <label class="pe-check">{{ form.is_address_verified }}<span>Address Verified</span></label>
+                            {% for error in form.is_address_verified.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div>
+                            <label class="pe-check">{{ form.is_aadhar_verified }}<span>Aadhar Verified</span></label>
+                            {% for error in form.is_aadhar_verified.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
+                        </div>
+
+                        <div>
+                            <label class="pe-check">{{ form.is_background_check_completed }}<span>Background Check</span></label>
+                            {% for error in form.is_background_check_completed.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="check-card">{{ form.is_address_verified }}<span>Address Verified</span></label>
-                        {% for error in form.is_address_verified.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+                    <div class="pe-foot">
+                        <button type="submit" class="pe-btn">Save Changes</button>
                     </div>
+                </section>
 
-                    <div>
-                        <label class="check-card">{{ form.is_aadhar_verified }}<span>Aadhar Verified</span></label>
-                        {% for error in form.is_aadhar_verified.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-                    </div>
-
-                    <div>
-                        <label class="check-card">{{ form.is_background_check_completed }}<span>Background Check</span></label>
-                        {% for error in form.is_background_check_completed.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-                    </div>
-                </div>
-
-                <div class="form-footer">
-                    <button type="submit" class="btn btn-primary btn-inline">Save Changes</button>
-                </div>
-            </section>
-        </div>
-    </form>
-
-    <!-- BOTTOM SECTION ROW 2 -->
-    <div class="bottom-grid">
-        <section id="documents" class="content-card animate-block delay-5">
-            <div class="card-header">
-                <h2>Documents</h2>
-                <p>Upload and track identity and employment documents.</p>
-            </div>
-
-            {% if document_form.non_field_errors %}
-                <div class="alert">{{ document_form.non_field_errors }}</div>
-            {% endif %}
-
-            <form method="post" 
-                  {% if profile and profile.uuid %}
-                      action="{% url 'profile_document_upload' profile.uuid %}" 
-                  {% else %}
-                      action=""
-                  {% endif %}
-                  enctype="multipart/form-data">
-                
-                {% csrf_token %}
-                <div class="form-grid" style="align-items: end;">
-                    <div class="field">
-                        <label for="{{ document_form.document_type.id_for_label }}">{{ document_form.document_type.label }}</label>
-                        {{ document_form.document_type }}
-                        {% for error in document_form.document_type.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-                    </div>
-                    <div class="field">
-                        <label for="{{ document_form.file.id_for_label }}">{{ document_form.file.label }}</label>
-                        {{ document_form.file }}
-                        {% for error in document_form.file.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-                    </div>
-                    <div>
-                        <button type="submit" class="btn btn-primary" {% if not profile or not profile.uuid %}disabled{% endif %}>Upload Document</button>
-                    </div>
-                </div>
-                <div class="field-help" style="margin-top: 12px;">Supported formats: PDF, JPG, PNG or DOCX. Maximum file size: 5MB.</div>
             </form>
 
-            {% if documents %}
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr><th>Document Type</th><th>Date Uploaded</th><th>Status</th><th>Actions</th></tr>
-                        </thead>
-                        <tbody>
-                        {% for doc in documents %}
-                            <tr>
-                                <td style="font-weight: 600;">{{ doc.document_type.name }}</td>
-                                <td>{{ doc.uploaded_at|date:"d M Y" }}</td>
-                                <td>
-                                    <span class="badge {% if doc.is_verified %}badge-success{% else %}badge-warning{% endif %}">
-                                        {% if doc.is_verified %}Verified{% else %}Pending Verification{% endif %}
-                                    </span>
-                                </td>
-                                <td><a class="text-primary" href="{{ doc.file.url }}" target="_blank">View File</a></td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <h3>No Documents Found</h3>
-                    <p>No verification or employment documents have been uploaded for this employee yet.</p>
-                </div>
-            {% endif %}
-        </section>
 
-        <section id="salary" class="salary-wrapper animate-block delay-5">
-            <div class="card-header">
-                <h2>Salary & Compensation</h2>
-                <p>Current payroll metrics and salary breakdown.</p>
-            </div>
-            {% include "appEmp/_salary_block.html" %}
-        </section>
+            <section id="documents" class="pe-card pe-doc">
+                <div class="pe-head">
+                    <h2>Documents</h2>
+                    <p>Upload and track identity and employment documents.</p>
+                </div>
+
+                {% if document_form.non_field_errors %}
+                    <div class="pe-alert">{{ document_form.non_field_errors }}</div>
+                {% endif %}
+
+                <form method="post"
+                      {% if profile and profile.uuid %}
+                          action="{% url 'profile_document_upload' profile.uuid %}"
+                      {% else %}
+                          action=""
+                      {% endif %}
+                      enctype="multipart/form-data">
+
+                    {% csrf_token %}
+
+                    <div class="pe-docform">
+                        <div class="pe-field">
+                            <label for="{{ document_form.document_type.id_for_label }}">{{ document_form.document_type.label }}</label>
+                            {{ document_form.document_type }}
+                            {% for error in document_form.document_type.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="pe-field">
+                            <label for="{{ document_form.file.id_for_label }}">{{ document_form.file.label }}</label>
+                            {{ document_form.file }}
+                            {% for error in document_form.file.errors %}<div class="pe-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        <button type="submit" class="pe-btn" {% if not profile or not profile.uuid %}disabled{% endif %}>Upload Document</button>
+                    </div>
+
+                    <div class="pe-doc-note">Supported formats: PDF, JPG, PNG or DOCX. Maximum file size: 5MB.</div>
+
+                </form>
+
+                {% if documents %}
+                    <div class="pe-tablewrap">
+                        <table class="pe-table">
+                            <thead>
+                                <tr>
+                                    <th>Document Type</th>
+                                    <th>Date Uploaded</th>
+                                    <th>Status</th>
+                                    <th class="pe-r">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for doc in documents %}
+                                <tr>
+                                    <td data-label="Document Type" style="font-weight: 600;">{{ doc.document_type.name }}</td>
+                                    <td data-label="Date Uploaded">{{ doc.uploaded_at|date:"d M Y" }}</td>
+                                    <td data-label="Status">
+                                        <span class="pe-badge {% if doc.is_verified %}pe-badge-ok{% else %}pe-badge-wait{% endif %}">
+                                            {% if doc.is_verified %}Verified{% else %}Pending Verification{% endif %}
+                                        </span>
+                                    </td>
+                                    <td data-label="Actions" class="pe-r"><a class="pe-link" href="{{ doc.file.url }}" target="_blank" rel="noopener">View File</a></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="pe-empty">
+                        <h3>No Documents Found</h3>
+                        <p>No verification or employment documents have been uploaded for this employee yet.</p>
+                    </div>
+                {% endif %}
+            </section>
+
+
+            <section id="salary" class="pe-card pe-salary">
+                <div class="pe-head">
+                    <h2>Salary &amp; Compensation</h2>
+                    <p>Current payroll metrics and salary breakdown.</p>
+                </div>
+                {% include "appEmp/_salary_block.html" %}
+            </section>
+
+        </div>
+
     </div>
+
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const sections = document.querySelectorAll('section[id]');
-        const navLinks = document.querySelectorAll('.sidebar-nav a');
+    document.addEventListener('DOMContentLoaded', function () {
+        var sections = document.querySelectorAll('.pe section[id]');
+        var navLinks = document.querySelectorAll('.pe-nav a');
+        if (!('IntersectionObserver' in window)) { return; }
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
                 if (entry.isIntersecting) {
-                    navLinks.forEach(link => {
+                    navLinks.forEach(function (link) {
                         link.classList.remove('active');
-                        if (link.getAttribute('href') === `#${entry.target.id}`) {
+                        if (link.getAttribute('href') === '#' + entry.target.id) {
                             link.classList.add('active');
                         }
                     });
@@ -660,7 +733,8 @@
             });
         }, { rootMargin: '-20% 0px -70% 0px' });
 
-        sections.forEach(section => observer.observe(section));
+        sections.forEach(function (section) { observer.observe(section); });
     });
 </script>
+
 {% endblock %}

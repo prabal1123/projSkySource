@@ -3,290 +3,344 @@
 
 {% block title %}Ready for Finalization{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-{% endblock %}
-
 {% block content %}
 
-<div class="sky-dashboard">
+<style>
+    .rf-wrap { max-width: 1250px; margin: 0 auto; }
 
-    <div class="container" style="max-width: 1250px;">
+    .rf-header { margin-bottom: 20px; }
+    .rf-eyebrow {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--green-dark);
+        background: var(--green-soft-2);
+        padding: 4px 10px;
+        border-radius: 999px;
+        margin-bottom: 10px;
+    }
+    .rf-header h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        line-height: 1.2;
+        color: var(--navy);
+    }
+    .rf-help { margin: 0; font-size: 14px; color: var(--ink-soft); max-width: 640px; }
 
-        <div class="sky-header">
+    .rf-panel {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+    .rf-panel-head {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        background: var(--green-soft-2);
+    }
+    .rf-panel-head h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--green-dark);
+    }
+    .rf-panel-body { padding: 0; }
 
-            <div>
-                <span class="sky-eyebrow">
-                    HR / Employee Exit
-                </span>
+    .rf-table { width: 100%; border-collapse: collapse; }
+    .rf-table th {
+        text-align: left;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+    .rf-table td {
+        padding: 14px 16px;
+        font-size: 14px;
+        color: var(--navy);
+        vertical-align: top;
+    }
+    .rf-table th.rf-r, .rf-table td.rf-r { text-align: right; }
+    .rf-table tr.rf-main td { border-top: 1px solid var(--border); padding-bottom: 8px; }
+    .rf-table tbody.rf-rec:first-of-type tr.rf-main td { border-top: 0; }
+    .rf-table tr.rf-detail td { padding: 0 16px 14px; }
 
-                <h1>Ready for Finalization</h1>
+    .rf-name { font-weight: 700; color: var(--navy); }
+    .rf-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+    .rf-muted { font-size: 13px; color: var(--ink-soft); }
 
-                <p class="sky-help-text">
-                    Employees whose Manager and Finance clearances
-                    have been completed.
-                </p>
-            </div>
+    .rf-pill {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: var(--green-soft-2);
+        color: var(--green-dark);
+        white-space: nowrap;
+    }
+    .rf-pill-warn { background: var(--rose-soft); color: var(--rose-dark); }
 
+    .rf-btn {
+        display: inline-block;
+        padding: 8px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--green);
+        border: 1px solid var(--green);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background .15s ease;
+    }
+    .rf-btn:hover { background: var(--green-dark); border-color: var(--green-dark); }
+    .rf-form { margin: 0; }
+
+    .rf-detailbox {
+        background: #fafcfb;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--ink-soft);
+    }
+    .rf-detailbox strong { color: var(--navy); }
+
+    .rf-empty {
+        padding: 40px 20px;
+        text-align: center;
+        font-size: 14px;
+        color: var(--ink-soft);
+    }
+
+    @media (max-width: 700px) {
+        .rf-header h1 { font-size: 22px; }
+        .rf-panel-body { padding: 12px; }
+
+        .rf-table, .rf-table tbody, .rf-table tr, .rf-table td { display: block; width: 100%; }
+        .rf-table thead { display: none; }
+
+        .rf-table tbody.rf-rec {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 6px 14px 12px;
+            margin-bottom: 12px;
+            background: #fff;
+        }
+        .rf-table tbody.rf-rec:last-child { margin-bottom: 0; }
+
+        .rf-table tr.rf-main td,
+        .rf-table tbody.rf-rec:first-of-type tr.rf-main td {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 10px 0;
+            border-top: 0;
+            border-bottom: 1px solid var(--border);
+            text-align: right;
+        }
+        .rf-table tr.rf-main td::before {
+            content: attr(data-label);
+            flex: 0 0 38%;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+
+        .rf-table tr.rf-main td.rf-actioncell { display: block; border-bottom: 0; padding-top: 12px; text-align: center; }
+        .rf-table tr.rf-main td.rf-actioncell::before { display: none; }
+        .rf-table td.rf-actioncell .rf-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 18px;
+            font-size: 16px;
+        }
+        .rf-table tr.rf-detail td { padding: 4px 0 0; }
+    }
+</style>
+
+<div class="rf-wrap">
+
+    <div class="rf-header">
+        <span class="rf-eyebrow">HR / Employee Exit</span>
+        <h1>Ready for Finalization</h1>
+        <p class="rf-help">Employees whose Manager and Finance clearances have been completed.</p>
+    </div>
+
+    <div class="rf-panel">
+
+        <div class="rf-panel-head">
+            <h2>Exit Finalization Queue</h2>
         </div>
 
+        <div class="rf-panel-body">
 
-        <div class="sky-panel">
+            {% if exit_requests %}
 
-            <div class="sky-panel-head">
-                <h6>Exit Finalization Queue</h6>
-            </div>
+                <table class="rf-table">
 
-            <div class="sky-panel-body">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Exit Type</th>
+                            <th>Last Working Date</th>
+                            <th>Manager NOC</th>
+                            <th>Finance NOC</th>
+                            <th>Exit Status</th>
+                            <th class="rf-r">Finalization</th>
+                        </tr>
+                    </thead>
 
-                {% if exit_requests %}
+                    {% for exit_request in exit_requests %}
 
-                    <div class="table-responsive">
+                        <tbody class="rf-rec">
 
-                        <table class="table align-middle">
+                            <tr class="rf-main">
 
-                            <thead>
-                                <tr>
-                                    <th>Employee</th>
-                                    <th>Exit Type</th>
-                                    <th>Last Working Date</th>
-                                    <th>Manager NOC</th>
-                                    <th>Finance NOC</th>
-                                    <th>Exit Status</th>
-                                    <th>Finalization</th>
-                                </tr>
-                            </thead>
+                                <td data-label="Employee">
+                                    <div>
+                                        <div class="rf-name">
+                                            {{ exit_request.employee.user.get_full_name|default:exit_request.employee.user.username }}
+                                        </div>
+                                        <div class="rf-sub">
+                                            {{ exit_request.employee.user.username }}
+                                        </div>
+                                    </div>
+                                </td>
 
-                            <tbody>
+                                <td data-label="Exit Type">
+                                    {{ exit_request.get_exit_type_display }}
+                                </td>
 
-                                {% for exit_request in exit_requests %}
+                                <td data-label="Last Working Date">
+                                    {% if exit_request.final_last_working_date %}
+                                        <strong>{{ exit_request.final_last_working_date|date:"d M Y" }}</strong>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
 
-                                    <tr>
-
-                                        <!-- Employee -->
-                                        <td>
-
-                                            <strong>
-                                                {{ exit_request.employee.user.get_full_name|default:exit_request.employee.user.username }}
-                                            </strong>
-
-                                            <div class="sky-help-text">
-                                                {{ exit_request.employee.user.username }}
-                                            </div>
-
-                                        </td>
-
-
-                                        <!-- Exit Type -->
-                                        <td>
-
-                                            {{ exit_request.get_exit_type_display }}
-
-                                        </td>
-
-
-                                        <!-- Last Working Date -->
-                                        <td>
-
-                                            {% if exit_request.final_last_working_date %}
-
-                                                <strong>
-                                                    {{ exit_request.final_last_working_date|date:"d M Y" }}
-                                                </strong>
-
-                                            {% else %}
-
-                                                —
-
-                                            {% endif %}
-
-                                        </td>
-
-
-                                        <!-- Manager NOC -->
-                                        <td>
-
-                                            {% if exit_request.clearance_request %}
-
-                                                {% for approval in exit_request.clearance_request.approvals.all %}
-
-                                                    {% if approval.approval_type == "MANAGER_NOC" %}
-
-                                                        <strong>
-                                                            {{ approval.get_status_display }}
-                                                        </strong>
-
-                                                        {% if approval.remarks %}
-
-                                                            <div class="sky-help-text">
-                                                                {{ approval.remarks }}
-                                                            </div>
-
-                                                        {% endif %}
-
+                                <td data-label="Manager NOC">
+                                    {% if exit_request.clearance_request %}
+                                        <div>
+                                            {% for approval in exit_request.clearance_request.approvals.all %}
+                                                {% if approval.approval_type == "MANAGER_NOC" %}
+                                                    <span class="rf-pill">{{ approval.get_status_display }}</span>
+                                                    {% if approval.remarks %}
+                                                        <div class="rf-sub">{{ approval.remarks }}</div>
                                                     {% endif %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
 
-                                                {% endfor %}
-
-                                            {% else %}
-
-                                                —
-
-                                            {% endif %}
-
-                                        </td>
-
-
-                                        <!-- Finance NOC -->
-                                        <td>
-
-                                            {% if exit_request.clearance_request %}
-
-                                                {% for approval in exit_request.clearance_request.approvals.all %}
-
-                                                    {% if approval.approval_type == "FINANCE_NOC" %}
-
-                                                        <strong>
-                                                            {{ approval.get_status_display }}
-                                                        </strong>
-
-                                                        {% if approval.remarks %}
-
-                                                            <div class="sky-help-text">
-                                                                {{ approval.remarks }}
-                                                            </div>
-
-                                                        {% endif %}
-
+                                <td data-label="Finance NOC">
+                                    {% if exit_request.clearance_request %}
+                                        <div>
+                                            {% for approval in exit_request.clearance_request.approvals.all %}
+                                                {% if approval.approval_type == "FINANCE_NOC" %}
+                                                    <span class="rf-pill">{{ approval.get_status_display }}</span>
+                                                    {% if approval.remarks %}
+                                                        <div class="rf-sub">{{ approval.remarks }}</div>
                                                     {% endif %}
-
-                                                {% endfor %}
-
-                                            {% else %}
-
-                                                —
-
-                                            {% endif %}
-
-                                        </td>
-
-
-                                        <!-- Exit Status -->
-                                        <td>
-
-                                            <strong>
-                                                {{ exit_request.get_status_display }}
-                                            </strong>
-
-                                        </td>
-
-
-                                        <!-- Finalization -->
-                                        <td>
-
-                                            {% if exit_request.final_last_working_date %}
-
-                                                {% if exit_request.final_last_working_date <= today %}
-
-                                                    <form
-                                                        method="post"
-                                                        action="{% url 'finalizeEmployeeExit' exit_request.uuid %}"
-                                                        onsubmit="return confirm('Are you sure you want to finalize this employee exit? The employee account will be deactivated.');"
-                                                    >
-
-                                                        {% csrf_token %}
-
-                                                        <button
-                                                            type="submit"
-                                                            class="sky-header-btn"
-                                                        >
-                                                            Finalize Exit
-                                                        </button>
-
-                                                    </form>
-
-                                                {% else %}
-
-                                                    <span class="text-muted">
-                                                        Available on
-                                                        {{ exit_request.final_last_working_date|date:"d M Y" }}
-                                                    </span>
-
                                                 {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
 
-                                            {% else %}
+                                <td data-label="Exit Status">
+                                    <span class="rf-pill">{{ exit_request.get_status_display }}</span>
+                                </td>
 
-                                                <span class="text-danger">
-                                                    Last Working Date Missing
-                                                </span>
+                                <td data-label="Finalization" class="rf-r rf-actioncell">
+                                    {% if exit_request.final_last_working_date %}
 
-                                            {% endif %}
+                                        {% if exit_request.final_last_working_date <= today %}
 
-                                        </td>
+                                            <form
+                                                method="post"
+                                                action="{% url 'finalizeEmployeeExit' exit_request.uuid %}"
+                                                class="rf-form"
+                                                onsubmit="return confirm('Are you sure you want to finalize this employee exit? The employee account will be deactivated.');"
+                                            >
+                                                {% csrf_token %}
+                                                <button type="submit" class="rf-btn">Finalize Exit</button>
+                                            </form>
 
-                                    </tr>
+                                        {% else %}
 
+                                            <span class="rf-muted">
+                                                Available on {{ exit_request.final_last_working_date|date:"d M Y" }}
+                                            </span>
 
-                                    <!-- Additional Details -->
-                                    <tr>
+                                        {% endif %}
 
-                                        <td colspan="7">
+                                    {% else %}
 
-                                            <div class="sky-help-text">
+                                        <span class="rf-pill rf-pill-warn">Last Working Date Missing</span>
 
-                                                <strong>Reason:</strong>
-                                                {{ exit_request.reason }}
+                                    {% endif %}
+                                </td>
 
-                                                {% if exit_request.hr_remarks %}
+                            </tr>
 
-                                                    <br>
+                            <tr class="rf-detail">
 
-                                                    <strong>
-                                                        HR Remarks:
-                                                    </strong>
+                                <td colspan="7">
 
-                                                    {{ exit_request.hr_remarks }}
+                                    <div class="rf-detailbox">
 
-                                                {% endif %}
+                                        <strong>Reason:</strong>
+                                        {{ exit_request.reason }}
 
+                                        {% if exit_request.hr_remarks %}
+                                            <br>
+                                            <strong>HR Remarks:</strong>
+                                            {{ exit_request.hr_remarks }}
+                                        {% endif %}
 
-                                                {% if exit_request.hr_reviewed_by %}
+                                        {% if exit_request.hr_reviewed_by %}
+                                            <br>
+                                            <strong>HR Reviewed By:</strong>
+                                            {{ exit_request.hr_reviewed_by.get_full_name|default:exit_request.hr_reviewed_by.username }}
+                                        {% endif %}
 
-                                                    <br>
+                                    </div>
 
-                                                    <strong>
-                                                        HR Reviewed By:
-                                                    </strong>
+                                </td>
 
-                                                    {{ exit_request.hr_reviewed_by.get_full_name|default:exit_request.hr_reviewed_by.username }}
+                            </tr>
 
-                                                {% endif %}
+                        </tbody>
 
-                                            </div>
+                    {% endfor %}
 
-                                        </td>
+                </table>
 
-                                    </tr>
+            {% else %}
 
-                                {% endfor %}
+                <div class="rf-empty">
+                    There are no employee exits ready for finalization.
+                </div>
 
-                            </tbody>
-
-                        </table>
-
-                    </div>
-
-                {% else %}
-
-                    <div class="sky-empty">
-
-                        There are no employee exits ready for finalization.
-
-                    </div>
-
-                {% endif %}
-
-            </div>
+            {% endif %}
 
         </div>
 

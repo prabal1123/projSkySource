@@ -5,391 +5,187 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-<style>
-    *, *::before, *::after {
-        box-sizing: border-box;
-    }
-
-    .sky-dashboard {
-        width: 100%;
-        overflow-x: hidden;
-    }
-
-    .sky-dashboard .container {
-        width: 100%;
-        max-width: 1320px;
-        padding-left: 15px;
-        padding-right: 15px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    .sky-panel {
-        width: 100%;
-        min-width: 0;
-        background: #fff;
-        border: 1px solid var(--border, #e6e8ec);
-        border-radius: 6px;
-    }
-
-    /* Filters Layout */
-    .sky-emp-filters {
-        padding: 0.85rem 1.25rem;
-        border-bottom: 1px solid var(--border, #e6e8ec);
-    }
-
-    .sky-filter-row-main {
-        display: flex;
-        gap: 0.6rem;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .sky-filter-row-actions {
-        display: flex;
-        gap: 0.6rem;
-        align-items: center;
-        flex-wrap: wrap;
-        margin-top: 0.75rem;
-    }
-
-    .sky-filter-export-group {
-        margin-left: auto;
-        display: flex;
-        gap: 0.6rem;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    /* Table & Actions */
-    .table-responsive {
-        width: 100%;
-        max-width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        display: block;
-        margin: 0;
-        position: relative;
-    }
-
-    .sky-table {
-        width: 100%;
-        border-collapse: collapse;
-        min-width: 480px;
-    }
-
-    .sky-table th, 
-    .sky-table td {
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid var(--border, #e6e8ec);
-        vertical-align: middle;
-    }
-
-    .sky-table tbody tr:hover {
-        background: #fcfdfd;
-    }
-
-    .sky-table th.col-sno, 
-    .sky-table td.col-sno {
-        width: 60px;
-        text-align: center;
-    }
-
-    .sky-table th.col-name, 
-    .sky-table td.col-name {
-        min-width: 160px;
-    }
-
-    .sky-table th.col-phone, 
-    .sky-table td.col-phone {
-        min-width: 120px;
-    }
-
-    /* Sticky Action Column */
-    .sky-table th.col-action,
-    .sky-table td.col-action {
-        position: sticky;
-        right: 0;
-        background: #ffffff;
-        width: 130px;
-        text-align: right;
-        box-shadow: -6px 0 10px -4px rgba(0, 0, 0, 0.05);
-        z-index: 2;
-    }
-
-    .sky-table tbody tr:hover td.col-action {
-        background: #fcfdfd;
-    }
-
-    .sky-table thead th.col-action {
-        background: #ffffff;
-        z-index: 3;
-    }
-
-    .sky-employee-actions {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        white-space: nowrap;
-    }
-
-    .sky-action-divider {
-        color: #cbd5e1;
-    }
-
-    .sky-edit-link {
-        font-size: 0.78rem;
-        color: var(--ink-soft, #5b6b85);
-        text-decoration: none;
-        border: 1px solid var(--border, #e6e8ec);
-        padding: 0.25rem 0.55rem;
-        border-radius: 4px;
-        transition: all 0.15s ease;
-    }
-
-    .sky-edit-link:hover {
-        border-color: var(--teal, #0f9e96);
-        color: var(--teal, #0f9e96);
-    }
-
-    /* Mobile Adjustments */
-    @media (max-width: 768px) {
-        .sky-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.85rem;
-        }
-
-        .sky-header a.sky-punch-btn {
-            width: 100%;
-            text-align: center;
-        }
-
-        .sky-filter-row-main input,
-        .sky-filter-row-main select {
-            width: 100%;
-            max-width: 100% !important;
-        }
-
-        .sky-filter-export-group {
-            margin-left: 0;
-            width: 100%;
-            justify-content: flex-start;
-        }
-
-        .sky-table th, 
-        .sky-table td {
-            padding: 0.6rem 0.65rem;
-            font-size: 0.82rem;
-        }
-
-        .sky-table th.col-sno,
-        .sky-table td.col-sno {
-            width: 45px;
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
-        }
-
-        .sky-table th.col-action,
-        .sky-table td.col-action {
-            width: 115px;
-            padding-right: 0.75rem;
-        }
-
-        .sky-edit-link {
-            padding: 0.2rem 0.45rem;
-            font-size: 0.74rem;
-        }
-    }
-
-    /* Print Styles */
-    @media print {
-        .hr-sidebar,
-        .hr-sidebar-overlay,
-        .hr-topbar,
-        .sky-header a,
-        .sky-emp-filters,
-        .sky-employee-actions,
-        footer {
-            display: none !important;
-        }
-
-        .sky-table th.col-action,
-        .sky-table td.col-action {
-            display: none !important;
-        }
-
-        body, .sky-dashboard, .container {
-            background: #fff !important;
-            margin: 0;
-            padding: 0;
-        }
-
-        .sky-panel {
-            box-shadow: none !important;
-            border: none !important;
-        }
-    }
-</style>
 {% endblock %}
 
 {% block content %}
-<div class="sky-dashboard">
-    <div class="container">
+<style>
+    .el-page { max-width: 1380px; margin: 0 auto; animation: elIn .4s ease-out; }
+    @keyframes elIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-        <div class="sky-header">
-            <div>
-                <span class="sky-eyebrow">Organization</span>
-                <h1>Employees</h1>
-            </div>
+    .el-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 22px; }
+    .el-eyebrow { color: var(--green, #2F6B4F); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+    .el-head h1 { margin: 0; font-size: 30px; letter-spacing: -.03em; color: var(--navy, #183D2F); }
 
-            <a
-                href="{% url 'register' %}"
-                class="sky-punch-btn in"
-                style="text-decoration: none; display: inline-block; padding: 0.55rem 1.4rem; font-size: 0.9rem;"
-            >
-                + Add Employee
-            </a>
+    .el-btn { display: inline-flex; align-items: center; justify-content: center; padding: 9px 16px; border-radius: 9px; border: 1px solid var(--green, #2F6B4F); background: var(--green, #2F6B4F); color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; transition: .2s ease; }
+    .el-btn:hover { background: var(--green-dark, #214F3B); border-color: var(--green-dark, #214F3B); color: #fff; }
+    .el-btn-ghost { background: #fff; color: var(--green-dark, #214F3B); border-color: var(--border, #E1E7E3); }
+    .el-btn-ghost:hover { background: var(--green-soft-2, #EEF6F1); color: var(--green-dark, #214F3B); }
+
+    .el-card { background: #fff; border: 1px solid var(--border, #E1E7E3); border-radius: 18px; box-shadow: 0 6px 22px rgba(24,61,47,.04); overflow: hidden; }
+    .el-card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border, #E1E7E3); }
+    .el-card-head h2 { margin: 0; font-size: 16px; color: #111827; }
+    .el-count { font-size: 12px; color: var(--ink-soft, #69756E); background: #F1F4F2; padding: 4px 10px; border-radius: 999px; font-weight: 600; }
+
+    .el-filters { padding: 16px 20px; border-bottom: 1px solid var(--border, #E1E7E3); background: #FAFCFB; }
+    .el-filter-main { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .el-filter-main input, .el-filter-main select { padding: 9px 12px; border: 1px solid #D9E1DC; border-radius: 8px; font-size: 14px; background: #fff; min-width: 0; }
+    .el-filter-main input[type="text"] { flex: 1 1 240px; max-width: 300px; }
+    .el-filter-main select { flex: 0 1 190px; }
+    .el-filter-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+    .el-clear { font-size: 13px; color: var(--ink-soft, #69756E); text-decoration: underline; }
+    .el-export { margin-left: auto; display: flex; flex-wrap: wrap; gap: 10px; }
+
+    .el-table-wrap { overflow-x: auto; }
+    .el-table { width: 100%; border-collapse: collapse; }
+    .el-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8a93a1; padding: 12px 20px; border-bottom: 1px solid #edf0ef; white-space: nowrap; }
+    .el-table td { padding: 14px 20px; border-bottom: 1px solid #f0f2f1; font-size: 14px; color: #374151; vertical-align: middle; }
+    .el-table tbody tr:hover { background: #F7FAF8; }
+    .el-table tr:last-child td { border-bottom: 0; }
+    .el-sno { width: 60px; color: #8a93a1; }
+    .el-name { display: flex; align-items: center; gap: 12px; font-weight: 600; color: #1f2937; }
+    .el-avatar { width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; background: #E4F0E8; color: #214F3B; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+    .el-muted { color: var(--ink-soft, #69756E); }
+    .el-th-action, .el-td-action { text-align: right; }
+    .el-actions { display: inline-flex; gap: 8px; white-space: nowrap; }
+    .el-link { font-size: 12px; font-weight: 600; color: var(--green-dark, #214F3B); border: 1px solid var(--border, #E1E7E3); padding: 5px 11px; border-radius: 7px; background: #fff; text-decoration: none; transition: .15s ease; }
+    .el-link:hover { background: var(--green-soft-2, #EEF6F1); border-color: #BDD5C7; color: var(--green-dark, #214F3B); }
+    .el-empty { text-align: center; padding: 40px 20px !important; color: var(--ink-soft, #69756E); }
+
+    @media (max-width: 768px) {
+        .el-head { flex-direction: column; align-items: flex-start; }
+        .el-head h1 { font-size: 26px; }
+        .el-head .el-btn { width: 100%; }
+        .el-filters { padding: 14px; }
+        .el-filter-main input[type="text"], .el-filter-main select { flex: 1 1 100%; max-width: 100%; width: 100%; }
+        .el-export { margin-left: 0; width: 100%; }
+        .el-export > * { flex: 1; }
+        .el-card-head { padding: 14px; }
+
+        /* table becomes cards on phones */
+        .el-table thead { display: none; }
+        .el-table, .el-table tbody, .el-table tr, .el-table td { display: block; width: 100%; }
+        .el-table tr { padding: 14px; border-bottom: 1px solid #edf0ef; }
+        .el-table tr:last-child { border-bottom: 0; }
+        .el-table td { padding: 5px 0; border: 0; display: flex; justify-content: space-between; gap: 12px; text-align: right; }
+        .el-table td::before { content: attr(data-label); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8a93a1; text-align: left; flex-shrink: 0; }
+        .el-table td.el-td-sno { display: none; }
+        .el-table td.el-td-name::before { display: none; }
+        .el-table td.el-td-name { text-align: left; justify-content: flex-start; }
+        .el-table td.el-td-action { justify-content: flex-end; padding-top: 10px; }
+        .el-table td.el-td-action::before { display: none; }
+    }
+
+    @media print {
+        .hr-sidebar, .hr-sidebar-overlay, .hr-topbar, .el-head .el-btn, .el-filters,
+        .el-actions, .el-th-action, .el-td-action, footer { display: none !important; }
+        body, .el-page { background: #fff !important; margin: 0; padding: 0; }
+        .el-card { box-shadow: none !important; border: none !important; }
+    }
+</style>
+
+<div class="el-page">
+
+    <div class="el-head">
+        <div>
+            <div class="el-eyebrow">Organization</div>
+            <h1>Employees</h1>
         </div>
-
-        <div class="sky-panel">
-            <div class="sky-panel-head">
-                <h6>All Employees</h6>
-                <span class="sky-count">
-                    {{ objects|length }} record(s)
-                </span>
-            </div>
-
-            <form method="get" class="sky-emp-filters">
-                <div class="sky-filter-row-main">
-                    <input
-                        type="text"
-                        name="q"
-                        value="{{ search_query }}"
-                        placeholder="Search by name or phone..."
-                        class="form-control"
-                        style="max-width: 280px;"
-                    >
-
-                    <select name="designation" class="form-select" style="max-width: 200px;">
-                        <option value="">All Designations</option>
-                        {% for d in designations %}
-                            <option value="{{ d.id }}" {% if selected_designation == d.id|stringformat:"s" %}selected{% endif %}>
-                                {{ d.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-
-                    <select name="shift" class="form-select" style="max-width: 200px;">
-                        <option value="">All Shifts</option>
-                        {% for s in shifts %}
-                            <option value="{{ s.id }}" {% if selected_shift == s.id|stringformat:"s" %}selected{% endif %}>
-                                {{ s.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-
-                    <select name="status" class="form-select" style="max-width: 160px;">
-                        <option value="">All Status</option>
-                        <option value="active" {% if selected_status == "active" %}selected{% endif %}>Active</option>
-                        <option value="inactive" {% if selected_status == "inactive" %}selected{% endif %}>Inactive</option>
-                    </select>
-
-                    {% include "app_projects/_project_filter.html" %}
-                </div>
-
-                <div class="sky-filter-row-actions">
-                    <button type="submit" class="sky-punch-btn in" style="padding: 0.5rem 1.2rem; font-size: 0.85rem;">
-                        Apply
-                    </button>
-
-                    {% if search_query or selected_designation or selected_shift or selected_status or project_filter_selected %}
-                        <a href="{% url 'employeeList' %}" style="font-size: 0.85rem; color: var(--ink-soft); text-decoration: underline;">
-                            Clear
-                        </a>
-                    {% endif %}
-
-                    <div class="sky-filter-export-group">
-                        <button
-                            type="button"
-                            class="sky-punch-btn"
-                            style="padding: 0.5rem 1.1rem; font-size: 0.85rem; background: #fff; color: var(--ink, #222); border: 1px solid #ccc;"
-                            onclick="window.print()"
-                        >
-                            Print
-                        </button>
-
-                        <a
-                            href="{% url 'employeeListPdf' %}?{{ request.GET.urlencode }}"
-                            class="sky-punch-btn in"
-                            style="padding: 0.5rem 1.1rem; font-size: 0.85rem; text-decoration: none; display: inline-block;"
-                        >
-                            Download PDF
-                        </a>
-                    </div>
-                </div>
-            </form>
-
-            <div class="table-responsive">
-                <table class="sky-table">
-                    <thead>
-                        <tr>
-                            <th class="col-sno">#</th>
-                            <th class="col-name">Name</th>
-                            <th class="col-phone">Phone Number</th>
-                            <th class="col-action">Action</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {% for obj in objects %}
-                            <tr>
-                                <td class="sky-time col-sno">
-                                    {% if page_obj %}
-                                        {{ page_obj.start_index|add:forloop.counter0 }}
-                                    {% else %}
-                                        {{ forloop.counter }}
-                                    {% endif %}
-                                </td>
-
-                                <td class="col-name">
-                                    {% if obj.user__first_name or obj.user__last_name %}
-                                        {{ obj.user__last_name }}, {{ obj.user__first_name }}
-                                    {% else %}
-                                        Employee #{{ forloop.counter }}
-                                    {% endif %}
-                                </td>
-
-                                <td class="sky-time col-phone">
-                                    {{ obj.phone_number|default:"—" }}
-                                </td>
-
-                                <td class="col-action">
-                                    <div class="sky-employee-actions">
-                                        <a href="{% url 'editProfile' obj.uuid %}" class="sky-edit-link">
-                                            Edit
-                                        </a>
-
-                                        <span class="sky-action-divider">|</span>
-
-                                        <a href="{% url 'attendanceCalendarAdmin' obj.uuid %}" class="sky-edit-link">
-                                            Calendar
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="4" class="sky-empty">
-                                    No employees found.
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
+        <a href="{% url 'register' %}" class="el-btn">+ Add Employee</a>
     </div>
+
+    <div class="el-card">
+        <div class="el-card-head">
+            <h2>All Employees</h2>
+            <span class="el-count">{{ objects|length }} record(s)</span>
+        </div>
+
+        <form method="get" class="el-filters">
+            <div class="el-filter-main">
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Search by name or phone...">
+
+                <select name="designation">
+                    <option value="">All Designations</option>
+                    {% for d in designations %}
+                        <option value="{{ d.id }}" {% if selected_designation == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="shift">
+                    <option value="">All Shifts</option>
+                    {% for s in shifts %}
+                        <option value="{{ s.id }}" {% if selected_shift == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="status">
+                    <option value="">All Status</option>
+                    <option value="active" {% if selected_status == "active" %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if selected_status == "inactive" %}selected{% endif %}>Inactive</option>
+                </select>
+
+                {% include "app_projects/_project_filter.html" %}
+            </div>
+
+            <div class="el-filter-actions">
+                <button type="submit" class="el-btn">Apply</button>
+
+                {% if search_query or selected_designation or selected_shift or selected_status or project_filter_selected %}
+                    <a href="{% url 'employeeList' %}" class="el-clear">Clear</a>
+                {% endif %}
+
+                <div class="el-export">
+                    <button type="button" class="el-btn el-btn-ghost" onclick="window.print()">Print</button>
+                    <a href="{% url 'employeeListPdf' %}?{{ request.GET.urlencode }}" class="el-btn">Download PDF</a>
+                </div>
+            </div>
+        </form>
+
+        <div class="el-table-wrap">
+            <table class="el-table">
+                <thead>
+                    <tr>
+                        <th class="el-sno">#</th>
+                        <th>Name</th>
+                        <th>Phone Number</th>
+                        <th class="el-th-action">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for obj in objects %}
+                        <tr>
+                            <td class="el-sno el-td-sno" data-label="#">
+                                {% if page_obj %}{{ page_obj.start_index|add:forloop.counter0 }}{% else %}{{ forloop.counter }}{% endif %}
+                            </td>
+
+                            <td class="el-td-name" data-label="Name">
+                                <div class="el-name">
+                                    <div class="el-avatar">{{ obj.user__first_name|default:"E"|first|upper }}</div>
+                                    <span>
+                                        {% if obj.user__first_name or obj.user__last_name %}
+                                            {{ obj.user__last_name }}, {{ obj.user__first_name }}
+                                        {% else %}
+                                            Employee #{{ forloop.counter }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </td>
+
+                            <td class="el-muted" data-label="Phone">{{ obj.phone_number|default:"—" }}</td>
+
+                            <td class="el-td-action" data-label="Action">
+                                <div class="el-actions">
+                                    <a href="{% url 'editProfile' obj.uuid %}" class="el-link">Edit</a>
+                                    <a href="{% url 'attendanceCalendarAdmin' obj.uuid %}" class="el-link">Calendar</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="el-empty">No employees found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 {% endblock %}

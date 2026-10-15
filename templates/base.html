@@ -7,51 +7,26 @@
 
     <meta charset="UTF-8">
 
-    <meta
-        http-equiv="X-UA-Compatible"
-        content="IE=edge"
-    >
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    <title>
-        {% block title %}
-            HRMS
-        {% endblock %}
-    </title>
+    <title>{% block title %}HRMS{% endblock %}</title>
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <meta
-        name="description"
-        content="{% block meta_description %}My Django Application{% endblock %}"
-    >
+    <meta name="description" content="{% block meta_description %}My Django Application{% endblock %}">
 
-    <meta
-        name="keywords"
-        content="{% block meta_keywords %}django, python{% endblock %}"
-    >
+    <meta name="keywords" content="{% block meta_keywords %}django, python{% endblock %}">
 
-    <meta
-        name="author"
-        content="Your Company"
-    >
+    <meta name="author" content="Your Company">
 
-    <meta
-        name="robots"
-        content="index, follow"
-    >
+    <meta name="robots" content="noindex, nofollow">
 
 
     <!-- ========================================= -->
     <!-- FAVICON -->
     <!-- ========================================= -->
 
-    <link
-        rel="icon"
-        href="{% static 'images/favicon.ico' %}"
-    >
+    <link rel="icon" href="{% static 'images/favicon.ico' %}">
 
 
     <!-- ========================================= -->
@@ -75,22 +50,15 @@
 
 
     <!-- ========================================= -->
-    <!-- GOOGLE FONTS -->
+    <!-- GOOGLE FONTS (Inter only, same as Lite) -->
     <!-- ========================================= -->
 
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com"
-    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin
-    >
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
@@ -99,10 +67,7 @@
     <!-- GLOBAL CSS -->
     <!-- ========================================= -->
 
-    <link
-        rel="stylesheet"
-        href="{% static 'css/style.css' %}"
-    >
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
 
     <!-- ========================================= -->
@@ -116,9 +81,7 @@
 
 
 
-<body
-    class="{% if user.is_authenticated %}hr-authenticated{% else %}bg-light{% endif %}"
->
+<body class="{% if user.is_authenticated %}hr-authenticated{% else %}bg-light{% endif %}">
 
 
 <!-- ========================================================= -->
@@ -131,52 +94,40 @@
     <div class="hr-app-shell">
 
 
-        <!-- ========================================= -->
         <!-- SIDEBAR -->
-        <!-- ========================================= -->
 
         {% include 'includes/sidebar.html' %}
 
 
-
-        <!-- ========================================= -->
         <!-- MOBILE SIDEBAR OVERLAY -->
-        <!-- ========================================= -->
 
-        <div
-            class="hr-sidebar-overlay"
-            id="sidebarOverlay"
-        ></div>
+        <div class="hr-sidebar-overlay" id="sidebarOverlay"></div>
 
 
+        <!-- MOBILE MENU BUTTON (only visible on small screens) -->
 
-        <!-- ========================================= -->
+        <button
+            type="button"
+            class="hr-mobile-toggle"
+            id="sidebarToggle"
+            aria-label="Toggle navigation"
+            aria-controls="hrSidebar"
+        >
+            <i class="bi bi-list"></i>
+        </button>
+
+
         <!-- MAIN APPLICATION AREA -->
-        <!-- ========================================= -->
 
         <div class="hr-main">
 
 
-            <!-- ========================================= -->
-            <!-- TOPBAR (ADDED MOBILE MENU TOGGLE) -->
-            <!-- ========================================= -->
-            
-            <div class="d-flex d-lg-none p-3 align-items-center justify-content-between bg-white border-bottom">
-                <strong style="color: #0a3728; font-size: 18px;">NumaHr</strong>
-                <button id="mobileSidebarToggle" class="btn btn-sm" style="background: #0a3728; color: white; border-radius: 8px;">
-                    <i class="bi bi-list fs-5"></i>
-                </button>
-            </div>
-
-
-            <!-- ========================================= -->
-            <!-- MESSAGES -->
-            <!-- ========================================= -->
+            <!-- VIEWING ANOTHER ORGANIZATION BANNER -->
 
             {% if is_viewing_other_org %}
-            <div style="background: #b45309; color: #ffffff; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+            <div class="hr-org-banner">
                 <span><strong>You are working inside: {{ current_org.name }}</strong> &mdash; any change you make is saved in this organization.</span>
-                <form method="post" action="{% url 'switch_organization' %}" style="margin: 0;">
+                <form method="post" action="{% url 'switch_organization' %}">
                     {% csrf_token %}
                     <input type="hidden" name="org_id" value="">
                     <button type="submit" class="btn btn-sm btn-light">Back to my organization</button>
@@ -184,13 +135,13 @@
             </div>
             {% endif %}
 
+
+            <!-- MESSAGES -->
+
             {% include 'includes/messages.html' %}
 
 
-
-            <!-- ========================================= -->
             <!-- AUTHENTICATED CONTENT WRAPPER START -->
-            <!-- ========================================= -->
 
             <main class="hr-content">
 
@@ -205,25 +156,17 @@
 <!-- ========================================================= -->
 
 
-    <!-- ========================================= -->
     <!-- PUBLIC NAVBAR -->
-    <!-- ========================================= -->
 
     {% include 'includes/navbar.html' %}
 
 
-
-    <!-- ========================================= -->
     <!-- MESSAGES -->
-    <!-- ========================================= -->
 
     {% include 'includes/messages.html' %}
 
 
-
-    <!-- ========================================= -->
     <!-- PUBLIC CONTENT WRAPPER START -->
-    <!-- ========================================= -->
 
     <div class="container">
 
@@ -253,17 +196,7 @@
 
             </main>
 
-
-
-            <!-- ========================================= -->
-            <!-- FOOTER -->
-            <!-- ========================================= -->
-
-            {% include 'includes/footer.html' %}
-
-
         </div>
-
 
     </div>
 
@@ -272,14 +205,6 @@
 
 
     </div>
-
-
-
-    <!-- ========================================= -->
-    <!-- PUBLIC FOOTER -->
-    <!-- ========================================= -->
-
-    {% include 'includes/footer.html' %}
 
 
 {% endif %}
@@ -293,26 +218,17 @@
 
 <!-- Bootstrap -->
 
-<script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
-></script>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 
 
 <!-- Existing Project JS -->
 
-<script
-    src="{% static 'js/main.js' %}"
-></script>
+<script src="{% static 'js/main.js' %}"></script>
 
 
+<!-- Sidebar JS (mobile open/close) -->
 
-<!-- Sidebar JS -->
-
-<script
-    src="{% static 'js/sidebar.js' %}"
-></script>
-
+<script src="{% static 'js/sidebar.js' %}"></script>
 
 
 <script src="{% static 'js/compress_upload.js' %}"></script>
@@ -323,33 +239,9 @@
       attachCompression(fileInput, { maxKB: 190 });
     }
   });
-
-  // Mobile Sidebar Toggle Logic
-  document.addEventListener("DOMContentLoaded", function() {
-      const sidebar = document.getElementById("hrSidebar");
-      const overlay = document.getElementById("sidebarOverlay");
-      const toggleBtn = document.getElementById("mobileSidebarToggle");
-
-      function toggleMobileSidebar() {
-          if (sidebar) sidebar.classList.toggle("show-mobile");
-          if (overlay) overlay.classList.toggle("show");
-          
-          if (sidebar && sidebar.classList.contains("show-mobile")) {
-              document.body.style.overflow = "hidden";
-          } else {
-              document.body.style.overflow = "";
-          }
-      }
-
-      if (toggleBtn) {
-          toggleBtn.addEventListener("click", toggleMobileSidebar);
-      }
-
-      if (overlay) {
-          overlay.addEventListener("click", toggleMobileSidebar);
-      }
-  });
 </script>
+
+
 <!-- ========================================= -->
 <!-- PAGE SPECIFIC JS -->
 <!-- ========================================= -->

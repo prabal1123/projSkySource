@@ -1,173 +1,213 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block title %}My Documents{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-{% endblock %}
-
 {% block content %}
-<div class="sky-dashboard">
-    <div class="container" style="max-width: 900px;">
+<style>
+    .ud-page { max-width: 920px; margin: 0 auto; animation: udIn .4s ease-out; }
+    @keyframes udIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-        <div class="sky-header">
-            <div>
-                <span class="sky-eyebrow">Employee / Documents</span>
-                <h1>My Documents</h1>
-                <p class="sky-help-text">
-                    Upload and track your HR documents — ID proof, resume, offer letter, and more.
-                    {% if can_upload_for_others %}
-                        As an HR user, you can also upload a document on behalf of another employee below.
-                    {% endif %}
-                </p>
-            </div>
-        </div>
+    .ud-head { margin-bottom: 22px; }
+    .ud-eyebrow { color: var(--green, #2F6B4F); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+    .ud-head h1 { margin: 0; font-size: 30px; letter-spacing: -.03em; color: var(--navy, #183D2F); }
+    .ud-head p { margin: 7px 0 0; color: var(--ink-soft, #69756E); font-size: 14px; line-height: 1.55; max-width: 680px; }
 
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="sky-alert sky-alert-{{ message.tags }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
+    .ud-alert { margin-bottom: 14px; padding: 12px 14px; border-radius: 10px; font-size: 13px; font-weight: 500; background: #E4F0E8; border: 1px solid #BDD5C7; color: #214F3B; }
+    .ud-alert.error, .ud-alert.danger { background: var(--rose-soft, #FAEEEB); border-color: #EDCAC3; color: var(--rose-dark, #A95345); }
+    .ud-alert.warning { background: #FBF3E8; border-color: #EBD5B3; color: #B47A37; }
+
+    .ud-card { background: #fff; border: 1px solid var(--border, #E1E7E3); border-radius: 18px; box-shadow: 0 6px 22px rgba(24,61,47,.04); margin-bottom: 18px; overflow: hidden; }
+    .ud-card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--border, #E1E7E3); }
+    .ud-card-head h2 { margin: 0; font-size: 16px; color: #111827; }
+    .ud-card-body { padding: 22px; }
+    .ud-count { font-size: 12px; font-weight: 600; color: var(--ink-soft, #69756E); background: #F1F4F2; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+
+    .ud-error-banner { margin-bottom: 18px; padding: 12px 14px; border-radius: 10px; background: var(--rose-soft, #FAEEEB); border: 1px solid #EDCAC3; color: var(--rose-dark, #A95345); font-size: 13px; font-weight: 500; }
+    .ud-error-banner ul { margin: 0; padding: 0; list-style: none; }
+
+    .ud-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .ud-field { min-width: 0; }
+    .ud-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #374151; }
+    .ud-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+    .ud-field select {
+        display: block; width: 100%; max-width: 100%; box-sizing: border-box;
+        padding: 10px 12px; border: 1px solid #D9E1DC; border-radius: 9px;
+        font-size: 14px; font-family: inherit; color: var(--ink, #1C2B24); background: #fff;
+    }
+    .ud-field input[type="file"] {
+        display: block; width: 100%; max-width: 100%; box-sizing: border-box;
+        padding: 8px; border: 1px dashed #BDD5C7; border-radius: 9px; background: #F7FAF8;
+        font-size: 13px; font-family: inherit; color: #374151;
+    }
+    .ud-field input[type="file"]::file-selector-button {
+        margin-right: 12px; padding: 7px 13px; border: 1px solid var(--green, #2F6B4F); border-radius: 7px;
+        background: var(--green, #2F6B4F); color: #fff; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .ud-field input:focus, .ud-field select:focus { outline: none; border-color: #8CB59B; box-shadow: 0 0 0 3px rgba(47,107,79,.12); }
+    .ud-help { margin-top: 5px; font-size: 12px; color: #8a93a1; line-height: 1.45; }
+    .ud-field-error { margin-top: 5px; font-size: 12.5px; font-weight: 500; color: var(--rose-dark, #A95345); }
+
+    .ud-actions { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border, #E1E7E3); }
+    .ud-btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; border-radius: 9px; border: 1px solid var(--green, #2F6B4F); background: var(--green, #2F6B4F); color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; white-space: nowrap; transition: .2s ease; }
+    .ud-btn:hover { background: var(--green-dark, #214F3B); border-color: var(--green-dark, #214F3B); color: #fff; transform: translateY(-1px); }
+    .ud-btn-ghost { background: #fff; color: var(--green-dark, #214F3B); border-color: var(--border, #E1E7E3); }
+    .ud-btn-ghost:hover { background: var(--green-soft-2, #EEF6F1); color: var(--green-dark, #214F3B); }
+    .ud-btn-sm { padding: 6px 13px; font-size: 12px; }
+
+    /* Documents table */
+    .ud-table { width: 100%; border-collapse: collapse; }
+    .ud-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8a93a1; padding: 12px 18px; border-bottom: 1px solid #edf0ef; background: #FAFCFB; }
+    .ud-table td { padding: 14px 18px; border-bottom: 1px solid #f0f2f1; font-size: 14px; color: #374151; vertical-align: middle; overflow-wrap: anywhere; }
+    .ud-table tbody tr:last-child td { border-bottom: 0; }
+    .ud-table tbody tr:hover { background: #F7FAF8; }
+    .ud-type { font-weight: 600; color: #1f2937; }
+    .ud-muted { color: var(--ink-soft, #69756E); }
+    /* header and cell share one alignment, so the heading sits right above the button */
+    .ud-table th.ud-th-action, .ud-table td.ud-td-action { text-align: right; }
+    .ud-reason { display: block; margin-top: 5px; font-size: 12px; color: var(--rose-dark, #A95345); line-height: 1.4; }
+    .ud-empty { text-align: center; padding: 34px 20px; border: 1px dashed #D4E3D9; border-radius: 13px; background: #F7FAF8; color: var(--ink-soft, #69756E); font-size: 13px; }
+
+    .ud-pill { display: inline-flex; padding: 4px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+    .ud-pill-verified { background: #E4F0E8; color: #214F3B; }
+    .ud-pill-pending { background: #FBF3E8; color: #B47A37; }
+    .ud-pill-rejected { background: var(--rose-soft, #FAEEEB); color: var(--rose-dark, #A95345); }
+
+    @media (max-width: 700px) {
+        .ud-head h1 { font-size: 26px; }
+        .ud-card-head { padding: 14px 16px; }
+        .ud-card-body { padding: 16px; }
+        .ud-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+        .ud-actions .ud-btn { width: 100%; }
+        .ud-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), .ud-field select { font-size: 16px; }
+
+        /* each document becomes a card, so nothing needs sideways swiping */
+        .ud-table thead { display: none; }
+        .ud-table, .ud-table tbody, .ud-table tr, .ud-table td { display: block; width: 100%; }
+        .ud-table tr { padding: 14px 4px; border-bottom: 1px solid #edf0ef; }
+        .ud-table tbody tr:last-child { border-bottom: 0; }
+        .ud-table td { display: flex; justify-content: space-between; gap: 14px; padding: 5px 0; border: 0; text-align: right; }
+        .ud-table td::before { content: attr(data-label); flex-shrink: 0; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8a93a1; text-align: left; padding-top: 2px; }
+        .ud-table td.ud-td-type { justify-content: flex-start; padding-bottom: 8px; text-align: left; font-size: 15px; }
+        .ud-table td.ud-td-type::before { display: none; }
+        .ud-table td.ud-td-action { display: block; padding-top: 10px; }
+        .ud-table td.ud-td-action::before { display: none; }
+        .ud-table td.ud-td-action .ud-btn { width: 100%; }
+    }
+</style>
+
+<div class="ud-page">
+
+    <div class="ud-head">
+        <div class="ud-eyebrow">Employee / Documents</div>
+        <h1>My Documents</h1>
+        <p>
+            Upload and track your HR documents — ID proof, resume, offer letter, and more.
+            {% if can_upload_for_others %}
+                As an HR user, you can also upload a document on behalf of another employee below.
+            {% endif %}
+        </p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="ud-alert {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="ud-card">
+        <div class="ud-card-head"><h2>Upload New Document</h2></div>
+        <div class="ud-card-body">
+
+            {% if form.non_field_errors %}
+                <div class="ud-error-banner">{{ form.non_field_errors }}</div>
             {% endif %}
 
-        <div class="sky-panel">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
 
-            <div class="sky-panel-head">
-                <h6>Upload New Document</h6>
-            </div>
+                <div class="ud-grid">
 
-            <div class="sky-panel-body">
-
-                {% if form.non_field_errors %}
-                    <div class="sky-auth-error-banner">
-                        {{ form.non_field_errors }}
-                    </div>
-                {% endif %}
-
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-
-                    <div class="row">
-
-                        {% if form.employee %}
-                        <div class="col-md-6 mb-3">
-                            <label
-                                class="sky-form-label"
-                                for="{{ form.employee.id_for_label }}"
-                            >
-                                {{ form.employee.label }}
-                            </label>
-
+                    {% if form.employee %}
+                        <div class="ud-field">
+                            <label class="ud-label" for="{{ form.employee.id_for_label }}">{{ form.employee.label }}</label>
                             {{ form.employee }}
-
                             {% for error in form.employee.errors %}
-                                <div class="sky-form-error">
-                                    {{ error }}
-                                </div>
+                                <div class="ud-field-error">{{ error }}</div>
                             {% endfor %}
                         </div>
-                        {% endif %}
+                    {% endif %}
 
-                        <div class="col-md-6 mb-3">
-                            <label
-                                class="sky-form-label"
-                                for="{{ form.document_type.id_for_label }}"
-                            >
-                                {{ form.document_type.label }}
-                            </label>
-
-                            {{ form.document_type }}
-
-                            {% for error in form.document_type.errors %}
-                                <div class="sky-form-error">
-                                    {{ error }}
-                                </div>
-                            {% endfor %}
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label
-                                class="sky-form-label"
-                                for="{{ form.file.id_for_label }}"
-                            >
-                                {{ form.file.label }}
-                            </label>
-
-                            {{ form.file }}
-
-                            <div class="sky-help-text">
-                                PDF, JPG, PNG or DOCX. Max 200 Kb.
-                            </div>
-
-                            {% for error in form.file.errors %}
-                                <div class="sky-form-error">
-                                    {{ error }}
-                                </div>
-                            {% endfor %}
-                        </div>
-
+                    <div class="ud-field">
+                        <label class="ud-label" for="{{ form.document_type.id_for_label }}">{{ form.document_type.label }}</label>
+                        {{ form.document_type }}
+                        {% for error in form.document_type.errors %}
+                            <div class="ud-field-error">{{ error }}</div>
+                        {% endfor %}
                     </div>
 
-                    <button type="submit" class="sky-header-btn">
-                        Upload Document
-                    </button>
-
-                </form>
-
-            </div>
-
-        </div>
-
-        <div class="sky-panel">
-
-            <div class="sky-panel-head">
-                <h6>Uploaded Documents</h6>
-            </div>
-
-            <div class="sky-panel-body">
-
-                {% if documents %}
-                    <div class="table-responsive">
-                        <table class="table sky-table">
-                            <thead>
-                                <tr>
-                                    <th>Type</th>
-                                    <th>Uploaded</th>
-                                    <th>Status</th>
-                                    <th>File</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            {% for doc in documents %}
-                                <tr>
-                                    <td>{{ doc.document_type.name }}</td>
-                                    <td>{{ doc.uploaded_at|date:"d M Y" }}</td>
-                                    <td>
-                                        {% if doc.is_verified %}
-                                            <span class="sky-badge sky-badge-success">Verified</span>
-                                        {% else %}
-                                            <span class="sky-badge sky-badge-pending">Pending</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <a href="{{ doc.file.url }}" target="_blank" class="sky-link">View</a>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
+                    <div class="ud-field">
+                        <label class="ud-label" for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>
+                        {{ form.file }}
+                        <div class="ud-help">PDF, JPG, PNG or DOCX. Max 200 Kb.</div>
+                        {% for error in form.file.errors %}
+                            <div class="ud-field-error">{{ error }}</div>
+                        {% endfor %}
                     </div>
-                {% else %}
-                    <p class="sky-help-text">No documents uploaded yet.</p>
-                {% endif %}
 
-            </div>
+                </div>
+
+                <div class="ud-actions">
+                    <button type="submit" class="ud-btn">Upload Document</button>
+                </div>
+            </form>
 
         </div>
-
     </div>
-</div>
 
+    <div class="ud-card">
+        <div class="ud-card-head">
+            <h2>Uploaded Documents</h2>
+            {% if documents %}<span class="ud-count">{{ documents|length }} file(s)</span>{% endif %}
+        </div>
+
+        {% if documents %}
+            <table class="ud-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Uploaded</th>
+                        <th>Status</th>
+                        <th class="ud-th-action">File</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in documents %}
+                        <tr>
+                            <td class="ud-td-type ud-type" data-label="Type">{{ doc.document_type.name }}</td>
+                            <td class="ud-muted" data-label="Uploaded">{{ doc.uploaded_at|date:"d M Y" }}</td>
+                            <td data-label="Status">
+                                {% if doc.is_verified %}
+                                    <span class="ud-pill ud-pill-verified">Verified</span>
+                                {% elif doc.is_rejected %}
+                                    <span class="ud-pill ud-pill-rejected">Rejected</span>
+                                    {% if doc.rejection_reason %}<span class="ud-reason">{{ doc.rejection_reason }}</span>{% endif %}
+                                {% else %}
+                                    <span class="ud-pill ud-pill-pending">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td class="ud-td-action" data-label="File">
+                                <a href="{{ doc.file.url }}" target="_blank" rel="noopener" class="ud-btn ud-btn-ghost ud-btn-sm">View</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="ud-card-body">
+                <div class="ud-empty">No documents uploaded yet.</div>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
 {% endblock %}

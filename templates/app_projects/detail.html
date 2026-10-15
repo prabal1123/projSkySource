@@ -2,81 +2,198 @@
 
 {% block title %}{{ project.name }}{% endblock %}
 
-{% block extra_css %}{% include "app_projects/_styles.html" %}{% endblock %}
-
 {% block content %}
-<div class="sky-dashboard">
-    <div class="container" style="max-width: 900px;">
+<style>
+    .pd-page { max-width: 1180px; margin: 0 auto; }
 
-        <div class="sky-header">
+    .pd-breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-bottom: 18px; font-size: 13px; color: #7b8494; }
+    .pd-breadcrumb a { color: #596579; }
+    .pd-breadcrumb a:hover { color: var(--green-dark, #214F3B); }
+
+    .pd-hero { position: relative; overflow: hidden; background: linear-gradient(135deg, #fff 0%, #F4F8F5 100%); border: 1px solid var(--border, #E1E7E3); border-radius: 22px; padding: 30px; margin-bottom: 18px; box-shadow: 0 8px 28px rgba(24,61,47,.05); animation: pdIn .45s ease both; }
+    .pd-hero::after { content: ""; position: absolute; width: 190px; height: 190px; right: -75px; top: -95px; border-radius: 50%; background: rgba(47,107,79,.08); pointer-events: none; }
+    .pd-hero-row { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .pd-eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--green, #2F6B4F); }
+    .pd-hero h1 { margin: 5px 0 8px; font-size: 32px; line-height: 1.15; letter-spacing: -.7px; color: var(--navy, #183D2F); }
+    .pd-desc { max-width: 700px; margin: 12px 0 0; line-height: 1.6; color: var(--ink-soft, #69756E); white-space: pre-line; }
+
+    .pd-actions { display: flex; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
+    .pd-actions form { margin: 0; }
+    .pd-btn { display: inline-flex; align-items: center; justify-content: center; padding: 9px 15px; border-radius: 9px; border: 1px solid var(--green, #2F6B4F); background: var(--green, #2F6B4F); color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; transition: .2s ease; }
+    .pd-btn:hover { background: var(--green-dark, #214F3B); color: #fff; }
+    .pd-btn-ghost { background: #fff; color: var(--green-dark, #214F3B); border-color: var(--border, #E1E7E3); }
+    .pd-btn-ghost:hover { background: var(--green-soft-2, #EEF6F1); color: var(--green-dark, #214F3B); }
+
+    .pd-status { display: inline-flex; padding: 5px 10px; border-radius: 999px; background: #F1F4F2; color: #536159; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .pd-status.status-active { background: #E4F0E8; color: #214F3B; }
+    .pd-status.status-archived { background: #FBF3E8; color: #B47A37; }
+
+    .pd-subnav { display: flex; gap: 6px; padding: 5px; width: fit-content; background: #F1F4F2; border: 1px solid var(--border, #E1E7E3); border-radius: 12px; margin-bottom: 18px; }
+    .pd-subnav a { padding: 9px 14px; border-radius: 8px; color: #687385; font-size: 13px; font-weight: 600; white-space: nowrap; }
+    .pd-subnav a:hover { background: #fff; color: #111827; }
+    .pd-subnav a.active { background: #fff; color: #111827; box-shadow: 0 2px 7px rgba(24,61,47,.08); }
+
+    .pd-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+    .pd-stat { background: #fff; border: 1px solid var(--border, #E1E7E3); border-radius: 16px; padding: 18px 20px; box-shadow: 0 5px 18px rgba(24,61,47,.035); animation: pdIn .5s ease both; }
+    .pd-stat strong { display: block; font-size: 22px; color: #111827; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pd-stat span { font-size: 12px; color: #7b8494; }
+
+    .pd-card { background: #fff; border: 1px solid var(--border, #E1E7E3); border-radius: 18px; padding: 22px; margin-bottom: 18px; box-shadow: 0 6px 22px rgba(24,61,47,.04); animation: pdIn .5s ease both; }
+    .pd-section-head { margin-bottom: 16px; }
+    .pd-section-head h2 { margin: 0 0 5px; font-size: 18px; color: #111827; }
+    .pd-section-head p { margin: 0; font-size: 13px; color: var(--ink-soft, #69756E); }
+
+    .pd-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0; }
+    .pd-meta dt { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8a93a1; margin-bottom: 4px; }
+    .pd-meta dd { margin: 0; font-size: 14px; color: #1f2937; }
+
+    .pd-people { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; }
+    .pd-person { padding: 15px; border: 1px solid #E4EBE6; border-radius: 13px; background: #F7FAF8; }
+    .pd-avatar { width: 36px; height: 36px; border-radius: 10px; background: #E4F0E8; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #214F3B; margin-bottom: 11px; }
+    .pd-person strong { display: block; font-size: 14px; color: #1f2937; margin-bottom: 3px; }
+    .pd-person span { display: block; font-size: 11px; color: #7b8494; }
+
+    .pd-list { list-style: none; margin: 0; padding: 0; }
+    .pd-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 11px 0; border-bottom: 1px solid #F0F2F1; font-size: 13px; }
+    .pd-list li:last-child { border-bottom: 0; }
+    .pd-list small { color: #7b8494; }
+
+    .pd-empty { text-align: center; padding: 34px 20px; border: 1px dashed #D4E3D9; border-radius: 14px; background: #F7FAF8; color: var(--ink-soft, #69756E); font-size: 13px; }
+
+    @keyframes pdIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 1000px) {
+        .pd-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .pd-people { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 700px) {
+        .pd-hero { padding: 22px; }
+        .pd-hero-row { flex-direction: column; align-items: flex-start; }
+        .pd-hero h1 { font-size: 26px; }
+        .pd-actions { width: 100%; }
+        .pd-meta { grid-template-columns: 1fr; }
+        .pd-people { grid-template-columns: 1fr; }
+        .pd-subnav { width: 100%; overflow-x: auto; }
+        .pd-card { padding: 17px; }
+    }
+</style>
+
+<div class="pd-page">
+
+    <div class="pd-breadcrumb">
+        <a href="{% url 'projectList' %}">Projects</a>
+        <span>›</span>
+        <span>{{ project.name }}</span>
+    </div>
+
+    <section class="pd-hero">
+        <div class="pd-hero-row">
             <div>
-                <span class="sky-eyebrow">Project &middot; {{ project.code }}</span>
+                <div class="pd-eyebrow">Project &middot; {{ project.code }}</div>
                 <h1>{{ project.name }}</h1>
-                <span class="pj-badge pj-badge-{{ project.status }}">{{ project.get_status_display }}</span>
+                <span class="pd-status status-{{ project.status }}">{{ project.get_status_display }}</span>
+                {% if project.description %}
+                    <p class="pd-desc">{{ project.description }}</p>
+                {% endif %}
             </div>
-            <div class="pj-actions" style="margin-top: 0;">
-                <a href="{% url 'projectList' %}" class="pj-btn pj-btn-ghost">Back</a>
-                <a href="{% url 'projectActionList' project.uuid %}" class="pj-btn">Actions</a>
+
+            <div class="pd-actions">
+                <a href="{% url 'projectActionList' project.uuid %}" class="pd-btn">Actions</a>
                 {% if can_manage %}
                     {% if project.is_archived %}
                         <form method="post" action="{% url 'projectUnarchive' project.uuid %}">
                             {% csrf_token %}
-                            <button type="submit" class="pj-btn">Unarchive</button>
+                            <button type="submit" class="pd-btn">Unarchive</button>
                         </form>
                     {% else %}
-                        <a href="{% url 'projectEdit' project.uuid %}" class="pj-btn">Edit</a>
+                        <a href="{% url 'projectEdit' project.uuid %}" class="pd-btn pd-btn-ghost">Edit</a>
                         <form method="post" action="{% url 'projectArchive' project.uuid %}" onsubmit="return confirm('Archive this project? It becomes read-only.');">
                             {% csrf_token %}
-                            <button type="submit" class="pj-btn pj-btn-ghost">Archive</button>
+                            <button type="submit" class="pd-btn pd-btn-ghost">Archive</button>
                         </form>
                     {% endif %}
                 {% endif %}
             </div>
         </div>
+    </section>
 
-        <div class="sky-panel" style="margin-bottom: 1rem;">
-            <div class="pj-body">
-                <dl class="pj-meta">
-                    <div>
-                        <dt>Lead</dt>
-                        <dd>{% if project.lead %}{{ project.lead.user.get_full_name|default:project.lead.user.username }}{% else %}&mdash;{% endif %}</dd>
-                    </div>
-                    <div>
-                        <dt>Start date</dt>
-                        <dd>{{ project.start_date|date:"d M Y"|default:"&mdash;" }}</dd>
-                    </div>
-                    <div>
-                        <dt>End date</dt>
-                        <dd>{{ project.end_date|date:"d M Y"|default:"&mdash;" }}</dd>
-                    </div>
-                </dl>
-                {% if project.description %}
-                    <p style="margin: 1rem 0 0; white-space: pre-line;">{{ project.description }}</p>
-                {% endif %}
-            </div>
+    <nav class="pd-subnav">
+        <a class="active" href="{% url 'projectDetail' project.uuid %}">Overview</a>
+        <a href="{% url 'projectActionList' project.uuid %}">Actions</a>
+    </nav>
+
+    <div class="pd-stats">
+        <div class="pd-stat">
+            <strong>{{ team|length }}</strong>
+            <span>Team members</span>
         </div>
-
-        <div class="sky-panel">
-            <div class="pj-body">
-                <h6 style="margin-bottom: .75rem;">Team ({{ team|length }})</h6>
-                <ul class="pj-team">
-                    {% for member in team %}
-                        <li>{{ member.user.get_full_name|default:member.user.username }}</li>
-                    {% empty %}
-                        <li class="pj-help">No one is assigned to this project yet.</li>
-                    {% endfor %}
-                </ul>
-                {% if reassign_list %}
-                    <h6 style="margin: 1.25rem 0 .75rem;">Needs reassigning ({{ reassign_list|length }})</h6>
-                    <ul class="pj-team">
-                        {% for a in reassign_list %}
-                            <li><a href="{% url 'projectActionDetail' project.uuid a.uuid %}">{{ a.title }}</a> <span class="pj-help">&middot; {{ a.assignee.user.get_full_name|default:a.assignee.user.username }}</span></li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-            </div>
+        <div class="pd-stat">
+            <strong>{{ project.get_status_display }}</strong>
+            <span>Status</span>
         </div>
-
+        <div class="pd-stat">
+            <strong>{% if project.lead %}{{ project.lead.user.get_full_name|default:project.lead.user.username }}{% else %}—{% endif %}</strong>
+            <span>Project lead</span>
+        </div>
+        {% if can_manage %}
+            <div class="pd-stat">
+                <strong>{{ reassign_list|length }}</strong>
+                <span>Need reassigning</span>
+            </div>
+        {% else %}
+            <div class="pd-stat">
+                <strong>{{ project.end_date|date:"d M Y"|default:"—" }}</strong>
+                <span>End date</span>
+            </div>
+        {% endif %}
     </div>
+
+    <section class="pd-card">
+        <div class="pd-section-head"><h2>Details</h2></div>
+        <dl class="pd-meta">
+            <div><dt>Lead</dt><dd>{% if project.lead %}{{ project.lead.user.get_full_name|default:project.lead.user.username }}{% else %}—{% endif %}</dd></div>
+            <div><dt>Start date</dt><dd>{{ project.start_date|date:"d M Y"|default:"—" }}</dd></div>
+            <div><dt>End date</dt><dd>{{ project.end_date|date:"d M Y"|default:"—" }}</dd></div>
+        </dl>
+    </section>
+
+    <section class="pd-card">
+        <div class="pd-section-head">
+            <h2>Project team</h2>
+            <p>Employees working on this project.</p>
+        </div>
+
+        {% if team %}
+            <div class="pd-people">
+                {% for member in team %}
+                    <div class="pd-person">
+                        <div class="pd-avatar">{{ member.user.first_name|default:member.user.username|first|upper }}</div>
+                        <strong>{{ member.user.get_full_name|default:member.user.username }}</strong>
+                        <span>{{ member.user.username }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="pd-empty">No one is assigned to this project yet.</div>
+        {% endif %}
+    </section>
+
+    {% if reassign_list %}
+        <section class="pd-card">
+            <div class="pd-section-head">
+                <h2>Needs reassigning ({{ reassign_list|length }})</h2>
+                <p>Actions whose assignee is no longer on this project.</p>
+            </div>
+            <ul class="pd-list">
+                {% for a in reassign_list %}
+                    <li>
+                        <a href="{% url 'projectActionDetail' project.uuid a.uuid %}">{{ a.title }}</a>
+                        <small>{{ a.assignee.user.get_full_name|default:a.assignee.user.username }}</small>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+
 </div>
 {% endblock %}

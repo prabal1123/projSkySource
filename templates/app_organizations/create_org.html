@@ -1,48 +1,162 @@
 {% extends "base.html" %}
 {% load static %}
+
 {% block title %}Create Organization{% endblock %}
 
-{% block extra_css %}
-    {{ block.super }}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/numahr-tokens.css' %}">
-    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
-{% endblock %}
 {% block content %}
-<div class="sky-auth-wrap">
-    <div class="sky-auth-card">
-        <span class="sky-auth-eyebrow">Administration / New Organization</span>
+
+<style>
+    .co-wrap { max-width: 560px; margin: 0 auto; }
+
+    .co-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 28px;
+    }
+
+    .co-eyebrow {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--green-dark);
+        background: var(--green-soft-2);
+        padding: 4px 10px;
+        border-radius: 999px;
+        margin-bottom: 10px;
+    }
+    .co-card h1 {
+        margin: 0 0 20px;
+        font-size: 26px;
+        line-height: 1.2;
+        color: var(--navy);
+    }
+
+    .co-success {
+        margin-bottom: 18px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: var(--green-soft-2);
+        color: var(--green-dark);
+        border: 1px solid var(--green);
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    .co-banner {
+        margin-bottom: 18px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: var(--rose-soft);
+        color: var(--rose-dark);
+        border: 1px solid var(--rose-dark);
+        font-size: 14px;
+    }
+
+    .co-field { margin-bottom: 18px; }
+    .co-field label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+    }
+    .co-field select,
+    .co-field textarea,
+    .co-field input:not([type="checkbox"]):not([type="radio"]) {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px 12px;
+        font-size: 14px;
+        color: var(--navy);
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+    }
+    .co-field textarea { min-height: 100px; resize: vertical; }
+    .co-field select:focus,
+    .co-field textarea:focus,
+    .co-field input:focus {
+        outline: none;
+        border-color: var(--green);
+        box-shadow: 0 0 0 3px var(--green-soft-2);
+    }
+    .co-error { margin-top: 6px; font-size: 13px; font-weight: 600; color: var(--rose-dark); }
+
+    .co-submit {
+        display: block;
+        width: 100%;
+        padding: 12px 18px;
+        margin-top: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--green);
+        border: 1px solid var(--green);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background .15s ease;
+    }
+    .co-submit:hover { background: var(--green-dark); border-color: var(--green-dark); }
+
+    @media (max-width: 700px) {
+        .co-card { padding: 20px 16px; }
+        .co-card h1 { font-size: 22px; }
+        .co-field select,
+        .co-field textarea,
+        .co-field input:not([type="checkbox"]):not([type="radio"]) {
+            font-size: 16px;
+            padding: 12px;
+        }
+        .co-submit { font-size: 16px; }
+    }
+</style>
+
+<div class="co-wrap">
+
+    <div class="co-card">
+
+        <span class="co-eyebrow">Administration / New Organization</span>
         <h1>Create Organization</h1>
 
         {% if created %}
-        <div style="margin-bottom:1rem;padding:.75rem 1rem;border-radius:6px;background:#e8f5e9;color:#1b5e20;">
-            Organization <strong>{{ created.org.name }}</strong> was created.
-            The owner can log in with <strong>{{ created.owner.email }}</strong>
-            by requesting an emailed code.
-        </div>
+            <div class="co-success">
+                Organization <strong>{{ created.org.name }}</strong> was created.
+                The owner can log in with <strong>{{ created.owner.email }}</strong>
+                by requesting an emailed code.
+            </div>
         {% endif %}
 
         {% if form.non_field_errors %}
-        <div class="sky-auth-error-banner">
-            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
-        </div>
+            <div class="co-banner">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
         {% endif %}
 
         <form method="post" novalidate>
+
             {% csrf_token %}
+
             {% for field in form %}
-            <div class="sky-auth-field">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}
-                    <div class="sky-form-error">{{ field.errors|striptags }}</div>
-                {% endif %}
-            </div>
+                <div class="co-field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="co-error">{{ field.errors|striptags }}</div>
+                    {% endif %}
+                </div>
             {% endfor %}
-            <button type="submit" class="sky-auth-submit">Create organization</button>
+
+            <button type="submit" class="co-submit">Create organization</button>
+
         </form>
+
     </div>
+
 </div>
+
 {% endblock %}

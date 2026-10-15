@@ -1,93 +1,71 @@
 /* =========================================================
-   SKY SOURCE HR MAIN DASHBOARD
+   NumaHr Pro - main dashboard (Lite look)
+   Uses the tokens from style.css (--primary, --border, --muted ...).
+   Class names are unchanged, so existing templates keep working.
 ========================================================= */
 
+
+/* Old variable names kept as aliases (attendance_location and any
+   inline styles may still read them). */
+
 :root {
-    --hr-green: #063b2d;
-    --hr-green-dark: #042f24;
-    --hr-green-soft: #eaf0ed;
-
-    --hr-coral: #d16d4e;
-    --hr-coral-soft: #fff0ea;
-
-    --hr-bg: #f5f6f3;
+    --hr-green: var(--primary);
+    --hr-green-dark: var(--primary-dark);
+    --hr-green-soft: var(--primary-soft);
+    --hr-coral: var(--danger);
+    --hr-coral-soft: #fef2f2;
+    --hr-bg: var(--bg);
     --hr-card: #ffffff;
-
-    --hr-border: #dde3df;
-
-    --hr-text: #07382c;
-    --hr-muted: #81918b;
+    --hr-border: var(--border);
+    --hr-text: var(--text);
+    --hr-muted: var(--muted);
 }
 
-*, *::before, *::after {
-    box-sizing: border-box;
-}
 
 /* =========================================================
    PAGE
 ========================================================= */
 
 .hr-dashboard-shell {
-    min-height: calc(100vh - 70px);
     width: 100%;
-    overflow-x: hidden;
-    padding: 0 0 80px;
-    background: linear-gradient(180deg, #f8f9f7 0, #f4f5f2 100%);
-    font-family: "Inter", sans-serif;
-    color: var(--hr-text);
+    color: var(--text);
 }
 
-.hr-dashboard-container {
-    width: 100%;
-    max-width: 1320px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 16px;
-    padding-right: 16px;
-}
 
 /* =========================================================
-   OVERRIDE BASE NAVBAR ONLY ON DASHBOARD
-========================================================= */
-
-body:has(.hr-dashboard-shell) .navbar.bg-dark {
-    background: var(--hr-green) !important;
-}
-
-body:has(.hr-dashboard-shell) .navbar {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 28px rgba(4, 47, 36, 0.12) !important;
-}
-
-/* =========================================================
-   HEADER
+   HEADER (white card, Lite style)
 ========================================================= */
 
 .hr-welcome {
-    margin-bottom: 32px;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
-    gap: 30px;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding: 22px 24px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
 }
 
 .hr-kicker,
 .hr-section-label {
     display: block;
-    margin-bottom: 8px;
-    color: var(--hr-coral);
-    font-size: 10px;
-    font-weight: 750;
-    letter-spacing: 1.8px;
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .hr-welcome h1 {
-    margin: 0;
-    color: var(--hr-green);
-    font-family: "Space Grotesk", sans-serif;
-    font-size: clamp(34px, 4vw, 48px);
-    letter-spacing: -2px;
+    margin: 2px 0 0;
+    font-size: 1.75rem;
     font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--text);
 }
 
 .hr-welcome h1 strong {
@@ -96,149 +74,138 @@ body:has(.hr-dashboard-shell) .navbar {
 
 .hr-welcome p {
     max-width: 680px;
-    margin: 10px 0 0;
-    color: var(--hr-muted);
-    line-height: 1.6;
+    margin: 6px 0 0;
+    color: var(--muted);
     font-size: 14px;
+    line-height: 1.55;
 }
 
 .hr-header-side {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
 .hr-live-pill {
-    padding: 7px 12px;
-    border-radius: 20px;
-    background: white;
-    border: 1px solid var(--hr-border);
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    color: #5f756d;
-    font-size: 11px;
+    padding: 6px 12px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .hr-live-pill span {
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
+    background: #16a34a;
     border-radius: 50%;
-    background: #22a36a;
-    box-shadow: 0 0 0 4px rgba(34, 163, 106, 0.10);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.14);
 }
 
 .hr-date {
-    color: #75877f;
-    font-size: 12px;
+    padding: 6px 12px;
+    background: var(--primary-soft);
+    border-radius: 999px;
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 600;
     white-space: nowrap;
 }
+
 
 /* =========================================================
    TOP METRICS
 ========================================================= */
 
 .hr-metric-grid {
-    margin-bottom: 24px;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 14px;
-    min-width: 0;
     width: 100%;
+    margin-bottom: 20px;
 }
 
 .hr-metric-card {
-    min-height: 145px;
-    min-width: 0;
-    padding: 20px;
-    border: 1px solid var(--hr-border);
-    background: var(--hr-card);
-    color: var(--hr-text);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    min-width: 0;
+    padding: 18px 20px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    color: var(--text);
 }
 
-.hr-metric-card:hover {
-    transform: translateY(-4px);
-    border-color: #bdcbc5;
-    box-shadow: 0 18px 40px rgba(6, 59, 45, 0.07);
+a.hr-metric-card:hover {
+    border-color: var(--primary-line);
+    box-shadow: var(--shadow-md);
+    color: var(--text);
 }
 
 .hr-metric-top {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
 }
 
 .hr-metric-label {
-    color: #788a83;
-    font-size: 11px;
-    font-weight: 600;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .hr-metric-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--hr-green-soft);
-    color: var(--hr-green);
-    font-size: 12px;
+    display: none;
 }
 
 .hr-metric-value {
-    margin-top: 18px;
-    font-family: "Space Grotesk", sans-serif;
-    font-size: 36px;
-    line-height: 1;
-    letter-spacing: -1.5px;
+    margin-top: 6px;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
 }
 
 .hr-metric-note {
-    margin-top: 8px;
-    color: #93a19b;
-    font-size: 10px;
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 13px;
 }
 
-.metric-green {
-    background: #f7faf8;
+/* Pending Actions tile: amber only when something is waiting */
+
+.hr-metric-card.metric-pending.has-items {
+    background: #fffaeb;
+    border-color: #fedf89;
 }
 
-.metric-coral .hr-metric-icon {
-    color: var(--hr-coral);
-    background: var(--hr-coral-soft);
+.hr-metric-card.metric-pending.has-items .hr-metric-label,
+.hr-metric-card.metric-pending.has-items .hr-metric-note {
+    color: #93370d;
 }
 
-.metric-dark {
-    background: var(--hr-green);
-    border-color: var(--hr-green);
-    color: white;
+.hr-metric-card.metric-pending.has-items .hr-metric-value {
+    color: #b54708;
 }
 
-.metric-dark .hr-metric-label,
-.metric-dark .hr-metric-note {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.metric-dark .hr-metric-icon {
-    color: var(--hr-coral);
-    background: rgba(255, 255, 255, 0.10);
-}
 
 /* =========================================================
-   MAIN GRID
+   MAIN GRID AND CARDS
 ========================================================= */
 
 .hr-main-grid {
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
     gap: 18px;
-    min-width: 0;
     width: 100%;
+    min-width: 0;
 }
 
 .hr-card {
@@ -246,14 +213,10 @@ body:has(.hr-dashboard-shell) .navbar {
     min-width: 0;
     max-width: 100%;
     padding: 24px;
-    background: var(--hr-card);
-    border: 1px solid var(--hr-border);
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-}
-
-.hr-card:hover {
-    border-color: #c8d2cd;
-    box-shadow: 0 17px 38px rgba(6, 59, 45, 0.05);
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
 }
 
 .hr-attendance-card {
@@ -263,92 +226,112 @@ body:has(.hr-dashboard-shell) .navbar {
 
 .hr-actions-panel {
     grid-column: span 5;
-    min-width: 0;
     width: 100%;
+    min-width: 0;
 }
 
 .hr-wide-card {
     grid-column: span 12;
-    min-width: 0;
     width: 100%;
+    min-width: 0;
+}
+
+.hr-col-5 { grid-column: span 5; }
+.hr-col-4 { grid-column: span 4; }
+.hr-col-3 { grid-column: span 3; }
+
+.hr-row-split {
+    grid-column: span 12;
+    display: grid;
+    grid-template-columns: 7fr 5fr;
+    align-items: start;
+    gap: 18px;
+    min-width: 0;
+}
+
+.hr-attendance-col {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+}
+
+.hr-row-split > .hr-actions-panel {
+    grid-column: unset;
+    min-width: 0;
 }
 
 .hr-card-header {
-    margin-bottom: 22px;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 15px;
+    margin-bottom: 18px;
 }
 
 .hr-card-header h2 {
     margin: 0;
-    color: var(--hr-green);
-    font-family: "Space Grotesk", sans-serif;
-    font-size: 20px;
-    letter-spacing: -0.6px;
+    color: var(--text);
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
 }
 
 .hr-large-percentage {
-    font-family: "Space Grotesk", sans-serif;
-    color: var(--hr-green);
-    font-size: 34px;
-    font-weight: 650;
+    color: var(--text);
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
+
 
 /* =========================================================
    ATTENDANCE
 ========================================================= */
 
 .hr-progress-track {
-    height: 7px;
-    overflow: hidden;
-    border-radius: 20px;
-    background: #e8ece9;
     width: 100%;
+    height: 8px;
+    overflow: hidden;
+    background: #eef2f7;
+    border-radius: 999px;
 }
 
 .hr-progress-value {
     height: 100%;
+    background: var(--success);
     border-radius: inherit;
-    background: var(--hr-green);
-    animation: dashboardProgress 1.1s ease-out;
-}
-
-@keyframes dashboardProgress {
-    from { max-width: 0; }
-    to { max-width: 100%; }
 }
 
 .hr-attendance-summary {
-    margin-top: 24px;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 10px;
     width: 100%;
+    margin-top: 22px;
 }
 
 .hr-attendance-summary > div {
-    padding: 13px;
     display: flex;
     align-items: center;
     gap: 10px;
-    border: 1px solid #e5e9e6;
-    background: #fafbf9;
     min-width: 0;
+    padding: 13px 14px;
+    background: var(--bg);
+    border-radius: 10px;
 }
 
 .summary-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
+    width: 9px;
+    height: 9px;
     flex-shrink: 0;
+    border-radius: 50%;
 }
 
-.present-dot { background: #2a8f67; }
-.absent-dot { background: #d16d4e; }
-.leave-dot { background: #d5a33f; }
-.unmarked-dot { background: #aab5b0; }
+.present-dot  { background: #16a34a; }
+.absent-dot   { background: #ef4444; }
+.leave-dot    { background: #f59e0b; }
+.unmarked-dot { background: #98a2b3; }
 
 .hr-attendance-summary strong,
 .hr-attendance-summary span {
@@ -356,68 +339,72 @@ body:has(.hr-dashboard-shell) .navbar {
 }
 
 .hr-attendance-summary strong {
-    font-size: 16px;
+    font-size: 18px;
+    line-height: 1.2;
 }
 
 .hr-attendance-summary div div span {
     margin-top: 2px;
-    color: #91a09a;
-    font-size: 9px;
+    color: var(--muted);
+    font-size: 12px;
 }
 
+
 /* =========================================================
-   TREND
+   7-DAY TREND
 ========================================================= */
 
 .hr-trend {
-    margin-top: 30px;
-    padding-top: 22px;
-    border-top: 1px solid #e7ebe8;
     width: 100%;
+    margin-top: 26px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
 }
 
 .hr-subheading {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
-    margin-bottom: 15px;
+    margin-bottom: 14px;
 }
 
 .hr-subheading strong {
-    font-size: 11px;
+    font-size: 13px;
+    font-weight: 700;
 }
 
 .hr-subheading span {
-    color: #98a49f;
-    font-size: 9px;
+    color: var(--muted);
+    font-size: 12px;
 }
 
 .hr-trend-bars {
-    height: 120px;
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 12px;
     align-items: end;
+    gap: 12px;
     width: 100%;
+    height: 124px;
 }
 
 .trend-day {
-    height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
     align-items: center;
+    justify-content: flex-end;
     gap: 7px;
+    height: 100%;
     min-width: 0;
 }
 
 .trend-bar-track {
+    position: relative;
     width: 100%;
     height: 90px;
-    position: relative;
     overflow: hidden;
-    background: #eef1ef;
+    background: #eef2f7;
+    border-radius: 6px;
 }
 
 .trend-bar-fill {
@@ -425,128 +412,130 @@ body:has(.hr-dashboard-shell) .navbar {
     bottom: 0;
     width: 100%;
     min-height: 2px;
-    background: var(--hr-green);
-    transition: height 0.7s ease, background 0.2s ease;
+    background: var(--primary);
+    border-radius: 6px;
 }
 
 .trend-day:hover .trend-bar-fill {
-    background: var(--hr-coral);
+    background: var(--primary-dark);
 }
 
 .trend-day > span {
-    color: #899891;
-    font-size: 9px;
+    color: var(--muted);
+    font-size: 11px;
 }
 
+
 /* =========================================================
-   PENDING ACTIONS
+   PENDING HR WORK
 ========================================================= */
 
 .hr-action-total {
-    width: 37px;
-    height: 37px;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: var(--primary-soft);
     border-radius: 50%;
-    background: var(--hr-coral-soft);
-    color: var(--hr-coral);
+    color: var(--primary);
+    font-size: 14px;
     font-weight: 700;
 }
 
 .hr-action-list {
     display: grid;
-    gap: 7px;
+    gap: 2px;
     width: 100%;
 }
 
 .hr-action-row {
-    padding: 10px 12px;
     display: grid;
-    grid-template-columns: 38px minmax(0, 1fr) 30px;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
     align-items: center;
     gap: 12px;
-    border: 1px solid transparent;
-    color: var(--hr-text);
-    text-decoration: none !important;
-    min-height: 64px;
-    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    min-height: 58px;
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+}
+
+.hr-action-row:last-child {
+    border-bottom: 0;
 }
 
 .hr-action-row:hover {
-    transform: translateX(3px);
-    background: #f7f9f7;
-    border-color: #e1e6e2;
+    background: var(--bg);
+    color: var(--text);
 }
 
 .action-row-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--hr-green-soft);
-    color: var(--hr-green);
-    font-size: 12px;
+    width: 36px;
+    height: 36px;
+    background: var(--primary-soft);
+    border-radius: 10px;
+    color: var(--primary);
+    font-size: 13px;
     font-weight: 700;
 }
 
 .action-row-icon.coral {
-    color: var(--hr-coral);
-    background: var(--hr-coral-soft);
+    background: #fffaeb;
+    color: #b54708;
 }
 
 .hr-action-row > div {
-    min-width: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    min-width: 0;
 }
 
 .hr-action-row div strong {
-    font-size: 11px;
-    color: var(--hr-green);
-    line-height: 1.25;
-}
-
-.hr-action-row div span {
-    margin-top: 4px;
-    color: #94a29c;
-    font-size: 9px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
     line-height: 1.3;
 }
 
-.hr-action-row > b {
-    min-width: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    color: var(--hr-coral);
-    font-size: 15px;
+.hr-action-row div span {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.35;
 }
+
+.hr-action-row > b {
+    min-width: 26px;
+    text-align: right;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 700;
+}
+
 
 /* =========================================================
    WORKFORCE
 ========================================================= */
 
 .hr-workforce-stats {
-    margin-bottom: 25px;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    border: 1px solid #e2e7e3;
+    gap: 10px;
     width: 100%;
+    margin-bottom: 22px;
 }
 
 .hr-workforce-stats div {
-    padding: 16px;
-    text-align: center;
-    border-right: 1px solid #e2e7e3;
     min-width: 0;
-}
-
-.hr-workforce-stats div:last-child {
-    border-right: 0;
+    padding: 14px;
+    background: var(--bg);
+    border-radius: 10px;
+    text-align: center;
 }
 
 .hr-workforce-stats strong,
@@ -555,45 +544,49 @@ body:has(.hr-dashboard-shell) .navbar {
 }
 
 .hr-workforce-stats strong {
-    font-size: 21px;
+    font-size: 22px;
+    font-weight: 700;
 }
 
 .hr-workforce-stats span {
     margin-top: 4px;
-    color: #95a39d;
-    font-size: 8px;
-    line-height: 1.4;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.35;
 }
 
 .hr-people-list {
     display: grid;
-    gap: 5px;
     width: 100%;
 }
 
 .hr-person-row {
-    padding: 10px 5px;
     display: grid;
-    grid-template-columns: 35px minmax(0, 1fr) auto;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
     align-items: center;
     gap: 10px;
-    border-bottom: 1px solid #edf0ee;
     min-width: 0;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.hr-person-row:last-child {
+    border-bottom: 0;
 }
 
 .hr-avatar,
 .table-avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--hr-green-soft);
-    color: var(--hr-green);
-    font-size: 11px;
-    font-weight: 700;
+    width: 34px;
+    height: 34px;
     flex-shrink: 0;
+    background: #e0e7ff;
+    border-radius: 50%;
+    color: #3538cd;
+    font-size: 12px;
+    font-weight: 700;
 }
 
 .hr-person-row div strong,
@@ -602,58 +595,71 @@ body:has(.hr-dashboard-shell) .navbar {
 }
 
 .hr-person-row div strong {
-    font-size: 11px;
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .hr-person-row div span {
     margin-top: 2px;
-    color: #96a39e;
-    font-size: 9px;
+    color: var(--muted);
+    font-size: 12px;
 }
 
 .hr-person-status {
-    color: #26865e;
-    font-size: 8px;
+    padding: 3px 9px;
+    background: #eafcf1;
+    border-radius: 999px;
+    color: var(--success);
+    font-size: 11px;
+    font-weight: 700;
 }
+
 
 /* =========================================================
    LEAVE
 ========================================================= */
 
 .hr-leave-highlight {
-    margin-bottom: 24px;
-    padding: 18px;
     display: flex;
     align-items: center;
-    gap: 13px;
-    background: var(--hr-green);
-    color: white;
+    gap: 14px;
+    margin-bottom: 22px;
+    padding: 16px 18px;
+    background: var(--primary-soft);
+    border: 1px solid var(--primary-line);
+    border-radius: 12px;
 }
 
 .hr-leave-highlight strong {
+    color: var(--primary);
     font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .hr-leave-highlight span {
-    max-width: 150px;
-    color: rgba(255,255,255,0.65);
-    font-size: 10px;
+    max-width: 170px;
+    color: var(--muted);
+    font-size: 13px;
     line-height: 1.4;
 }
 
 .hr-compact-list {
     display: grid;
-    gap: 6px;
     width: 100%;
 }
 
 .hr-compact-row {
-    padding: 10px 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    border-bottom: 1px solid #ecefec;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.hr-compact-row:last-child {
+    border-bottom: 0;
 }
 
 .hr-compact-row div strong,
@@ -662,23 +668,26 @@ body:has(.hr-dashboard-shell) .navbar {
 }
 
 .hr-compact-row div strong {
-    font-size: 10px;
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .hr-compact-row div span {
     margin-top: 2px;
-    color: #99a59f;
-    font-size: 8px;
+    color: var(--muted);
+    font-size: 12px;
 }
 
 .hr-date-badge {
-    padding: 5px 8px;
-    border-radius: 20px;
-    background: #f0f3f1;
-    color: #657970;
-    font-size: 8px;
+    padding: 4px 10px;
+    background: #f1f5f9;
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
     white-space: nowrap;
 }
+
 
 /* =========================================================
    HOLIDAYS
@@ -686,48 +695,49 @@ body:has(.hr-dashboard-shell) .navbar {
 
 .hr-holiday-list {
     display: grid;
-    gap: 8px;
     width: 100%;
 }
 
 .hr-holiday-row {
-    padding: 9px;
     display: grid;
     grid-template-columns: 44px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 11px;
-    border: 1px solid #e6eae7;
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    gap: 12px;
     min-width: 0;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
 }
 
-.hr-holiday-row:hover {
-    transform: translateX(3px);
-    border-color: #cbd5d0;
+.hr-holiday-row:last-child {
+    border-bottom: 0;
 }
 
 .holiday-date-box {
-    width: 42px;
-    height: 42px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: var(--hr-green);
-    color: white;
+    width: 42px;
+    height: 42px;
     flex-shrink: 0;
+    background: var(--primary-soft);
+    border-radius: 10px;
+    color: var(--primary);
 }
 
 .holiday-date-box.optional-date {
-    background: var(--hr-coral);
+    background: #fffaeb;
+    color: #b54708;
 }
 
 .holiday-date-box strong {
-    font-size: 14px;
+    font-size: 15px;
+    line-height: 1.1;
 }
 
 .holiday-date-box span {
-    font-size: 7px;
+    font-size: 10px;
+    font-weight: 700;
     text-transform: uppercase;
 }
 
@@ -740,122 +750,114 @@ body:has(.hr-dashboard-shell) .navbar {
 }
 
 .hr-holiday-row div:nth-child(2) strong {
-    font-size: 10px;
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .hr-holiday-row div:nth-child(2) span {
     margin-top: 2px;
-    color: #96a39e;
-    font-size: 8px;
+    color: var(--muted);
+    font-size: 12px;
 }
 
 .holiday-type {
-    padding: 5px 8px;
-    border-radius: 20px;
-    font-size: 7px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
     font-weight: 700;
     white-space: nowrap;
 }
 
 .holiday-type.mandatory {
-    background: var(--hr-green-soft);
-    color: var(--hr-green);
+    background: #f1f5f9;
+    color: #475467;
 }
 
 .holiday-type.optional {
-    background: var(--hr-coral-soft);
-    color: var(--hr-coral);
+    background: #eaf2ff;
+    color: #2563eb;
 }
+
+.holiday-type.approved {
+    background: #eafcf1;
+    color: var(--success);
+}
+
 
 /* =========================================================
    QUICK ACTIONS
 ========================================================= */
 
-.hr-quick-actions-card {
-    padding: 22px;
-}
-
-.hr-quick-actions-card .hr-card-header {
-    margin-bottom: 16px;
-}
-
-.hr-quick-actions-card .hr-card-header h2 {
-    font-size: 18px;
-}
-
-.hr-quick-actions-card .hr-section-label {
-    margin-bottom: 5px;
-    font-size: 9px;
-}
-
 .hr-quick-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 7px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
     width: 100%;
 }
 
 .hr-quick-grid a {
-    min-height: 66px;
-    padding: 11px 12px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    border: 1px solid #e2e7e3;
-    color: var(--hr-text);
-    text-decoration: none !important;
-    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    gap: 12px;
     min-width: 0;
+    min-height: 92px;
+    padding: 14px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
 }
 
 .hr-quick-grid a:hover {
-    transform: translateY(-3px);
-    background: var(--hr-green);
-    border-color: var(--hr-green);
-    color: white;
+    border-color: #b9c7f8;
+    box-shadow: 0 5px 18px rgba(16, 24, 40, 0.06);
+    color: var(--text);
 }
 
 .hr-quick-grid a span {
-    width: 25px;
-    height: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    background: var(--hr-green-soft);
-    color: var(--hr-green);
-    font-size: 8px;
+    width: 28px;
+    height: 28px;
+    background: var(--primary-soft);
+    border-radius: 8px;
+    color: var(--primary);
+    font-size: 12px;
     font-weight: 700;
 }
 
-.hr-quick-grid a:hover span {
-    color: var(--hr-coral);
-    background: rgba(255,255,255,0.12);
+.hr-quick-grid strong {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
 }
 
-.hr-quick-grid strong {
-    font-size: 9px;
-    line-height: 1.25;
-}
 
 /* =========================================================
    LINKS
 ========================================================= */
 
 .hr-text-link {
-    color: var(--hr-coral);
-    font-size: 9px;
-    font-weight: 650;
-    text-decoration: none;
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.hr-text-link:hover {
+    color: var(--primary-dark);
 }
 
 .hr-record-count {
-    color: #93a19b;
-    font-size: 9px;
+    color: var(--muted);
+    font-size: 12px;
 }
 
+
 /* =========================================================
-   TABLE & RESPONSIVE CONTAINER
+   TABLES
 ========================================================= */
 
 .table-responsive {
@@ -863,38 +865,45 @@ body:has(.hr-dashboard-shell) .navbar {
     max-width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    display: block;
-    margin-bottom: 1rem;
 }
 
 .hr-dashboard-table {
     width: 100%;
-    min-width: 580px; /* Forces scroll inside wrapper rather than breaking outer viewport */
+    min-width: 580px;
     border-collapse: collapse;
 }
 
 .hr-dashboard-table th {
-    padding: 11px 13px;
-    border-bottom: 1px solid #dde3df;
-    color: #899991;
-    font-size: 8px;
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.7px;
+    letter-spacing: 0.04em;
+    text-align: left;
     text-transform: uppercase;
     white-space: nowrap;
 }
 
 .hr-dashboard-table td {
-    padding: 12px 13px;
-    border-bottom: 1px solid #edf0ee;
-    color: #536b62;
-    font-size: 10px;
+    padding: 13px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-size: 14px;
     vertical-align: middle;
     white-space: nowrap;
 }
 
+.hr-dashboard-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
 .hr-dashboard-table tbody tr:hover {
-    background: #f8faf8;
+    background: #f9fafb;
+}
+
+.hr-dashboard-table td a {
+    font-weight: 600;
 }
 
 .table-person {
@@ -904,47 +913,47 @@ body:has(.hr-dashboard-shell) .navbar {
 }
 
 .table-avatar {
-    width: 29px;
-    height: 29px;
-    font-size: 9px;
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
 }
 
 .table-person strong {
-    color: var(--hr-text);
-    font-size: 10px;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .attendance-status {
     display: inline-flex;
-    padding: 5px 8px;
-    border-radius: 20px;
-    font-size: 7px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
     font-weight: 700;
 }
 
-.attendance-status.present { color: #18734f; background: #e8f5ef; }
-.attendance-status.late { color: #aa7421; background: #fff5df; }
-.attendance-status.absent { color: #b95138; background: #fff0eb; }
-.attendance-status.half_day { color: #986c26; background: #fff5df; }
-.attendance-status.leave { color: #536f65; background: #edf1ef; }
+.attendance-status.present  { background: #ecfdf3; color: #067647; }
+.attendance-status.late     { background: #fffaeb; color: #b54708; }
+.attendance-status.half_day { background: #fffaeb; color: #b54708; }
+.attendance-status.absent   { background: #fef3f2; color: #b42318; }
+.attendance-status.leave    { background: #eef2ff; color: #4f46e5; }
 
 .table-action {
-    color: var(--hr-coral);
-    font-size: 9px;
+    color: var(--primary);
+    font-size: 13px;
     font-weight: 600;
-    text-decoration: none;
 }
 
 .hr-empty-table,
 .hr-empty-state {
-    padding: 24px;
+    padding: 28px;
+    color: var(--muted);
+    font-size: 14px;
     text-align: center;
-    color: #98a49f;
-    font-size: 10px;
 }
 
+
 /* =========================================================
-   PERIOD FILTER
+   ATTENDANCE PERIOD FILTER
 ========================================================= */
 
 .attendance-period-controls {
@@ -958,23 +967,23 @@ body:has(.hr-dashboard-shell) .navbar {
 }
 
 .attendance-period-select {
-    min-width: 135px;
-    padding: 8px 30px 8px 11px;
-    border: 1px solid var(--hr-border);
-    border-radius: 6px;
-    background: #ffffff;
-    color: var(--hr-green);
-    font-size: 10px;
+    min-width: 140px;
+    padding: 8px 30px 8px 12px;
+    background-color: #ffffff;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .attendance-period-select:focus {
-    border-color: var(--hr-green);
-    box-shadow: 0 0 0 3px rgba(6, 59, 45, 0.07);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(49, 91, 234, 0.14);
 }
+
 
 /* =========================================================
    EMPLOYEE DASHBOARD
@@ -988,89 +997,89 @@ body:has(.hr-dashboard-shell) .navbar {
 }
 
 .employee-punch-card {
-    min-height: 280px;
     min-width: 0;
-    padding: 31px;
-    position: relative;
-    overflow: hidden;
-    background: var(--hr-green);
-    color: white;
-}
-
-.employee-punch-card::after {
-    content: "";
-    position: absolute;
-    right: -80px;
-    bottom: -120px;
-    width: 260px;
-    height: 260px;
-    border: 50px solid rgba(255,255,255,0.025);
-    border-radius: 50%;
-    pointer-events: none;
-}
-
-.hr-section-label.light {
-    color: #dc8366;
+    min-height: 240px;
+    padding: 28px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+    color: var(--text);
 }
 
 .employee-punch-card h2 {
-    margin: 35px 0 10px;
-    font-family: "Space Grotesk", sans-serif;
-    font-size: 34px;
-    color: #efecd8 !important;
+    margin: 18px 0 8px;
+    color: var(--text);
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
 .employee-punch-card p {
     max-width: 440px;
-    color: #efecd8 !important;
-    line-height: 1.65;
-    font-size: 12px;
-}
-
-.employee-punch-button {
-    margin-top: 22px;
-    padding: 11px 22px;
-    border: 0;
-    border-radius: 30px;
-    background: var(--hr-coral);
-    color: white;
-    font-size: 11px;
-    font-weight: 650;
-    cursor: pointer;
-    transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.employee-punch-button:hover {
-    transform: translateY(-2px);
-    background: #be5f43;
+    margin: 0;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
 }
 
 .employee-status-pill {
     display: inline-flex;
-    margin-top: 15px;
-    padding: 6px 11px;
-    border-radius: 20px;
-    background: rgba(255,255,255,0.1);
-    color: white;
-    font-size: 9px;
+    margin-top: 14px;
+    padding: 5px 12px;
+    background: #ecfdf3;
+    border-radius: 999px;
+    color: var(--success);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.employee-punch-button {
+    margin-top: 18px;
+    padding: 10px 22px;
+    background: var(--primary);
+    border: 0;
+    border-radius: 9px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.employee-punch-button:hover {
+    background: var(--primary-dark);
+}
+
+.employee-punch-button:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+#checkOutButton {
+    background: var(--danger);
+}
+
+#checkOutButton:hover {
+    background: #dc2626;
+}
+
+.employee-location-error {
+    color: #b42318;
 }
 
 .employee-overview-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    border: 1px solid #e2e7e3;
+    gap: 10px;
     width: 100%;
 }
 
 .employee-overview-grid div {
-    padding: 22px 14px;
-    text-align: center;
-    border-right: 1px solid #e2e7e3;
     min-width: 0;
-}
-
-.employee-overview-grid div:last-child {
-    border-right: 0;
+    padding: 16px 12px;
+    background: var(--bg);
+    border-radius: 10px;
+    text-align: center;
 }
 
 .employee-overview-grid strong,
@@ -1079,120 +1088,106 @@ body:has(.hr-dashboard-shell) .navbar {
 }
 
 .employee-overview-grid strong {
-    font-size: 27px;
+    font-size: 24px;
+    font-weight: 700;
 }
 
 .employee-overview-grid span {
-    margin-top: 5px;
-    color: #97a39e;
-    font-size: 8px;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.35;
 }
 
 .employee-shortcuts {
-    margin-top: 25px;
     display: grid;
-    gap: 8px;
     width: 100%;
+    margin-top: 20px;
 }
 
 .employee-shortcuts a {
-    padding: 10px 0;
-    border-bottom: 1px solid #edf0ee;
-    color: var(--hr-green);
-    font-size: 10px;
-    text-decoration: none;
-    transition: color 0.2s ease, padding-left 0.2s ease;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.employee-shortcuts a:last-child {
+    border-bottom: 0;
 }
 
 .employee-shortcuts a:hover {
-    padding-left: 5px;
-    color: var(--hr-coral);
+    color: var(--primary-dark);
 }
 
 .employee-wide-card {
     grid-column: span 2;
-    min-width: 0;
     width: 100%;
+    min-width: 0;
 }
 
 .employee-role-actions {
-    margin-top: 18px;
-    padding: 24px;
-    background: white;
-    border: 1px solid var(--hr-border);
     width: 100%;
     min-width: 0;
+    margin-top: 18px;
+    padding: 24px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
 }
+
 
 /* =========================================================
-   ANIMATIONS
+   RESPONSIVE (based on the width left next to the sidebar)
 ========================================================= */
 
-.hr-metric-card,
-.hr-card,
-.employee-punch-card {
-    animation: hrCardIn 0.45s ease both;
-}
-
-.hr-metric-card:nth-child(2) { animation-delay: 0.04s; }
-.hr-metric-card:nth-child(3) { animation-delay: 0.08s; }
-.hr-metric-card:nth-child(4) { animation-delay: 0.12s; }
-.hr-metric-card:nth-child(5) { animation-delay: 0.16s; }
-
-@keyframes hrCardIn {
-    from {
-        opacity: 0;
-        transform: translateY(12px);
+@media (max-width: 1280px) {
+    .hr-col-5,
+    .hr-col-4 {
+        grid-column: span 6;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+
+    .hr-col-3 {
+        grid-column: span 12;
     }
 }
 
-/* =========================================================
-   RESPONSIVE BREAKPOINTS
-========================================================= */
-
-@media (max-width: 1200px) {
-    .hr-metric-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 850px) {
+@media (max-width: 760px) {
     .hr-welcome {
-        align-items: flex-start;
         flex-direction: column;
-        gap: 16px;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 18px;
     }
 
-    .hr-metric-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .hr-welcome h1 {
+        font-size: 1.5rem;
     }
 
     .hr-main-grid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: 1fr;
         gap: 16px;
-    }
-
-    .hr-row-split {
-        grid-template-columns: 1fr !important;
-        grid-column: 1 / -1 !important;
     }
 
     .hr-card,
     .hr-actions-panel,
-    .hr-quick-actions-card,
-    .hr-workforce-card,
-    .hr-leave-card,
-    .hr-wide-card {
-        grid-column: 1 / -1 !important;
-        width: 100% !important;
+    .hr-wide-card,
+    .hr-col-5,
+    .hr-col-4,
+    .hr-col-3,
+    .hr-row-split {
+        grid-column: 1 / -1;
+        width: 100%;
     }
 
-    .hr-attendance-summary {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .hr-row-split {
+        grid-template-columns: 1fr;
+    }
+
+    .hr-card {
+        padding: 18px;
     }
 
     .employee-dashboard-grid {
@@ -1202,43 +1197,19 @@ body:has(.hr-dashboard-shell) .navbar {
     .employee-wide-card {
         grid-column: span 1;
     }
+
+    .employee-punch-card {
+        padding: 22px;
+    }
 }
 
 @media (max-width: 520px) {
-    .hr-dashboard-shell {
-        padding-top: 24px;
-    }
-
-    .hr-metric-grid {
-        grid-template-columns: 1fr;
-    }
-
     .hr-header-side {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .hr-attendance-summary {
-        grid-template-columns: 1fr;
+        flex-wrap: wrap;
     }
 
     .hr-workforce-stats,
     .employee-overview-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .hr-workforce-stats div,
-    .employee-overview-grid div {
-        border-right: 0;
-        border-bottom: 1px solid #e2e7e3;
-    }
-
-    .hr-workforce-stats div:last-child,
-    .employee-overview-grid div:last-child {
-        border-bottom: 0;
-    }
-
-    .hr-quick-grid {
         grid-template-columns: 1fr;
     }
 
@@ -1249,7 +1220,7 @@ body:has(.hr-dashboard-shell) .navbar {
     }
 
     .hr-trend-bars {
-        height: 100px;
+        height: 104px;
         gap: 6px;
     }
 
@@ -1257,7 +1228,7 @@ body:has(.hr-dashboard-shell) .navbar {
         height: 70px;
     }
 
-    .trend-day > span {
-        font-size: 8px;
+    .hr-quick-grid {
+        grid-template-columns: 1fr 1fr;
     }
 }

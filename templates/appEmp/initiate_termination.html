@@ -3,197 +3,244 @@
 
 {% block title %}Initiate Termination{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-{% endblock %}
-
 {% block content %}
 
-<div class="sky-dashboard">
+<style>
+    .it-wrap { max-width: 900px; margin: 0 auto; }
 
-    <div class="container" style="max-width: 900px;">
+    .it-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    .it-eyebrow {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--green-dark);
+        background: var(--green-soft-2);
+        padding: 4px 10px;
+        border-radius: 999px;
+        margin-bottom: 10px;
+    }
+    .it-header h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        line-height: 1.2;
+        color: var(--navy);
+    }
+    .it-help { margin: 0; font-size: 14px; color: var(--ink-soft); max-width: 560px; }
 
-        <div class="sky-header">
+    .it-panel {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    .it-panel:last-child { margin-bottom: 0; }
+    .it-panel-head {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        background: var(--green-soft-2);
+    }
+    .it-panel-head h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--green-dark);
+    }
+    .it-panel-body { padding: 20px; }
 
-            <div>
-                <span class="sky-eyebrow">
-                    HR / Employee Exit
-                </span>
+    .it-banner {
+        background: var(--rose-soft);
+        color: var(--rose-dark);
+        border: 1px solid var(--rose-dark);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        margin-bottom: 18px;
+    }
 
-                <h1>Initiate Termination</h1>
+    .it-field { margin-bottom: 18px; }
+    .it-field label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+    }
+    .it-field select,
+    .it-field input[type="text"],
+    .it-field input[type="date"],
+    .it-field input[type="number"],
+    .it-field textarea {
+        display: block;
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 14px;
+        color: var(--navy);
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+    .it-field textarea { min-height: 110px; resize: vertical; }
+    .it-field select:focus,
+    .it-field input:focus,
+    .it-field textarea:focus {
+        outline: none;
+        border-color: var(--green);
+        box-shadow: 0 0 0 3px var(--green-soft-2);
+    }
+    .it-hint { margin-top: 6px; font-size: 12px; color: var(--ink-soft); }
+    .it-error { margin-top: 6px; font-size: 13px; font-weight: 600; color: var(--rose-dark); }
 
-                <p class="sky-help-text">
-                    Initiate an employee exit directly.
-                    Manager and Finance clearance will start immediately.
-                </p>
-            </div>
+    .it-actions { margin-top: 24px; }
+    .it-btn {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--green);
+        border: 1px solid var(--green);
+        border-radius: 8px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background .15s ease;
+    }
+    .it-btn:hover { background: var(--green-dark); border-color: var(--green-dark); color: #fff; text-decoration: none; }
 
-            <a
-                href="{% url 'pendingResignations' %}"
-                class="sky-header-btn"
-            >
-                Pending Resignations
-            </a>
+    .it-steps { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; color: var(--ink-soft); }
+    .it-steps li { padding-left: 4px; }
+    .it-steps strong { color: var(--navy); }
+    .it-steps-lead { margin: 0 0 10px; font-size: 14px; color: var(--ink-soft); }
 
+    @media (max-width: 700px) {
+        .it-header h1 { font-size: 22px; }
+        .it-header .it-btn { width: 100%; text-align: center; padding: 12px 18px; font-size: 16px; }
+
+        .it-panel-body { padding: 16px; }
+        .it-field select,
+        .it-field input[type="text"],
+        .it-field input[type="date"],
+        .it-field input[type="number"],
+        .it-field textarea {
+            font-size: 16px;
+            padding: 12px;
+        }
+        .it-actions .it-btn { width: 100%; text-align: center; padding: 12px 18px; font-size: 16px; }
+    }
+</style>
+
+<div class="it-wrap">
+
+    <div class="it-header">
+
+        <div>
+            <span class="it-eyebrow">HR / Employee Exit</span>
+            <h1>Initiate Termination</h1>
+            <p class="it-help">
+                Initiate an employee exit directly. Manager and Finance clearance will start immediately.
+            </p>
         </div>
 
+        <a href="{% url 'pendingResignations' %}" class="it-btn">Pending Resignations</a>
 
-        <div class="sky-panel">
-
-            <div class="sky-panel-head">
-                <h6>Termination Details</h6>
-            </div>
-
-            <div class="sky-panel-body">
-
-                {% if form.non_field_errors %}
-
-                    <div class="sky-auth-error-banner">
-
-                        {% for error in form.non_field_errors %}
-                            {{ error }}
-                        {% endfor %}
-
-                    </div>
-
-                {% endif %}
+    </div>
 
 
-                <form method="post">
+    <div class="it-panel">
 
-                    {% csrf_token %}
-
-
-                    <!-- Employee -->
-                    <div class="mb-3">
-
-                        <label
-                            class="sky-form-label"
-                            for="{{ form.employee.id_for_label }}"
-                        >
-                            {{ form.employee.label }}
-                        </label>
-
-                        {{ form.employee }}
-
-                        <div class="sky-help-text">
-                            Select the employee whose exit should be initiated.
-                        </div>
-
-                        {% for error in form.employee.errors %}
-
-                            <div class="sky-form-error">
-                                {{ error }}
-                            </div>
-
-                        {% endfor %}
-
-                    </div>
-
-
-                    <!-- Final Last Working Date -->
-                    <div class="mb-3">
-
-                        <label
-                            class="sky-form-label"
-                            for="{{ form.final_last_working_date.id_for_label }}"
-                        >
-                            {{ form.final_last_working_date.label }}
-                        </label>
-
-                        {{ form.final_last_working_date }}
-
-                        <div class="sky-help-text">
-                            Set the employee's final working date.
-                            The employee cannot be finalized before this date.
-                        </div>
-
-                        {% for error in form.final_last_working_date.errors %}
-
-                            <div class="sky-form-error">
-                                {{ error }}
-                            </div>
-
-                        {% endfor %}
-
-                    </div>
-
-
-                    <!-- Reason -->
-                    <div class="mb-3">
-
-                        <label
-                            class="sky-form-label"
-                            for="{{ form.reason.id_for_label }}"
-                        >
-                            {{ form.reason.label }}
-                        </label>
-
-                        {{ form.reason }}
-
-                        <div class="sky-help-text">
-                            Enter the reason for initiating the termination.
-                        </div>
-
-                        {% for error in form.reason.errors %}
-
-                            <div class="sky-form-error">
-                                {{ error }}
-                            </div>
-
-                        {% endfor %}
-
-                    </div>
-
-
-                    <div class="mt-4">
-
-                        <button
-                            type="submit"
-                            class="sky-header-btn"
-                            onclick="return confirm('Are you sure you want to initiate termination for this employee? Manager and Finance clearance will start immediately.');"
-                        >
-                            Initiate Termination
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-
+        <div class="it-panel-head">
+            <h2>Termination Details</h2>
         </div>
 
+        <div class="it-panel-body">
 
-        <div class="sky-panel mt-4">
+            {% if form.non_field_errors %}
+                <div class="it-banner">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
 
-            <div class="sky-panel-head">
-                <h6>What happens next?</h6>
-            </div>
+            <form method="post">
 
-            <div class="sky-panel-body">
+                {% csrf_token %}
 
-                <div class="sky-help-text">
-
-                    After termination is initiated:
-
-                    <br><br>
-
-                    1. Manager NOC is created automatically.
-                    <br>
-                    2. Finance NOC is created automatically.
-                    <br>
-                    3. Both clearances can proceed in parallel.
-                    <br>
-                    4. Once both are approved, the exit becomes
-                    <strong>Ready for Finalization</strong>.
-                    <br>
-                    5. HR can finalize the employee exit on or after
-                    the final last working date.
-
+                <div class="it-field">
+                    <label for="{{ form.employee.id_for_label }}">{{ form.employee.label }}</label>
+                    {{ form.employee }}
+                    <div class="it-hint">Select the employee whose exit should be initiated.</div>
+                    {% for error in form.employee.errors %}
+                        <div class="it-error">{{ error }}</div>
+                    {% endfor %}
                 </div>
 
-            </div>
+                <div class="it-field">
+                    <label for="{{ form.final_last_working_date.id_for_label }}">{{ form.final_last_working_date.label }}</label>
+                    {{ form.final_last_working_date }}
+                    <div class="it-hint">
+                        Set the employee's final working date. The employee cannot be finalized before this date.
+                    </div>
+                    {% for error in form.final_last_working_date.errors %}
+                        <div class="it-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="it-field">
+                    <label for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>
+                    {{ form.reason }}
+                    <div class="it-hint">Enter the reason for initiating the termination.</div>
+                    {% for error in form.reason.errors %}
+                        <div class="it-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="it-actions">
+                    <button
+                        type="submit"
+                        class="it-btn"
+                        onclick="return confirm('Are you sure you want to initiate termination for this employee? Manager and Finance clearance will start immediately.');"
+                    >
+                        Initiate Termination
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <div class="it-panel">
+
+        <div class="it-panel-head">
+            <h2>What happens next?</h2>
+        </div>
+
+        <div class="it-panel-body">
+
+            <p class="it-steps-lead">After termination is initiated:</p>
+
+            <ol class="it-steps">
+                <li>Manager NOC is created automatically.</li>
+                <li>Finance NOC is created automatically.</li>
+                <li>Both clearances can proceed in parallel.</li>
+                <li>Once both are approved, the exit becomes <strong>Ready for Finalization</strong>.</li>
+                <li>HR can finalize the employee exit on or after the final last working date.</li>
+            </ol>
 
         </div>
 

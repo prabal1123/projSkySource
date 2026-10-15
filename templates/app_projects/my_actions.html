@@ -2,7 +2,10 @@
 
 {% block title %}My actions{% endblock %}
 
-{% block extra_css %}{% include "app_projects/_styles.html" %}{% include "app_projects/_action_styles.html" %}{% endblock %}
+{% block extra_css %}
+    {% include "app_projects/_styles.html" %}
+    {% include "app_projects/_action_styles.html" %}
+{% endblock %}
 
 {% block content %}
 <div class="sky-dashboard">
@@ -12,7 +15,9 @@
             <div>
                 <span class="sky-eyebrow">Projects</span>
                 <h1>My actions</h1>
-                <p class="sky-help-text">Actions assigned to you{% if not show_done %} that are still open{% endif %}.</p>
+                <p class="sky-help-text">
+                    Actions assigned to you{% if not show_done %} that are still open{% endif %}.
+                </p>
             </div>
             <div class="pj-actions" style="margin-top: 0;">
                 {% if show_done %}
@@ -25,7 +30,7 @@
 
         <div class="sky-panel">
             <div class="pj-table-wrap">
-                <table class="pj-table">
+                <table class="pj-table pj-cards">
                     <thead>
                         <tr>
                             <th>Title</th>
@@ -36,11 +41,12 @@
                     </thead>
                     <tbody>
                         {% for a in page %}
+                            {# data-label on each cell is used by the phone card layout #}
                             <tr>
-                                <td><a href="{% url 'projectActionDetail' a.project.uuid a.uuid %}">{{ a.title }}</a></td>
-                                <td>{{ a.project.name }}</td>
-                                <td><span class="pj-badge pj-badge-{{ a.status }}">{{ a.get_status_display }}</span></td>
-                                <td>
+                                <td data-label="Title"><a href="{% url 'projectActionDetail' a.project.uuid a.uuid %}">{{ a.title }}</a></td>
+                                <td data-label="Project" class="pj-muted">{{ a.project.name }}</td>
+                                <td data-label="Status"><span class="pj-badge pj-badge-{{ a.status }}">{{ a.get_status_display }}</span></td>
+                                <td data-label="Due" class="pj-muted">
                                     {% if a.due_date %}
                                         {{ a.due_date|date:"d M Y" }}
                                         {% if a.due_date < today and a.is_open %}<span class="pj-badge pj-badge-warn">Overdue</span>{% endif %}
@@ -53,6 +59,7 @@
                     </tbody>
                 </table>
             </div>
+
             {% if page.has_other_pages %}
                 <div class="pj-pager">
                     {% if page.has_previous %}<a class="pj-link" href="?{% if show_done %}done=1&amp;{% endif %}page={{ page.previous_page_number }}">Previous</a>{% endif %}

@@ -3,200 +3,271 @@
 
 {% block title %}Finance Clearances{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-{% endblock %}
-
 {% block content %}
 
-<div class="sky-dashboard">
+<style>
+    .fq-wrap { max-width: 1200px; margin: 0 auto; }
 
-    <div class="container" style="max-width: 1200px;">
+    .fq-header { margin-bottom: 20px; }
+    .fq-eyebrow {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--green-dark);
+        background: var(--green-soft-2);
+        padding: 4px 10px;
+        border-radius: 999px;
+        margin-bottom: 10px;
+    }
+    .fq-header h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        line-height: 1.2;
+        color: var(--navy);
+    }
+    .fq-help { margin: 0; font-size: 14px; color: var(--ink-soft); }
 
-        <div class="sky-header">
+    .fq-panel {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+    .fq-panel-head {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        background: var(--green-soft-2);
+    }
+    .fq-panel-head h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--green-dark);
+    }
+    .fq-panel-body { padding: 0; }
 
-            <div>
-                <span class="sky-eyebrow">
-                    Finance / Exit Clearance
-                </span>
+    .fq-table { width: 100%; border-collapse: collapse; }
+    .fq-table th {
+        text-align: left;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+    .fq-table td {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        font-size: 14px;
+        color: var(--navy);
+        vertical-align: middle;
+    }
+    .fq-table tbody tr:last-child td { border-bottom: 0; }
+    .fq-table tbody tr:hover td { background: #fafcfb; }
+    .fq-table th.fq-r, .fq-table td.fq-r { text-align: right; }
+    .fq-table td.fq-reason { max-width: 300px; color: var(--ink-soft); }
 
-                <h1>Pending Finance NOCs</h1>
+    .fq-name { font-weight: 700; color: var(--navy); }
+    .fq-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
 
-                <p class="sky-help-text">
-                    Review financial clearance requests for employee exits.
-                </p>
-            </div>
+    .fq-pill {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: var(--green-soft-2);
+        color: var(--green-dark);
+        white-space: nowrap;
+    }
 
+    .fq-btn {
+        display: inline-block;
+        padding: 8px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--green);
+        border-radius: 8px;
+        text-decoration: none;
+        transition: background .15s ease;
+    }
+    .fq-btn:hover { background: var(--green-dark); color: #fff; text-decoration: none; }
+
+    .fq-empty {
+        padding: 40px 20px;
+        text-align: center;
+        font-size: 14px;
+        color: var(--ink-soft);
+    }
+
+    @media (max-width: 700px) {
+        .fq-header h1 { font-size: 22px; }
+        .fq-panel-body { padding: 12px; }
+
+        .fq-table, .fq-table tbody, .fq-table tr, .fq-table td { display: block; width: 100%; }
+        .fq-table thead { display: none; }
+
+        .fq-table tr {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 6px 14px;
+            margin-bottom: 12px;
+            background: #fff;
+        }
+        .fq-table tbody tr:last-child { margin-bottom: 0; }
+        .fq-table tbody tr:hover td { background: transparent; }
+
+        .fq-table td,
+        .fq-table td.fq-r {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            text-align: right;
+        }
+        .fq-table td:last-child { border-bottom: 0; }
+        .fq-table td::before {
+            content: attr(data-label);
+            flex: 0 0 38%;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+        .fq-table td.fq-reason { max-width: none; }
+
+        .fq-table td.fq-actioncell { display: block; padding-top: 12px; }
+        .fq-table td.fq-actioncell::before { display: none; }
+        .fq-table td.fq-actioncell .fq-btn {
+            display: block;
+            text-align: center;
+            padding: 12px 18px;
+            font-size: 16px;
+        }
+    }
+</style>
+
+<div class="fq-wrap">
+
+    <div class="fq-header">
+        <span class="fq-eyebrow">Finance / Exit Clearance</span>
+        <h1>Pending Finance NOCs</h1>
+        <p class="fq-help">Review financial clearance requests for employee exits.</p>
+    </div>
+
+    <div class="fq-panel">
+
+        <div class="fq-panel-head">
+            <h2>Awaiting Finance Review</h2>
         </div>
 
+        <div class="fq-panel-body">
 
-        <div class="sky-panel">
+            {% if pending_approvals %}
 
-            <div class="sky-panel-head">
-                <h6>Awaiting Finance Review</h6>
-            </div>
+                <table class="fq-table">
 
-            <div class="sky-panel-body">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Exit Type</th>
+                            <th>Last Working Date</th>
+                            <th>Reason</th>
+                            <th>Manager NOC</th>
+                            <th>Finance Status</th>
+                            <th class="fq-r">Action</th>
+                        </tr>
+                    </thead>
 
-                {% if pending_approvals %}
+                    <tbody>
 
-                    <div class="table-responsive">
+                        {% for approval in pending_approvals %}
 
-                        <table class="table align-middle">
+                            <tr>
 
-                            <thead>
-                                <tr>
-                                    <th>Employee</th>
-                                    <th>Exit Type</th>
-                                    <th>Last Working Date</th>
-                                    <th>Reason</th>
-                                    <th>Manager NOC</th>
-                                    <th>Finance Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
+                                <td data-label="Employee">
+                                    <div>
+                                        <div class="fq-name">
+                                            {{ approval.clearance_request.employee.user.get_full_name|default:approval.clearance_request.employee.user.username }}
+                                        </div>
+                                        <div class="fq-sub">
+                                            {{ approval.clearance_request.employee.user.username }}
+                                        </div>
+                                    </div>
+                                </td>
 
-                            <tbody>
+                                <td data-label="Exit Type">
+                                    {% if approval.clearance_request.employee_exit_request %}
+                                        {{ approval.clearance_request.employee_exit_request.get_exit_type_display }}
+                                    {% else %}
+                                        Clearance
+                                    {% endif %}
+                                </td>
 
-                                {% for approval in pending_approvals %}
+                                <td data-label="Last Working Date">
+                                    {% if approval.clearance_request.employee_exit_request.final_last_working_date %}
+                                        {{ approval.clearance_request.employee_exit_request.final_last_working_date|date:"d M Y" }}
+                                    {% elif approval.clearance_request.employee_exit_request.proposed_last_working_date %}
+                                        {{ approval.clearance_request.employee_exit_request.proposed_last_working_date|date:"d M Y" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
 
-                                    <tr>
+                                <td data-label="Reason" class="fq-reason">
+                                    {% if approval.clearance_request.employee_exit_request %}
+                                        {{ approval.clearance_request.employee_exit_request.reason }}
+                                    {% else %}
+                                        {{ approval.clearance_request.reason }}
+                                    {% endif %}
+                                </td>
 
-                                        <!-- Employee -->
-                                        <td>
-
-                                            <strong>
-                                                {{ approval.clearance_request.employee.user.get_full_name|default:approval.clearance_request.employee.user.username }}
-                                            </strong>
-
-                                            <div class="sky-help-text">
-                                                {{ approval.clearance_request.employee.user.username }}
-                                            </div>
-
-                                        </td>
-
-
-                                        <!-- Exit Type -->
-                                        <td>
-
-                                            {% if approval.clearance_request.employee_exit_request %}
-
-                                                {{ approval.clearance_request.employee_exit_request.get_exit_type_display }}
-
-                                            {% else %}
-
-                                                Clearance
-
-                                            {% endif %}
-
-                                        </td>
-
-
-                                        <!-- Last Working Date -->
-                                        <td>
-
-                                            {% if approval.clearance_request.employee_exit_request.final_last_working_date %}
-
-                                                {{ approval.clearance_request.employee_exit_request.final_last_working_date|date:"d M Y" }}
-
-                                            {% elif approval.clearance_request.employee_exit_request.proposed_last_working_date %}
-
-                                                {{ approval.clearance_request.employee_exit_request.proposed_last_working_date|date:"d M Y" }}
-
-                                            {% else %}
-
-                                                —
-
-                                            {% endif %}
-
-                                        </td>
-
-
-                                        <!-- Exit Reason -->
-                                        <td style="max-width: 300px;">
-
-                                            {% if approval.clearance_request.employee_exit_request %}
-
-                                                {{ approval.clearance_request.employee_exit_request.reason }}
-
-                                            {% else %}
-
-                                                {{ approval.clearance_request.reason }}
-
-                                            {% endif %}
-
-                                        </td>
-
-
-                                        <!-- Manager NOC -->
-                                        <td>
-
-                                            {% for item in approval.clearance_request.approvals.all %}
-
-                                                {% if item.approval_type == "MANAGER_NOC" %}
-
-                                                    <strong>
-                                                        {{ item.get_status_display }}
-                                                    </strong>
-
-                                                    {% if item.remarks %}
-
-                                                        <div class="sky-help-text">
-                                                            {{ item.remarks }}
-                                                        </div>
-
-                                                    {% endif %}
-
+                                <td data-label="Manager NOC">
+                                    <div>
+                                        {% for item in approval.clearance_request.approvals.all %}
+                                            {% if item.approval_type == "MANAGER_NOC" %}
+                                                <span class="fq-pill">{{ item.get_status_display }}</span>
+                                                {% if item.remarks %}
+                                                    <div class="fq-sub">{{ item.remarks }}</div>
                                                 {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </td>
 
-                                            {% endfor %}
+                                <td data-label="Finance Status">
+                                    <span class="fq-pill">{{ approval.get_status_display }}</span>
+                                </td>
 
-                                        </td>
+                                <td data-label="Action" class="fq-r fq-actioncell">
+                                    <a href="{% url 'financeClearanceReview' approval.uuid %}" class="fq-btn">Review</a>
+                                </td>
 
+                            </tr>
 
-                                        <!-- Finance Status -->
-                                        <td>
+                        {% endfor %}
 
-                                            <strong>
-                                                {{ approval.get_status_display }}
-                                            </strong>
+                    </tbody>
 
-                                        </td>
+                </table>
 
+            {% else %}
 
-                                        <!-- Action -->
-                                        <td>
+                <div class="fq-empty">
+                    There are no pending Finance NOC requests.
+                </div>
 
-                                            <a
-                                                href="{% url 'financeClearanceReview' approval.uuid %}"
-                                                class="sky-header-btn"
-                                            >
-                                                Review
-                                            </a>
-
-                                        </td>
-
-                                    </tr>
-
-                                {% endfor %}
-
-                            </tbody>
-
-                        </table>
-
-                    </div>
-
-                {% else %}
-
-                    <div class="sky-empty">
-
-                        There are no pending Finance NOC requests.
-
-                    </div>
-
-                {% endif %}
-
-            </div>
+            {% endif %}
 
         </div>
 

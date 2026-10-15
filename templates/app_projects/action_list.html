@@ -2,93 +2,141 @@
 
 {% block title %}Actions - {{ project.name }}{% endblock %}
 
-{% block extra_css %}{% include "app_projects/_styles.html" %}{% include "app_projects/_action_styles.html" %}{% endblock %}
+{% block extra_css %}
+{% include "app_projects/_styles.html" %}{% include "app_projects/_action_styles.html" %}
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=Instrument+Sans:wght@400..600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  .act-wrap{font-family:'Instrument Sans',system-ui,sans-serif;color:var(--foreground,var(--ink,#1a1a1a))}
+  .act-eyebrow{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-foreground,var(--ink-soft,#6b6b6b))}
+  .act-title{font-family:'Fraunces',serif;font-weight:400;font-size:clamp(2.2rem,5vw,3.5rem);line-height:1;margin:.6rem 0 .5rem}
+  .act-sub{color:var(--muted-foreground,var(--ink-soft,#6b6b6b));margin:0}
+  .act-head{display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-end;justify-content:space-between;padding:1.5rem 0 2rem}
+  .act-btns{display:flex;gap:.6rem;flex-wrap:wrap}
+  .act-btn{display:inline-flex;align-items:center;border-radius:999px;padding:.55rem 1.25rem;font-size:.85rem;font-weight:500;text-decoration:none;border:1px solid currentColor;transition:opacity .2s}
+  .act-btn:hover{opacity:.75}
+  .act-btn-primary{background:var(--primary,#1a1a1a);border-color:var(--primary,#1a1a1a);color:var(--primary-foreground,#fff)}
+  .act-btn-ghost{background:transparent;color:inherit}
+
+  .act-tabs{display:flex;gap:1.75rem;flex-wrap:wrap;border-top:1px solid color-mix(in srgb,currentColor 15%,transparent);border-bottom:1px solid color-mix(in srgb,currentColor 15%,transparent)}
+  .act-tab{padding:.9rem 0;font-size:.85rem;text-decoration:none;color:var(--muted-foreground,var(--ink-soft,#6b6b6b));border-bottom:2px solid transparent;margin-bottom:-1px}
+  .act-tab:hover{color:inherit}
+  .act-tab.active{color:inherit;border-bottom-color:var(--primary,currentColor)}
+  .act-tab .n{font-family:'JetBrains Mono',monospace;font-size:.75rem;margin-left:.3rem;opacity:.7}
+
+  .act-filters{display:flex;flex-wrap:wrap;gap:.75rem 1rem;align-items:center;padding:.75rem 0;margin:0}
+  .act-filters .act-field{
+    box-sizing:border-box;width:auto;height:auto;min-height:0;min-width:0;margin:0;
+    flex:0 0 auto;padding:.25rem 0;font-size:.82rem;line-height:1.3;
+    background:transparent;border:0;border-bottom:1px solid color-mix(in srgb,currentColor 30%,transparent);
+    border-radius:0;box-shadow:none;color:inherit;outline:0;
+  }
+  .act-filters input.act-field{width:180px}
+  .act-filters select.act-field{width:150px;padding-right:1.25rem}
+  .act-filters .act-field:focus{border-bottom-color:var(--primary,currentColor)}
+  .act-filters .act-btn{height:auto;min-height:0;margin:0;padding:.3rem .9rem;font-size:.78rem;line-height:1.3;cursor:pointer}
+  .act-clear{font-size:.78rem;color:var(--muted-foreground,var(--ink-soft,#6b6b6b));text-decoration:underline}
+
+  .act-table{width:100%;border-collapse:collapse}
+  .act-table th{font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;font-weight:400;text-align:left;padding:.7rem .75rem .7rem 0;color:var(--muted-foreground,var(--ink-soft,#6b6b6b));border-bottom:1px solid currentColor}
+  .act-table td{padding:1rem .75rem 1rem 0;border-bottom:1px solid color-mix(in srgb,currentColor 12%,transparent);vertical-align:top;font-size:.92rem}
+  .act-table tbody tr:hover{background:color-mix(in srgb,currentColor 3%,transparent)}
+  .act-table td a{color:inherit;text-decoration:none;font-weight:500;border-bottom:1px solid color-mix(in srgb,currentColor 30%,transparent)}
+  .act-table td a:hover{border-bottom-color:var(--primary,currentColor)}
+  .act-mono{font-family:'JetBrains Mono',monospace;font-size:.82rem;font-variant-numeric:tabular-nums}
+  .act-muted{color:var(--muted-foreground,var(--ink-soft,#6b6b6b));font-size:.8rem}
+  .act-pill{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;padding:.2rem .6rem;border-radius:999px;border:1px solid currentColor}
+  .act-pill.warn{color:var(--primary,#c2410c);margin-left:.4rem}
+  .act-empty{text-align:center;padding:3rem 0!important;color:var(--muted-foreground,var(--ink-soft,#6b6b6b))}
+  .act-pager{display:flex;gap:1.25rem;align-items:center;justify-content:center;padding:1.75rem 0;font-size:.85rem}
+  .act-pager a{color:inherit;text-decoration:underline}
+  .act-scroll{overflow-x:auto}
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="sky-dashboard">
-    <div class="container" style="max-width: 1100px;">
+    <div class="container act-wrap" style="max-width: 1100px;">
 
-        <div class="sky-header">
+        <div class="act-head">
             <div>
-                <span class="sky-eyebrow">Project &middot; {{ project.code }}</span>
-                <h1>Actions</h1>
-                <p class="sky-help-text">{{ project.name }}{% if project.is_archived %} (archived, read-only){% endif %}</p>
+                <span class="act-eyebrow">Project &middot; {{ project.code }}</span>
+                <h1 class="act-title">Actions</h1>
+                <p class="act-sub">{{ project.name }}{% if project.is_archived %} (archived, read-only){% endif %}</p>
             </div>
-            <div class="pj-actions" style="margin-top: 0;">
-                <a href="{% url 'projectDetail' project.uuid %}" class="pj-btn pj-btn-ghost">Back to project</a>
+            <div class="act-btns">
+                <a href="{% url 'projectDetail' project.uuid %}" class="act-btn act-btn-ghost">Back to project</a>
                 {% if can_edit %}
-                    <a href="{% url 'projectActionCreate' project.uuid %}" class="pj-btn">+ Add action</a>
+                    <a href="{% url 'projectActionCreate' project.uuid %}" class="act-btn act-btn-primary">+ Add action</a>
                 {% endif %}
             </div>
         </div>
 
-        <div class="sky-panel">
-            <div class="pj-tabs">
-                {% for t in tabs %}
-                    <a href="{{ t.url }}" class="pj-tab {% if t.active %}active{% endif %}">{{ t.label }} ({{ t.count }})</a>
+        <div class="act-tabs">
+            {% for t in tabs %}
+                <a href="{{ t.url }}" class="act-tab {% if t.active %}active{% endif %}">{{ t.label }}<span class="n">{{ t.count }}</span></a>
+            {% endfor %}
+        </div>
+
+        <form method="get" class="act-filters">
+            {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+            <input type="text" name="q" value="{{ q }}" placeholder="Search titles" class="act-field">
+            <select name="assignee" class="act-field">
+                <option value="">Anyone</option>
+                <option value="unassigned" {% if assignee == "unassigned" %}selected{% endif %}>Unassigned</option>
+                {% for m in team %}
+                    <option value="{{ m.uuid }}" {% if assignee == m.uuid|stringformat:"s" %}selected{% endif %}>{{ m.user.get_full_name|default:m.user.username }}</option>
                 {% endfor %}
-            </div>
-
-            <form method="get" class="pj-filters">
-                {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
-                <input type="text" name="q" value="{{ q }}" placeholder="Search titles..." class="form-control" style="max-width: 260px;">
-                <select name="assignee" class="form-select" style="max-width: 240px;">
-                    <option value="">Anyone</option>
-                    <option value="unassigned" {% if assignee == "unassigned" %}selected{% endif %}>Unassigned</option>
-                    {% for m in team %}
-                        <option value="{{ m.uuid }}" {% if assignee == m.uuid|stringformat:"s" %}selected{% endif %}>{{ m.user.get_full_name|default:m.user.username }}</option>
-                    {% endfor %}
-                </select>
-                <button type="submit" class="pj-btn" style="padding: .45rem 1.1rem; font-size: .85rem;">Filter</button>
-                {% if q or assignee or status %}
-                    <a href="{% url 'projectActionList' project.uuid %}" style="font-size: .85rem; color: var(--ink-soft); text-decoration: underline;">Clear</a>
-                {% endif %}
-            </form>
-
-            <div class="pj-table-wrap">
-                <table class="pj-table">
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Status</th>
-                            <th>Assignee</th>
-                            <th>Due</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for a in page %}
-                            <tr>
-                                <td>
-                                    <a href="{% url 'projectActionDetail' project.uuid a.uuid %}">{{ a.title }}</a>
-                                    {% if a.subtask_count %}<span class="pj-help">&middot; {{ a.subtask_count }} subtask{{ a.subtask_count|pluralize }}</span>{% endif %}
-                                </td>
-                                <td><span class="pj-badge pj-badge-{{ a.status }}">{{ a.get_status_display }}</span></td>
-                                <td>
-                                    {% if a.assignee %}{{ a.assignee.user.get_full_name|default:a.assignee.user.username }}{% else %}<span class="pj-help">Unassigned</span>{% endif %}
-                                    {% if a.needs_reassign %}<span class="pj-badge pj-badge-warn">Needs reassigning</span>{% endif %}
-                                </td>
-                                <td>
-                                    {% if a.due_date %}
-                                        {{ a.due_date|date:"d M Y" }}
-                                        {% if a.due_date < today and a.is_open %}<span class="pj-badge pj-badge-warn">Overdue</span>{% endif %}
-                                    {% else %}&mdash;{% endif %}
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr><td colspan="4" class="pj-empty">No actions match.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            {% if page.has_other_pages %}
-                <div class="pj-pager">
-                    {% if page.has_previous %}<a class="pj-link" href="?{{ base_query }}{% if base_query %}&amp;{% endif %}page={{ page.previous_page_number }}">Previous</a>{% endif %}
-                    <span class="pj-help">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
-                    {% if page.has_next %}<a class="pj-link" href="?{{ base_query }}{% if base_query %}&amp;{% endif %}page={{ page.next_page_number }}">Next</a>{% endif %}
-                </div>
+            </select>
+            <button type="submit" class="act-btn act-btn-primary">Filter</button>
+            {% if q or assignee or status %}
+                <a href="{% url 'projectActionList' project.uuid %}" class="act-clear">Clear</a>
             {% endif %}
+        </form>
+
+        <div class="act-scroll">
+            <table class="act-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Assignee</th>
+                        <th>Due</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in page %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'projectActionDetail' project.uuid a.uuid %}">{{ a.title }}</a>
+                                {% if a.subtask_count %}<span class="act-muted">&middot; {{ a.subtask_count }} subtask{{ a.subtask_count|pluralize }}</span>{% endif %}
+                            </td>
+                            <td><span class="act-pill pj-badge-{{ a.status }}">{{ a.get_status_display }}</span></td>
+                            <td>
+                                {% if a.assignee %}{{ a.assignee.user.get_full_name|default:a.assignee.user.username }}{% else %}<span class="act-muted">Unassigned</span>{% endif %}
+                                {% if a.needs_reassign %}<span class="act-pill warn">Needs reassigning</span>{% endif %}
+                            </td>
+                            <td class="act-mono">
+                                {% if a.due_date %}
+                                    {{ a.due_date|date:"d M Y" }}
+                                    {% if a.due_date < today and a.is_open %}<span class="act-pill warn">Overdue</span>{% endif %}
+                                {% else %}&mdash;{% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="act-empty">No actions match.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+
+        {% if page.has_other_pages %}
+            <div class="act-pager">
+                {% if page.has_previous %}<a href="?{{ base_query }}{% if base_query %}&amp;{% endif %}page={{ page.previous_page_number }}">Previous</a>{% endif %}
+                <span class="act-mono act-muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+                {% if page.has_next %}<a href="?{{ base_query }}{% if base_query %}&amp;{% endif %}page={{ page.next_page_number }}">Next</a>{% endif %}
+            </div>
+        {% endif %}
 
     </div>
 </div>

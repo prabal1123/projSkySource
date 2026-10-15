@@ -12,7 +12,9 @@
             <div>
                 <span class="sky-eyebrow">Projects</span>
                 <h1>Assign people</h1>
-                <p class="sky-help-text">Pick employees on this page, choose a project, and apply.</p>
+                <p class="sky-help-text">
+                    Pick employees on this page, choose a project, and apply.
+                </p>
             </div>
             <div class="pj-actions" style="margin-top: 0;">
                 <a href="{% url 'projectList' %}" class="pj-btn pj-btn-ghost">Back to projects</a>
@@ -21,44 +23,50 @@
 
         <div class="sky-panel">
 
+            <!-- Search and filter form -->
             <form method="get" class="pj-filters">
-                <input type="text" name="q" value="{{ search_query }}" placeholder="Search name or designation..." class="form-control" style="max-width: 280px;">
-                <select name="project" class="form-select" style="max-width: 240px;">
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Search name or designation..." class="form-control pj-search">
+
+                <select name="project" class="form-select pj-select">
                     <option value="">All employees</option>
                     <option value="unassigned" {% if project_filter == 'unassigned' %}selected{% endif %}>Unassigned only</option>
                     {% for p in filter_projects %}
                         <option value="{{ p.uuid }}" {% if project_filter == p.uuid|stringformat:'s' %}selected{% endif %}>{{ p.name }}{% if p.is_archived %} (archived){% endif %}</option>
                     {% endfor %}
                 </select>
-                <button type="submit" class="pj-btn" style="padding: .45rem 1.1rem; font-size: .85rem;">Filter</button>
+
+                <button type="submit" class="pj-btn">Filter</button>
+
                 {% if search_query or project_filter %}
-                    <a href="{% url 'projectAssign' %}" style="font-size: .85rem; color: var(--ink-soft); text-decoration: underline;">Clear</a>
+                    <a href="{% url 'projectAssign' %}" class="pj-clear">Clear</a>
                 {% endif %}
             </form>
 
+            <!-- Bulk assignment form -->
             <form method="post" action="{% url 'projectAssign' %}">
                 {% csrf_token %}
                 <input type="hidden" name="q" value="{{ search_query }}">
                 <input type="hidden" name="project" value="{{ project_filter }}">
                 <input type="hidden" name="page" value="{{ page_obj.number }}">
 
-                <div class="pj-filters">
-                    <label for="assignTarget" style="margin: 0;">Assign selected to</label>
-                    <select name="target" id="assignTarget" class="form-select" style="max-width: 260px;" required>
+                <!-- Bulk action bar -->
+                <div class="pj-bulkbar">
+                    <label for="assignTarget">Assign selected to</label>
+                    <select name="target" id="assignTarget" class="form-select pj-select" required>
                         <option value="">Choose...</option>
                         {% for p in target_projects %}
                             <option value="{{ p.uuid }}">{{ p.name }} ({{ p.code }}){% if p.status == 'on_hold' %} - on hold{% endif %}</option>
                         {% endfor %}
                         <option value="none">Unassigned (remove from project)</option>
                     </select>
-                    <button type="submit" class="pj-btn" style="padding: .45rem 1.1rem; font-size: .85rem;">Apply to selected</button>
+                    <button type="submit" class="pj-btn">Apply to selected</button>
                 </div>
 
                 <div class="pj-table-wrap">
-                    <table class="pj-table">
+                    <table class="pj-table pj-cards">
                         <thead>
                             <tr>
-                                <th style="width: 40px;"><input type="checkbox" id="assignSelectAll" aria-label="Select all on this page"></th>
+                                <th class="pj-col-check"><input type="checkbox" id="assignSelectAll" aria-label="Select all on this page"></th>
                                 <th>Name</th>
                                 <th>Designation</th>
                                 <th>Current project</th>
@@ -66,15 +74,18 @@
                         </thead>
                         <tbody>
                             {% for e in page_obj %}
+                                {# data-label on each cell is used by the phone card layout #}
                                 <tr>
-                                    <td><input type="checkbox" name="employees" value="{{ e.uuid }}" class="assign-row"></td>
-                                    <td>{{ e.user.get_full_name|default:"Unnamed employee" }}</td>
-                                    <td>{% if e.designation %}{{ e.designation.name }}{% else %}&mdash;{% endif %}</td>
-                                    <td>{% if e.project %}{{ e.project.code }} &middot; {{ e.project.name }}{% else %}<span class="pj-help">Unassigned</span>{% endif %}</td>
+                                    <td data-label="Select"><input type="checkbox" name="employees" value="{{ e.uuid }}" class="assign-row"></td>
+                                    <td data-label="Name"><strong>{{ e.user.get_full_name|default:"Unnamed employee" }}</strong></td>
+                                    <td data-label="Designation" class="pj-muted">{% if e.designation %}{{ e.designation.name }}{% else %}&mdash;{% endif %}</td>
+                                    <td data-label="Current project" class="pj-muted">{% if e.project %}{{ e.project.code }} &middot; {{ e.project.name }}{% else %}<span class="pj-help">Unassigned</span>{% endif %}</td>
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="4"><div class="pj-empty">No employees match.</div></td>
+                                    <td colspan="4">
+                                        <div class="pj-empty">No employees match.</div>
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -83,7 +94,7 @@
             </form>
 
             {% if page_obj.paginator.num_pages > 1 %}
-                <div class="pj-body" style="display: flex; gap: .75rem; align-items: center;">
+                <div class="pj-pager">
                     {% if page_obj.has_previous %}
                         <a class="pj-link" href="?q={{ search_query|urlencode }}&amp;project={{ project_filter|urlencode }}&amp;page={{ page_obj.previous_page_number }}">Previous</a>
                     {% endif %}

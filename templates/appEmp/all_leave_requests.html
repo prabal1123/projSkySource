@@ -1,354 +1,210 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block title %}All Leave Requests{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-{% endblock %}
-
 {% block content %}
-<div class="sky-dashboard">
-    <div class="container">
+<style>
+    .al-page { max-width: 1240px; margin: 0 auto; animation: alIn .4s ease-out; }
+    @keyframes alIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-        <div class="sky-header">
-            <div>
-                <span class="sky-eyebrow">
-                    Leaves / Administration
-                </span>
+    .al-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
+    .al-eyebrow { color: var(--green, #2F6B4F); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+    .al-head h1 { margin: 0; font-size: 30px; letter-spacing: -.03em; color: var(--navy, #183D2F); }
+    .al-head p { margin: 7px 0 0; color: var(--ink-soft, #69756E); font-size: 14px; }
 
-                <h1>All Leave Requests</h1>
+    .al-btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 18px; border-radius: 9px; border: 1px solid var(--green, #2F6B4F); background: var(--green, #2F6B4F); color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; white-space: nowrap; transition: .2s ease; }
+    .al-btn:hover { background: var(--green-dark, #214F3B); border-color: var(--green-dark, #214F3B); color: #fff; }
+    .al-btn-ghost { background: #fff; color: var(--green-dark, #214F3B); border-color: var(--border, #E1E7E3); }
+    .al-btn-ghost:hover { background: var(--green-soft-2, #EEF6F1); color: var(--green-dark, #214F3B); }
+    .al-btn-sm { padding: 6px 13px; font-size: 12px; }
 
-                <p class="sky-help-text">
-                    View and filter employee leave requests.
-                </p>
-            </div>
+    .al-card { background: #fff; border: 1px solid var(--border, #E1E7E3); border-radius: 18px; box-shadow: 0 6px 22px rgba(24,61,47,.04); margin-bottom: 18px; overflow: hidden; }
+    .al-card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--border, #E1E7E3); }
+    .al-card-head h2 { margin: 0; font-size: 16px; color: #111827; }
+    .al-card-body { padding: 20px 22px; }
+    .al-count { font-size: 12px; font-weight: 600; color: var(--ink-soft, #69756E); background: #F1F4F2; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
 
-            <a
-                href="{% url 'pendingLeaveRequests' %}"
-                class="sky-header-btn"
-            >
-                Pending Requests
-            </a>
+    /* Filters */
+    .al-filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+    .al-field { min-width: 0; }
+    .al-label { display: block; margin-bottom: 6px; font-size: 12.5px; font-weight: 600; color: #374151; }
+    .al-field select, .al-field input { display: block; width: 100%; max-width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #D9E1DC; border-radius: 9px; font-size: 14px; font-family: inherit; background: #fff; color: var(--ink, #1C2B24); }
+    .al-field select:focus, .al-field input:focus { outline: none; border-color: #8CB59B; box-shadow: 0 0 0 3px rgba(47,107,79,.12); }
+    .al-filter-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+
+    /* Table */
+    .al-table { width: 100%; border-collapse: collapse; }
+    .al-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8a93a1; padding: 12px 16px; border-bottom: 1px solid #edf0ef; background: #FAFCFB; }
+    .al-table td { padding: 14px 16px; border-bottom: 1px solid #f0f2f1; font-size: 14px; color: #374151; vertical-align: middle; overflow-wrap: anywhere; }
+    .al-table tbody tr:last-child td { border-bottom: 0; }
+    .al-table tbody tr:hover { background: #F7FAF8; }
+    .al-emp { font-weight: 600; color: #1f2937; }
+    .al-muted { color: var(--ink-soft, #69756E); }
+    /* header and cell share one alignment, so "Action" sits right above the button */
+    .al-table th.al-th-action, .al-table td.al-td-action { text-align: right; }
+    .al-empty { text-align: center; padding: 40px 20px !important; color: var(--ink-soft, #69756E); }
+
+    .al-status { display: inline-flex; padding: 4px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; background: #F1F4F2; color: #536159; white-space: nowrap; }
+    .al-status-approved { background: #E4F0E8; color: #214F3B; }
+    .al-status-pending { background: #FBF3E8; color: #B47A37; }
+    .al-status-rejected, .al-status-cancelled { background: var(--rose-soft, #FAEEEB); color: var(--rose-dark, #A95345); }
+
+    @media (max-width: 991.98px) {
+        .al-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 700px) {
+        .al-head { flex-direction: column; align-items: flex-start; }
+        .al-head h1 { font-size: 26px; }
+        .al-head .al-btn { width: 100%; }
+        .al-card-head { padding: 14px 16px; }
+        .al-card-body { padding: 16px; }
+        .al-filter-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+        .al-filter-actions .al-btn { flex: 1; }
+        .al-field select, .al-field input { font-size: 16px; }
+
+        .al-table thead { display: none; }
+        .al-table, .al-table tbody, .al-table tr, .al-table td { display: block; width: 100%; }
+        .al-table tr { padding: 14px 16px; border-bottom: 1px solid #edf0ef; }
+        .al-table tbody tr:last-child { border-bottom: 0; }
+        .al-table td { display: flex; justify-content: space-between; gap: 14px; padding: 5px 0; border: 0; text-align: right; }
+        .al-table td::before { content: attr(data-label); flex-shrink: 0; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8a93a1; text-align: left; padding-top: 2px; }
+        .al-table td.al-td-emp { justify-content: flex-start; padding-bottom: 8px; text-align: left; font-size: 15px; }
+        .al-table td.al-td-emp::before { display: none; }
+        .al-table td.al-td-action { display: block; padding-top: 10px; text-align: center; }
+        .al-table td.al-td-action::before { display: none; }
+        .al-table td.al-td-action .al-btn { width: 100%; }
+        .al-table td.al-empty { display: block; text-align: center; }
+        .al-table td.al-empty::before { display: none; }
+    }
+</style>
+
+<div class="al-page">
+
+    <div class="al-head">
+        <div>
+            <div class="al-eyebrow">Leaves / Administration</div>
+            <h1>All Leave Requests</h1>
+            <p>View and filter employee leave requests.</p>
         </div>
+        <a href="{% url 'pendingLeaveRequests' %}" class="al-btn al-btn-ghost">Pending Requests</a>
+    </div>
 
-        <!-- Filters -->
-        <div class="sky-panel mb-4">
+    <div class="al-card">
+        <div class="al-card-head"><h2>Filters</h2></div>
+        <div class="al-card-body">
+            <form method="get">
+                <div class="al-filter-grid">
 
-            <div class="sky-panel-head">
-                <h6>Filters</h6>
-            </div>
-
-            <div class="sky-panel-body">
-
-                <form method="get">
-
-                    <div class="row">
-
-                        <!-- Employee -->
-                        <div class="col-md-3 mb-3">
-
-                            <label class="sky-form-label">
-                                Employee
-                            </label>
-
-                            <select
-                                name="employee"
-                                class="form-control"
-                            >
-                                <option value="">
-                                    All Employees
+                    <div class="al-field">
+                        <label class="al-label">Employee</label>
+                        <select name="employee">
+                            <option value="">All Employees</option>
+                            {% for employee in employees %}
+                                <option value="{{ employee.id }}" {% if selected_employee == employee.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ employee.user.get_full_name|default:employee.user.username }}
                                 </option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-                                {% for employee in employees %}
-                                    <option
-                                        value="{{ employee.id }}"
-                                        {% if selected_employee == employee.id|stringformat:"s" %}
-                                            selected
-                                        {% endif %}
-                                    >
-                                        {{ employee.user.get_full_name|default:employee.user.username }}
-                                    </option>
-                                {% endfor %}
-
-                            </select>
-
-                        </div>
-
-                        <!-- Leave Type -->
-                        <div class="col-md-3 mb-3">
-
-                            <label class="sky-form-label">
-                                Leave Type
-                            </label>
-
-                            <select
-                                name="leave_type"
-                                class="form-control"
-                            >
-                                <option value="">
-                                    All Leave Types
+                    <div class="al-field">
+                        <label class="al-label">Leave Type</label>
+                        <select name="leave_type">
+                            <option value="">All Leave Types</option>
+                            {% for leave_type in leave_types %}
+                                <option value="{{ leave_type.id }}" {% if selected_leave_type == leave_type.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ leave_type.name }}
                                 </option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-                                {% for leave_type in leave_types %}
-                                    <option
-                                        value="{{ leave_type.id }}"
-                                        {% if selected_leave_type == leave_type.id|stringformat:"s" %}
-                                            selected
-                                        {% endif %}
-                                    >
-                                        {{ leave_type.name }}
-                                    </option>
-                                {% endfor %}
+                    <div class="al-field">
+                        <label class="al-label">Status</label>
+                        <select name="status">
+                            <option value="">All Statuses</option>
+                            <option value="PENDING" {% if selected_status == "PENDING" %}selected{% endif %}>Pending</option>
+                            <option value="APPROVED" {% if selected_status == "APPROVED" %}selected{% endif %}>Approved</option>
+                            <option value="REJECTED" {% if selected_status == "REJECTED" %}selected{% endif %}>Rejected</option>
+                            <option value="CANCELLED" {% if selected_status == "CANCELLED" %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
 
-                            </select>
-
-                        </div>
-
-                        <!-- Status -->
-                        <div class="col-md-3 mb-3">
-
-                            <label class="sky-form-label">
-                                Status
-                            </label>
-
-                            <select
-                                name="status"
-                                class="form-control"
-                            >
-                                <option value="">
-                                    All Statuses
-                                </option>
-
-                                <option
-                                    value="PENDING"
-                                    {% if selected_status == "PENDING" %}
-                                        selected
-                                    {% endif %}
-                                >
-                                    Pending
-                                </option>
-
-                                <option
-                                    value="APPROVED"
-                                    {% if selected_status == "APPROVED" %}
-                                        selected
-                                    {% endif %}
-                                >
-                                    Approved
-                                </option>
-
-                                <option
-                                    value="REJECTED"
-                                    {% if selected_status == "REJECTED" %}
-                                        selected
-                                    {% endif %}
-                                >
-                                    Rejected
-                                </option>
-
-                                <option
-                                    value="CANCELLED"
-                                    {% if selected_status == "CANCELLED" %}
-                                        selected
-                                    {% endif %}
-                                >
-                                    Cancelled
-                                </option>
-                            </select>
-
-                        </div>
-
-                        <!-- Year -->
-                        <div class="col-md-3 mb-3">
-
-                            <label class="sky-form-label">
-                                Year
-                            </label>
-
-                            <select
-                                name="year"
-                                class="form-control"
-                            >
-                                <option value="">
-                                    All Years
-                                </option>
-
-                                {% for item_year in years %}
-                                    <option
-                                        value="{{ item_year }}"
-                                        {% if selected_year == item_year|stringformat:"s" %}
-                                            selected
-                                        {% endif %}
-                                    >
-                                        {{ item_year }}
-                                    </option>
-                                {% endfor %}
-
-                            </select>
-
-                        </div>
-
+                    <div class="al-field">
+                        <label class="al-label">Year</label>
+                        <select name="year">
+                            <option value="">All Years</option>
+                            {% for item_year in years %}
+                                <option value="{{ item_year }}" {% if selected_year == item_year|stringformat:"s" %}selected{% endif %}>{{ item_year }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
 
                     {% if project_filter_show %}
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <label class="sky-form-label">Project</label>
+                        <div class="al-field">
+                            <label class="al-label">Project</label>
                             {% include "app_projects/_project_filter.html" %}
                         </div>
-                    </div>
                     {% endif %}
 
-                    <div class="d-flex gap-2">
+                </div>
 
-                        <button
-                            type="submit"
-                            class="sky-header-btn"
-                        >
-                            Apply Filters
-                        </button>
-
-                        <a
-                            href="{% url 'allLeaveRequests' %}"
-                            class="sky-edit-link"
-                            style="
-                                display:flex;
-                                align-items:center;
-                            "
-                        >
-                            Clear Filters
-                        </a>
-
-                    </div>
-
-                </form>
-
-            </div>
+                <div class="al-filter-actions">
+                    <button type="submit" class="al-btn">Apply Filters</button>
+                    <a href="{% url 'allLeaveRequests' %}" class="al-btn al-btn-ghost">Clear Filters</a>
+                </div>
+            </form>
         </div>
-
-
-        <!-- Leave Requests Table -->
-        <div class="sky-panel">
-
-            <div class="sky-panel-head">
-
-                <h6>Leave Requests</h6>
-
-                <span class="sky-count">
-                    {{ leave_requests|length }} record(s)
-                </span>
-
-            </div>
-
-            <div class="table-responsive">
-
-                <table class="sky-table">
-
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Leave Type</th>
-                            <th>Dates</th>
-                            <th>Days</th>
-                            <th>Status</th>
-                            <th>Reviewed By</th>
-                            <th class="text-end">
-                                Action
-                            </th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-
-                        {% for leave in leave_requests %}
-
-                            <tr>
-
-                                <td>
-                                    {{ leave.employee.user.get_full_name|default:leave.employee.user.username }}
-                                </td>
-
-                                <td>
-                                    {{ leave.leave_type.name }}
-                                </td>
-
-                                <td class="sky-time">
-
-                                    {{ leave.start_date|date:"d M Y" }}
-
-                                    {% if leave.start_date != leave.end_date %}
-                                        –
-                                        {{ leave.end_date|date:"d M Y" }}
-                                    {% endif %}
-
-                                </td>
-
-                                <td>
-                                    {{ leave.number_of_days }}
-                                </td>
-
-                                <td>
-                                    <span class="
-                                        leave-status
-                                        leave-status-{{ leave.status|lower }}
-                                    ">
-                                        {{ leave.get_status_display }}
-                                    </span>
-                                </td>
-
-                                <td>
-                                    {% if leave.reviewed_by %}
-                                        {{ leave.reviewed_by.get_full_name|default:leave.reviewed_by.username }}
-                                    {% else %}
-                                        —
-                                    {% endif %}
-                                </td>
-
-                                <td class="text-end">
-
-                                    {% if leave.status == "PENDING" %}
-
-                                        <a
-                                            href="{% url 'reviewLeaveRequest' leave.uuid %}"
-                                            class="sky-edit-link"
-                                        >
-                                            Review
-                                        </a>
-
-                                    {% else %}
-
-                                        <span class="sky-time">
-                                            Reviewed
-                                        </span>
-
-                                    {% endif %}
-
-                                </td>
-
-                            </tr>
-
-                        {% empty %}
-
-                            <tr>
-                                <td
-                                    colspan="7"
-                                    class="sky-empty"
-                                >
-                                    No leave requests found.
-                                </td>
-                            </tr>
-
-                        {% endfor %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
     </div>
+
+    <div class="al-card">
+        <div class="al-card-head">
+            <h2>Leave Requests</h2>
+            <span class="al-count">{{ leave_requests|length }} record(s)</span>
+        </div>
+
+        <table class="al-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Leave Type</th>
+                    <th>Dates</th>
+                    <th>Days</th>
+                    <th>Status</th>
+                    <th>Reviewed By</th>
+                    <th class="al-th-action">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for leave in leave_requests %}
+                    <tr>
+                        <td class="al-td-emp al-emp" data-label="Employee">{{ leave.employee.user.get_full_name|default:leave.employee.user.username }}</td>
+                        <td data-label="Leave Type">{{ leave.leave_type.name }}</td>
+                        <td data-label="Dates">
+                            {{ leave.start_date|date:"d M Y" }}{% if leave.start_date != leave.end_date %} – {{ leave.end_date|date:"d M Y" }}{% endif %}
+                        </td>
+                        <td data-label="Days">{{ leave.number_of_days }}</td>
+                        <td data-label="Status">
+                            <span class="al-status al-status-{{ leave.status|lower }}">{{ leave.get_status_display }}</span>
+                        </td>
+                        <td class="al-muted" data-label="Reviewed By">
+                            {% if leave.reviewed_by %}{{ leave.reviewed_by.get_full_name|default:leave.reviewed_by.username }}{% else %}—{% endif %}
+                        </td>
+                        <td class="al-td-action" data-label="Action">
+                            {% if leave.status == "PENDING" %}
+                                <a href="{% url 'reviewLeaveRequest' leave.uuid %}" class="al-btn al-btn-sm">Review</a>
+                            {% else %}
+                                <span class="al-muted">Reviewed</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7" class="al-empty">No leave requests found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
 </div>
 {% endblock %}

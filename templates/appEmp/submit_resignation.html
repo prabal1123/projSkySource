@@ -1,201 +1,143 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block title %}Submit Resignation{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-{% endblock %}
-
 {% block content %}
+<style>
+    .sr-page { max-width: 880px; margin: 0 auto; animation: srIn .4s ease-out; }
+    @keyframes srIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-<div class="sky-dashboard">
+    .sr-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
+    .sr-eyebrow { color: var(--green, #2F6B4F); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+    .sr-head h1 { margin: 0; font-size: 30px; letter-spacing: -.03em; color: var(--navy, #183D2F); }
+    .sr-head p { margin: 7px 0 0; color: var(--ink-soft, #69756E); font-size: 14px; line-height: 1.55; max-width: 560px; }
 
-    <div class="container" style="max-width: 850px;">
+    .sr-btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; border-radius: 9px; border: 1px solid var(--green, #2F6B4F); background: var(--green, #2F6B4F); color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; white-space: nowrap; transition: .2s ease; }
+    .sr-btn:hover { background: var(--green-dark, #214F3B); border-color: var(--green-dark, #214F3B); color: #fff; transform: translateY(-1px); }
+    .sr-btn-ghost { background: #fff; color: var(--green-dark, #214F3B); border-color: var(--border, #E1E7E3); }
+    .sr-btn-ghost:hover { background: var(--green-soft-2, #EEF6F1); color: var(--green-dark, #214F3B); }
 
-        <div class="sky-header">
+    .sr-card { background: #fff; border: 1px solid var(--border, #E1E7E3); border-radius: 18px; box-shadow: 0 6px 22px rgba(24,61,47,.04); margin-bottom: 18px; overflow: hidden; }
+    .sr-card-head { padding: 16px 22px; border-bottom: 1px solid var(--border, #E1E7E3); }
+    .sr-card-head h2 { margin: 0; font-size: 16px; color: #111827; }
+    .sr-card-body { padding: 22px; }
 
-            <div>
-                <span class="sky-eyebrow">
-                    Employee Exit / Resignation
-                </span>
+    .sr-error-banner { margin-bottom: 18px; padding: 12px 14px; border-radius: 10px; background: var(--rose-soft, #FAEEEB); border: 1px solid #EDCAC3; color: var(--rose-dark, #A95345); font-size: 13px; font-weight: 500; }
 
-                <h1>Submit Resignation</h1>
+    .sr-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .sr-stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+    .sr-field { min-width: 0; }
+    .sr-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #374151; }
 
-                <p class="sky-help-text">
-                    Submit your resignation for HR review.
-                    Clearance will begin only after HR accepts it.
-                </p>
-            </div>
+    .sr-field input:not([type="checkbox"]):not([type="radio"]),
+    .sr-field select,
+    .sr-field textarea {
+        display: block; width: 100%; max-width: 100%; box-sizing: border-box;
+        padding: 10px 12px; border: 1px solid #D9E1DC; border-radius: 9px;
+        font-size: 14px; font-family: inherit; color: var(--ink, #1C2B24); background: #fff;
+        transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .sr-field textarea { min-height: 130px; resize: vertical; }
+    .sr-field input[readonly] { background: #F7FAF8; color: var(--ink-soft, #69756E); cursor: default; }
+    .sr-field input:focus, .sr-field select:focus, .sr-field textarea:focus { outline: none; border-color: #8CB59B; box-shadow: 0 0 0 3px rgba(47,107,79,.12); }
+    .sr-field input[readonly]:focus { border-color: #D9E1DC; box-shadow: none; }
 
-            <a
-                href="{% url 'myResignations' %}"
-                class="sky-header-btn"
-            >
-                My Resignations
-            </a>
+    .sr-help { margin-top: 5px; font-size: 12px; color: #8a93a1; line-height: 1.45; }
+    .sr-field-error { margin-top: 5px; font-size: 12.5px; font-weight: 500; color: var(--rose-dark, #A95345); }
 
+    .sr-actions { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border, #E1E7E3); }
+
+    @media (max-width: 700px) {
+        .sr-head { flex-direction: column; align-items: flex-start; }
+        .sr-head h1 { font-size: 26px; }
+        .sr-head .sr-btn { width: 100%; }
+        .sr-card-head { padding: 14px 16px; }
+        .sr-card-body { padding: 16px; }
+        .sr-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+        .sr-actions .sr-btn { width: 100%; }
+        /* 16px stops iOS from zooming in when a field is tapped */
+        .sr-field input:not([type="checkbox"]):not([type="radio"]), .sr-field select, .sr-field textarea { font-size: 16px; }
+    }
+</style>
+
+<div class="sr-page">
+
+    <div class="sr-head">
+        <div>
+            <div class="sr-eyebrow">Employee Exit / Resignation</div>
+            <h1>Submit Resignation</h1>
+            <p>Submit your resignation for HR review. Clearance will begin only after HR accepts it.</p>
         </div>
+        <a href="{% url 'myResignations' %}" class="sr-btn sr-btn-ghost">My Resignations</a>
+    </div>
 
+    <div class="sr-card">
+        <div class="sr-card-head"><h2>Employee Details</h2></div>
+        <div class="sr-card-body">
+            <div class="sr-grid">
+                <div class="sr-field">
+                    <label class="sr-label">Employee</label>
+                    <input type="text" value="{{ employee.user.get_full_name|default:employee.user.username }}" readonly>
+                </div>
 
-        <div class="sky-panel mb-4">
-
-            <div class="sky-panel-head">
-                <h6>Employee Details</h6>
+                <div class="sr-field">
+                    <label class="sr-label">Reporting Manager</label>
+                    {% if employee.manager %}
+                        <input type="text" value="{{ employee.manager.user.get_full_name|default:employee.manager.user.username }}" readonly>
+                    {% else %}
+                        <input type="text" value="No reporting manager assigned" readonly>
+                    {% endif %}
+                </div>
             </div>
+        </div>
+    </div>
 
-            <div class="sky-panel-body">
+    <div class="sr-card">
+        <div class="sr-card-head"><h2>Resignation Details</h2></div>
+        <div class="sr-card-body">
 
-                <div class="row">
+            {% if form.non_field_errors %}
+                <div class="sr-error-banner">
+                    {% for error in form.non_field_errors %}{{ error }} {% endfor %}
+                </div>
+            {% endif %}
 
-                    <div class="col-md-6 mb-3">
+            <form method="post">
+                {% csrf_token %}
 
-                        <label class="sky-form-label">
-                            Employee
-                        </label>
+                <div class="sr-stack">
 
-                        <input
-                            type="text"
-                            class="form-control"
-                            value="{{ employee.user.get_full_name|default:employee.user.username }}"
-                            readonly
-                        >
-
+                    <div class="sr-field">
+                        <label class="sr-label" for="{{ form.proposed_last_working_date.id_for_label }}">{{ form.proposed_last_working_date.label }}</label>
+                        {{ form.proposed_last_working_date }}
+                        {% if form.proposed_last_working_date.help_text %}
+                            <div class="sr-help">{{ form.proposed_last_working_date.help_text }}</div>
+                        {% endif %}
+                        {% for error in form.proposed_last_working_date.errors %}
+                            <div class="sr-field-error">{{ error }}</div>
+                        {% endfor %}
                     </div>
 
-
-                    <div class="col-md-6 mb-3">
-
-                        <label class="sky-form-label">
-                            Reporting Manager
-                        </label>
-
-                        {% if employee.manager %}
-
-                            <input
-                                type="text"
-                                class="form-control"
-                                value="{{ employee.manager.user.get_full_name|default:employee.manager.user.username }}"
-                                readonly
-                            >
-
-                        {% else %}
-
-                            <input
-                                type="text"
-                                class="form-control"
-                                value="No reporting manager assigned"
-                                readonly
-                            >
-
+                    <div class="sr-field">
+                        <label class="sr-label" for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>
+                        {{ form.reason }}
+                        {% if form.reason.help_text %}
+                            <div class="sr-help">{{ form.reason.help_text }}</div>
                         {% endif %}
-
+                        {% for error in form.reason.errors %}
+                            <div class="sr-field-error">{{ error }}</div>
+                        {% endfor %}
                     </div>
 
                 </div>
 
-            </div>
+                <div class="sr-actions">
+                    <button type="submit" class="sr-btn">Submit Resignation</button>
+                </div>
+            </form>
 
         </div>
-
-
-        <div class="sky-panel">
-
-            <div class="sky-panel-head">
-                <h6>Resignation Details</h6>
-            </div>
-
-            <div class="sky-panel-body">
-
-                {% if form.non_field_errors %}
-
-                    <div class="sky-auth-error-banner">
-
-                        {% for error in form.non_field_errors %}
-                            {{ error }}
-                        {% endfor %}
-
-                    </div>
-
-                {% endif %}
-
-
-                <form method="post">
-
-                    {% csrf_token %}
-
-
-                    <div class="mb-3">
-
-                        <label
-                            class="sky-form-label"
-                            for="{{ form.proposed_last_working_date.id_for_label }}"
-                        >
-                            {{ form.proposed_last_working_date.label }}
-                        </label>
-
-                        {{ form.proposed_last_working_date }}
-
-                        {% if form.proposed_last_working_date.help_text %}
-                            <div class="sky-help-text">
-                                {{ form.proposed_last_working_date.help_text }}
-                            </div>
-                        {% endif %}
-
-                        {% for error in form.proposed_last_working_date.errors %}
-
-                            <div class="sky-form-error">
-                                {{ error }}
-                            </div>
-
-                        {% endfor %}
-
-                    </div>
-
-
-                    <div class="mb-3">
-
-                        <label
-                            class="sky-form-label"
-                            for="{{ form.reason.id_for_label }}"
-                        >
-                            {{ form.reason.label }}
-                        </label>
-
-                        {{ form.reason }}
-
-                        {% if form.reason.help_text %}
-                            <div class="sky-help-text">
-                                {{ form.reason.help_text }}
-                            </div>
-                        {% endif %}
-
-                        {% for error in form.reason.errors %}
-
-                            <div class="sky-form-error">
-                                {{ error }}
-                            </div>
-
-                        {% endfor %}
-
-                    </div>
-
-
-                    <button
-                        type="submit"
-                        class="sky-header-btn"
-                    >
-                        Submit Resignation
-                    </button>
-
-                </form>
-
-            </div>
-
-        </div>
-
     </div>
 
 </div>
-
 {% endblock %}

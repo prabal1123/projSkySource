@@ -1,230 +1,146 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block title %}My Resignations{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-{% endblock %}
-
 {% block content %}
+<style>
+    .mr-page { max-width: 1100px; margin: 0 auto; animation: mrIn .4s ease-out; }
+    @keyframes mrIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-<div class="sky-dashboard">
+    .mr-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
+    .mr-eyebrow { color: var(--green, #2F6B4F); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+    .mr-head h1 { margin: 0; font-size: 30px; letter-spacing: -.03em; color: var(--navy, #183D2F); }
+    .mr-head p { margin: 7px 0 0; color: var(--ink-soft, #69756E); font-size: 14px; line-height: 1.55; max-width: 560px; }
 
-    <div class="container" style="max-width: 1100px;">
+    .mr-btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; border-radius: 9px; border: 1px solid var(--green, #2F6B4F); background: var(--green, #2F6B4F); color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; white-space: nowrap; transition: .2s ease; }
+    .mr-btn:hover { background: var(--green-dark, #214F3B); border-color: var(--green-dark, #214F3B); color: #fff; transform: translateY(-1px); }
 
-        <div class="sky-header">
+    .mr-section-title { margin: 0 0 12px; font-size: 16px; color: #111827; }
 
-            <div>
-                <span class="sky-eyebrow">
-                    Employee Exit
-                </span>
+    .mr-card { background: #fff; border: 1px solid var(--border, #E1E7E3); border-radius: 18px; box-shadow: 0 6px 22px rgba(24,61,47,.04); margin-bottom: 16px; overflow: hidden; }
+    .mr-card-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--border, #E1E7E3); background: #FAFCFB; }
+    .mr-submitted small { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8a93a1; margin-bottom: 2px; }
+    .mr-submitted strong { font-size: 15px; color: #1f2937; }
 
-                <h1>My Resignations</h1>
+    .mr-pill { display: inline-flex; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #F1F4F2; color: #536159; white-space: nowrap; }
+    .mr-pill-pending { background: #FBF3E8; color: #B47A37; }
+    .mr-pill-rejected { background: var(--rose-soft, #FAEEEB); color: var(--rose-dark, #A95345); }
 
-                <p class="sky-help-text">
-                    Track your resignation, HR review
-                    and exit clearance progress.
-                </p>
-            </div>
+    .mr-body { padding: 20px 22px; }
+    .mr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 18px; }
+    .mr-item { min-width: 0; }
+    .mr-item small { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8a93a1; margin-bottom: 4px; }
+    .mr-item strong { display: block; font-size: 14px; color: #1f2937; overflow-wrap: anywhere; }
+    .mr-item span { display: block; font-size: 14px; color: #374151; overflow-wrap: anywhere; }
+    .mr-note { margin-top: 4px; font-size: 12px; color: var(--ink-soft, #69756E); line-height: 1.45; overflow-wrap: anywhere; }
 
-            <a
-                href="{% url 'submitResignation' %}"
-                class="sky-header-btn"
-            >
-                Submit Resignation
-            </a>
+    .mr-reason { margin-top: 18px; padding: 14px 16px; border-radius: 12px; background: #F7FAF8; border: 1px solid #E4EBE6; font-size: 13px; line-height: 1.6; color: #374151; overflow-wrap: anywhere; }
+    .mr-reason + .mr-reason { margin-top: 10px; }
+    .mr-reason b { color: #1f2937; }
 
+    .mr-empty { text-align: center; padding: 46px 22px; background: #fff; border: 1px dashed #D4E3D9; border-radius: 18px; color: var(--ink-soft, #69756E); font-size: 14px; }
+    .mr-empty p { margin: 0 0 16px; }
+
+    @media (max-width: 700px) {
+        .mr-head { flex-direction: column; align-items: flex-start; }
+        .mr-head h1 { font-size: 26px; }
+        .mr-head .mr-btn, .mr-empty .mr-btn { width: 100%; }
+        .mr-card-top { padding: 14px 16px; }
+        .mr-body { padding: 16px; }
+        .mr-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
+    }
+</style>
+
+<div class="mr-page">
+
+    <div class="mr-head">
+        <div>
+            <div class="mr-eyebrow">Employee Exit</div>
+            <h1>My Resignations</h1>
+            <p>Track your resignation, HR review and exit clearance progress.</p>
         </div>
+        <a href="{% url 'submitResignation' %}" class="mr-btn">Submit Resignation</a>
+    </div>
 
+    <h2 class="mr-section-title">Resignation History</h2>
 
-        <div class="sky-panel">
+    {% if request_rows %}
+        {% for row in request_rows %}
+            <div class="mr-card">
 
-            <div class="sky-panel-head">
-                <h6>Resignation History</h6>
-            </div>
-
-            <div class="sky-panel-body">
-
-                {% if request_rows %}
-
-                    <div class="table-responsive">
-
-                        <table class="table align-middle">
-
-                            <thead>
-                                <tr>
-                                    <th>Submitted</th>
-                                    <th>Proposed LWD</th>
-                                    <th>Final LWD</th>
-                                    <th>HR Status</th>
-                                    <th>Manager NOC</th>
-                                    <th>Finance NOC</th>
-                                    <th>Overall Status</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-
-                                {% for row in request_rows %}
-
-                                    <tr>
-
-                                        <td>
-                                            {{ row.exit_request.created_at|date:"d M Y" }}
-                                        </td>
-
-                                        <td>
-                                            {{ row.exit_request.proposed_last_working_date|date:"d M Y" }}
-                                        </td>
-
-                                        <td>
-                                            {% if row.exit_request.final_last_working_date %}
-                                                {{ row.exit_request.final_last_working_date|date:"d M Y" }}
-                                            {% else %}
-                                                —
-                                            {% endif %}
-                                        </td>
-
-
-                                        <td>
-
-                                            {% if row.exit_request.status == "SUBMITTED" %}
-
-                                                Pending HR Review
-
-                                            {% elif row.exit_request.status == "HR_REJECTED" %}
-
-                                                Rejected by HR
-
-                                            {% elif row.exit_request.hr_reviewed_by %}
-
-                                                Accepted
-
-                                                <div class="sky-help-text">
-                                                    By:
-                                                    {{ row.exit_request.hr_reviewed_by.get_full_name|default:row.exit_request.hr_reviewed_by.username }}
-                                                </div>
-
-                                            {% else %}
-
-                                                —
-
-                                            {% endif %}
-
-                                        </td>
-
-
-                                        <td>
-
-                                            {% if row.manager_approval %}
-
-                                                <strong>
-                                                    {{ row.manager_approval.get_status_display }}
-                                                </strong>
-
-                                                {% if row.manager_approval.remarks %}
-                                                    <div class="sky-help-text">
-                                                        {{ row.manager_approval.remarks }}
-                                                    </div>
-                                                {% endif %}
-
-                                            {% else %}
-
-                                                Not Started
-
-                                            {% endif %}
-
-                                        </td>
-
-
-                                        <td>
-
-                                            {% if row.finance_approval %}
-
-                                                <strong>
-                                                    {{ row.finance_approval.get_status_display }}
-                                                </strong>
-
-                                                {% if row.finance_approval.remarks %}
-                                                    <div class="sky-help-text">
-                                                        {{ row.finance_approval.remarks }}
-                                                    </div>
-                                                {% endif %}
-
-                                            {% else %}
-
-                                                Not Started
-
-                                            {% endif %}
-
-                                        </td>
-
-
-                                        <td>
-                                            <strong>
-                                                {{ row.exit_request.get_status_display }}
-                                            </strong>
-                                        </td>
-
-                                    </tr>
-
-                                    <tr>
-
-                                        <td colspan="7">
-
-                                            <div class="sky-help-text">
-
-                                                <strong>Reason:</strong>
-                                                {{ row.exit_request.reason }}
-
-                                                {% if row.exit_request.hr_remarks %}
-                                                    <br>
-                                                    <strong>HR Remarks:</strong>
-                                                    {{ row.exit_request.hr_remarks }}
-                                                {% endif %}
-
-                                            </div>
-
-                                        </td>
-
-                                    </tr>
-
-                                {% endfor %}
-
-                            </tbody>
-
-                        </table>
-
+                <div class="mr-card-top">
+                    <div class="mr-submitted">
+                        <small>Submitted</small>
+                        <strong>{{ row.exit_request.created_at|date:"d M Y" }}</strong>
                     </div>
+                    <span class="mr-pill {% if row.exit_request.status == 'SUBMITTED' %}mr-pill-pending{% elif row.exit_request.status == 'HR_REJECTED' %}mr-pill-rejected{% endif %}">
+                        {{ row.exit_request.get_status_display }}
+                    </span>
+                </div>
 
-                {% else %}
+                <div class="mr-body">
+                    <div class="mr-grid">
 
-                    <div class="sky-empty">
+                        <div class="mr-item">
+                            <small>Proposed LWD</small>
+                            <span>{{ row.exit_request.proposed_last_working_date|date:"d M Y" }}</span>
+                        </div>
 
-                        You have not submitted any resignation request.
+                        <div class="mr-item">
+                            <small>Final LWD</small>
+                            <span>{% if row.exit_request.final_last_working_date %}{{ row.exit_request.final_last_working_date|date:"d M Y" }}{% else %}—{% endif %}</span>
+                        </div>
 
-                        <div class="mt-3">
+                        <div class="mr-item">
+                            <small>HR Status</small>
+                            {% if row.exit_request.status == "SUBMITTED" %}
+                                <strong>Pending HR Review</strong>
+                            {% elif row.exit_request.status == "HR_REJECTED" %}
+                                <strong>Rejected by HR</strong>
+                            {% elif row.exit_request.hr_reviewed_by %}
+                                <strong>Accepted</strong>
+                                <div class="mr-note">By: {{ row.exit_request.hr_reviewed_by.get_full_name|default:row.exit_request.hr_reviewed_by.username }}</div>
+                            {% else %}
+                                <span>—</span>
+                            {% endif %}
+                        </div>
 
-                            <a
-                                href="{% url 'submitResignation' %}"
-                                class="sky-header-btn"
-                            >
-                                Submit Resignation
-                            </a>
+                        <div class="mr-item">
+                            <small>Manager NOC</small>
+                            {% if row.manager_approval %}
+                                <strong>{{ row.manager_approval.get_status_display }}</strong>
+                                {% if row.manager_approval.remarks %}<div class="mr-note">{{ row.manager_approval.remarks }}</div>{% endif %}
+                            {% else %}
+                                <span>Not Started</span>
+                            {% endif %}
+                        </div>
 
+                        <div class="mr-item">
+                            <small>Finance NOC</small>
+                            {% if row.finance_approval %}
+                                <strong>{{ row.finance_approval.get_status_display }}</strong>
+                                {% if row.finance_approval.remarks %}<div class="mr-note">{{ row.finance_approval.remarks }}</div>{% endif %}
+                            {% else %}
+                                <span>Not Started</span>
+                            {% endif %}
                         </div>
 
                     </div>
 
-                {% endif %}
+                    <div class="mr-reason"><b>Reason:</b> {{ row.exit_request.reason }}</div>
+                    {% if row.exit_request.hr_remarks %}
+                        <div class="mr-reason"><b>HR Remarks:</b> {{ row.exit_request.hr_remarks }}</div>
+                    {% endif %}
+                </div>
 
             </div>
-
+        {% endfor %}
+    {% else %}
+        <div class="mr-empty">
+            <p>You have not submitted any resignation request.</p>
+            <a href="{% url 'submitResignation' %}" class="mr-btn">Submit Resignation</a>
         </div>
-
-    </div>
+    {% endif %}
 
 </div>
-
 {% endblock %}

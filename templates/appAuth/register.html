@@ -1,51 +1,129 @@
 {% extends "base.html" %}
-{% load static %}
+
 {% block title %}Register{% endblock %}
-{% block extra_css %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/numahr-tokens.css' %}">
-<link rel="stylesheet" href="{% static 'css/auth.css' %}">
-{% endblock %}
+
 {% block content %}
-<div class="sky-auth-wrap">
-    <div class="sky-auth-card">
-        <span class="sky-auth-eyebrow">MyProject / New Employee</span>
+<style>
+    .rg-page { max-width: 860px; margin: 0 auto; animation: rgIn .4s ease-out; }
+    @keyframes rgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .rg-head { margin-bottom: 22px; }
+    .rg-eyebrow { color: var(--green, #2F6B4F); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+    .rg-head h1 { margin: 0; font-size: 30px; letter-spacing: -.03em; color: var(--navy, #183D2F); }
+    .rg-head p { margin: 7px 0 0; color: var(--ink-soft, #69756E); font-size: 14px; }
+
+    .rg-card { background: #fff; border: 1px solid var(--border, #E1E7E3); border-radius: 18px; box-shadow: 0 6px 22px rgba(24,61,47,.04); overflow: hidden; }
+    .rg-card-head { padding: 16px 22px; border-bottom: 1px solid var(--border, #E1E7E3); }
+    .rg-card-head h2 { margin: 0; font-size: 16px; color: #111827; }
+    .rg-card-body { padding: 22px; }
+
+    .rg-error-banner { margin-bottom: 18px; padding: 12px 14px; border-radius: 10px; background: var(--rose-soft, #FAEEEB); border: 1px solid #EDCAC3; color: var(--rose-dark, #A95345); font-size: 13px; font-weight: 500; }
+
+    .rg-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .rg-field { min-width: 0; }
+    .rg-field.full { grid-column: 1 / -1; }
+    .rg-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #374151; }
+
+    .rg-field input:not([type="checkbox"]):not([type="radio"]),
+    .rg-field select,
+    .rg-field textarea {
+        display: block; width: 100%; max-width: 100%; box-sizing: border-box;
+        padding: 10px 12px; border: 1px solid #D9E1DC; border-radius: 9px;
+        font-size: 14px; font-family: inherit; color: var(--ink, #1C2B24); background: #fff;
+        transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .rg-field input:focus, .rg-field select:focus, .rg-field textarea:focus {
+        outline: none; border-color: #8CB59B; box-shadow: 0 0 0 3px rgba(47,107,79,.12);
+    }
+
+    /* password field with show + copy buttons */
+    .rg-pw { position: relative; }
+    .rg-pw input { padding-right: 84px !important; }
+    .rg-pw-btns { position: absolute; top: 0; right: 4px; bottom: 0; display: flex; align-items: center; gap: 2px; }
+    .rg-pw-btn { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; border-radius: 8px; color: #748078; font-size: 16px; cursor: pointer; transition: .15s ease; }
+    .rg-pw-btn:hover { background: var(--green-soft-2, #EEF6F1); color: var(--green-dark, #214F3B); }
+    .rg-pw-btn.is-copied { color: var(--green, #2F6B4F); background: var(--green-soft-2, #EEF6F1); }
+
+    .rg-help { margin-top: 5px; font-size: 12px; color: #8a93a1; line-height: 1.45; }
+    .rg-help ul { margin: 4px 0 0; padding-left: 18px; }
+    .rg-field-error { margin-top: 5px; font-size: 12.5px; font-weight: 500; color: var(--rose-dark, #A95345); }
+
+    .rg-actions { display: flex; gap: 10px; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border, #E1E7E3); }
+    .rg-btn { display: inline-flex; align-items: center; justify-content: center; padding: 11px 22px; border-radius: 9px; border: 1px solid var(--green, #2F6B4F); background: var(--green, #2F6B4F); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: .2s ease; }
+    .rg-btn:hover { background: var(--green-dark, #214F3B); border-color: var(--green-dark, #214F3B); transform: translateY(-1px); }
+
+    @media (max-width: 700px) {
+        .rg-head h1 { font-size: 26px; }
+        .rg-card-head { padding: 14px 16px; }
+        .rg-card-body { padding: 16px; }
+        .rg-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+        .rg-actions .rg-btn { width: 100%; }
+        /* 16px stops iOS from zooming in when a field is tapped */
+        .rg-field input:not([type="checkbox"]):not([type="radio"]), .rg-field select, .rg-field textarea { font-size: 16px; }
+    }
+</style>
+
+<div class="rg-page">
+
+    <div class="rg-head">
+        <div class="rg-eyebrow">MyProject / New Employee</div>
         <h1>Create Account</h1>
-        {% if form.non_field_errors %}
-        <div class="sky-auth-error-banner">
-            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
-        </div>
-        {% endif %}
-        <form method="post" novalidate>
-            {% csrf_token %}
-            {% for field in form %}
-            <div class="sky-auth-field">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-
-                {% if field.field.widget.input_type == 'password' %}
-                <div class="sky-password-wrap">
-                    {{ field }}
-                    <button type="button" class="sky-pw-toggle" data-target="{{ field.id_for_label }}" title="Show/Hide password">
-                        <i class="sky-eye-icon"></i>
-                    </button>
-                    <button type="button" class="sky-pw-copy" data-target="{{ field.id_for_label }}" title="Copy password">
-                        <i class="sky-copy-icon"></i>
-                    </button>
-                </div>
-                {% else %}
-                    {{ field }}
-                {% endif %}
-
-                {% if field.errors %}
-                    <div class="sky-form-error">{{ field.errors|striptags }}</div>
-                {% endif %}
-            </div>
-            {% endfor %}
-            <button type="submit" class="sky-auth-submit">Register</button>
-        </form>
+        <p>Add a new employee. They can sign in once the account is created.</p>
     </div>
+
+    <div class="rg-card">
+        <div class="rg-card-head"><h2>Account Details</h2></div>
+        <div class="rg-card-body">
+
+            {% if form.non_field_errors %}
+                <div class="rg-error-banner">
+                    {% for error in form.non_field_errors %}{{ error }} {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="rg-grid">
+                    {% for field in form %}
+                        <div class="rg-field {% if field.field.widget.input_type == 'textarea' or field.name == 'email' %}full{% endif %}">
+                            <label class="rg-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+
+                            {% if field.field.widget.input_type == 'password' %}
+                                <div class="rg-pw">
+                                    {{ field }}
+                                    <div class="rg-pw-btns">
+                                        <button type="button" class="rg-pw-btn sky-pw-toggle" data-target="{{ field.id_for_label }}" title="Show/Hide password" aria-label="Show or hide password">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button type="button" class="rg-pw-btn sky-pw-copy" data-target="{{ field.id_for_label }}" title="Copy password" aria-label="Copy password">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            {% else %}
+                                {{ field }}
+                            {% endif %}
+
+                            {% if field.help_text %}
+                                <div class="rg-help">{{ field.help_text|safe }}</div>
+                            {% endif %}
+
+                            {% if field.errors %}
+                                <div class="rg-field-error">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="rg-actions">
+                    <button type="submit" class="rg-btn">Register</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
 </div>
 {% endblock %}
 
@@ -56,32 +134,50 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.sky-pw-toggle').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var input = document.getElementById(btn.dataset.target);
+            var icon = btn.querySelector('i');
             if (!input) return;
             if (input.type === 'password') {
                 input.type = 'text';
                 btn.classList.add('is-visible');
+                if (icon) icon.className = 'bi bi-eye-slash';
             } else {
                 input.type = 'password';
                 btn.classList.remove('is-visible');
+                if (icon) icon.className = 'bi bi-eye';
             }
         });
     });
 
     // Copy password to clipboard
+    function flash(btn) {
+        var icon = btn.querySelector('i');
+        var original = btn.title;
+        btn.title = 'Copied!';
+        btn.classList.add('is-copied');
+        if (icon) icon.className = 'bi bi-check2';
+        setTimeout(function () {
+            btn.title = original;
+            btn.classList.remove('is-copied');
+            if (icon) icon.className = 'bi bi-clipboard';
+        }, 1500);
+    }
+
     document.querySelectorAll('.sky-pw-copy').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var input = document.getElementById(btn.dataset.target);
             if (!input || !input.value) return;
 
-            navigator.clipboard.writeText(input.value).then(function () {
-                var original = btn.title;
-                btn.title = 'Copied!';
-                btn.classList.add('is-copied');
-                setTimeout(function () {
-                    btn.title = original;
-                    btn.classList.remove('is-copied');
-                }, 1500);
-            });
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(input.value).then(function () { flash(btn); });
+            } else {
+                // fallback for non-https pages
+                var wasPassword = input.type === 'password';
+                if (wasPassword) input.type = 'text';
+                input.select();
+                try { document.execCommand('copy'); flash(btn); } catch (e) {}
+                if (wasPassword) input.type = 'password';
+                input.blur();
+            }
         });
     });
 });

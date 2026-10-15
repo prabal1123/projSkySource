@@ -1,197 +1,181 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block title %}Document Review{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% block content %}
 <style>
-    .doc-actions {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
+    .dr-page { max-width: 1180px; margin: 0 auto; animation: drIn .4s ease-out; }
+    @keyframes drIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-    .doc-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 6px 14px;
-        border-radius: 6px;
-        font-size: 0.82rem;
-        font-weight: 600;
-        border: 1px solid transparent;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: opacity 0.15s ease;
-    }
+    .dr-head { margin-bottom: 22px; }
+    .dr-eyebrow { color: var(--green, #2F6B4F); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+    .dr-head h1 { margin: 0; font-size: 30px; letter-spacing: -.03em; color: var(--navy, #183D2F); }
 
-    .doc-btn:hover {
-        opacity: 0.85;
-    }
+    .dr-alert { margin-bottom: 14px; padding: 12px 14px; border-radius: 10px; font-size: 13px; font-weight: 500; background: #E4F0E8; border: 1px solid #BDD5C7; color: #214F3B; }
 
-    .doc-btn-verify {
-        background: #2f855a;
-        border-color: #2f855a;
-        color: #fff;
-    }
+    /* Filter pills */
+    .dr-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .dr-pill-link { display: inline-flex; align-items: center; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border, #E1E7E3); background: #fff; color: #687385; font-size: 13px; font-weight: 600; text-decoration: none; transition: .15s ease; }
+    .dr-pill-link:hover { background: var(--green-soft-2, #EEF6F1); color: var(--green-dark, #214F3B); }
+    .dr-pill-link.active { background: var(--green, #2F6B4F); border-color: var(--green, #2F6B4F); color: #fff; }
+    .dr-pill-link.pending.active { background: #B47A37; border-color: #B47A37; }
+    .dr-pill-link.rejected.active { background: var(--rose-dark, #A95345); border-color: var(--rose-dark, #A95345); }
+    .dr-filters + .dr-filters { margin-bottom: 18px; }
 
-    .doc-btn-reject {
-        background: #fff;
-        border-color: #d16d4e;
-        color: #d16d4e;
-    }
+    .dr-card { background: #fff; border: 1px solid var(--border, #E1E7E3); border-radius: 18px; box-shadow: 0 6px 22px rgba(24,61,47,.04); overflow: hidden; }
+    .dr-card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--border, #E1E7E3); }
+    .dr-card-head h2 { margin: 0; font-size: 16px; color: #111827; }
+    .dr-count { font-size: 12px; font-weight: 600; color: var(--ink-soft, #69756E); background: #F1F4F2; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
 
-    .doc-reject-reason {
-        margin-top: 6px;
-        font-size: 0.78rem;
-        color: #7a7a7a;
-        line-height: 1.3;
-    }
+    /* Table */
+    .dr-table { width: 100%; border-collapse: collapse; }
+    .dr-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8a93a1; padding: 12px 16px; border-bottom: 1px solid #edf0ef; background: #FAFCFB; }
+    .dr-table td { padding: 14px 16px; border-bottom: 1px solid #f0f2f1; font-size: 14px; color: #374151; vertical-align: middle; overflow-wrap: anywhere; }
+    .dr-table tbody tr:last-child td { border-bottom: 0; }
+    .dr-table tbody tr:hover { background: #F7FAF8; }
+    .dr-emp { font-weight: 600; color: var(--green-dark, #214F3B); }
+    .dr-muted { color: var(--ink-soft, #69756E); }
+    /* header and cell share one alignment, so the heading sits right above the buttons */
+    .dr-table th.dr-th-actions, .dr-table td.dr-td-actions { text-align: right; }
+    .dr-reason { display: block; margin-top: 5px; font-size: 12px; color: var(--rose-dark, #A95345); line-height: 1.4; }
+    .dr-empty { text-align: center; padding: 40px 20px; color: var(--ink-soft, #69756E); font-size: 14px; }
 
-    .doc-file-cell a {
-        font-weight: 600;
-    }
+    .dr-status { display: inline-flex; padding: 4px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+    .dr-status-verified { background: #E4F0E8; color: #214F3B; }
+    .dr-status-pending { background: #FBF3E8; color: #B47A37; }
+    .dr-status-rejected { background: var(--rose-soft, #FAEEEB); color: var(--rose-dark, #A95345); }
 
-    .sky-pill.absent[title] {
-        cursor: help;
+    /* Buttons */
+    .dr-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; }
+    .dr-actions form { margin: 0; }
+    .dr-btn { display: inline-flex; align-items: center; justify-content: center; padding: 6px 13px; border-radius: 8px; border: 1px solid var(--border, #E1E7E3); background: #fff; color: var(--green-dark, #214F3B); font-size: 12px; font-weight: 700; text-decoration: none; cursor: pointer; white-space: nowrap; transition: .15s ease; }
+    .dr-btn:hover { background: var(--green-soft-2, #EEF6F1); color: var(--green-dark, #214F3B); }
+    .dr-btn-verify { background: var(--green, #2F6B4F); border-color: var(--green, #2F6B4F); color: #fff; }
+    .dr-btn-verify:hover { background: var(--green-dark, #214F3B); border-color: var(--green-dark, #214F3B); color: #fff; }
+    .dr-btn-reject { border-color: #E4BDB5; color: var(--rose-dark, #A95345); }
+    .dr-btn-reject:hover { background: var(--rose-soft, #FAEEEB); color: var(--rose-dark, #A95345); }
+
+    @media (max-width: 700px) {
+        .dr-head h1 { font-size: 26px; }
+        .dr-card-head { padding: 14px 16px; }
+        .dr-filters { gap: 6px; }
+        .dr-pill-link { padding: 6px 12px; font-size: 12.5px; }
+
+        /* each document becomes a card, so nothing needs sideways swiping */
+        .dr-table thead { display: none; }
+        .dr-table, .dr-table tbody, .dr-table tr, .dr-table td { display: block; width: 100%; }
+        .dr-table tr { padding: 14px 16px; border-bottom: 1px solid #edf0ef; }
+        .dr-table tbody tr:last-child { border-bottom: 0; }
+        .dr-table td { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 5px 0; border: 0; text-align: right; }
+        .dr-table td::before { content: attr(data-label); flex-shrink: 0; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #8a93a1; text-align: left; padding-top: 2px; }
+        .dr-table td.dr-td-emp { justify-content: flex-start; padding-bottom: 8px; text-align: left; font-size: 15px; }
+        .dr-table td.dr-td-emp::before { display: none; }
+        .dr-table td.dr-td-status { flex-direction: column; align-items: flex-end; }
+        .dr-table td.dr-td-status::before { align-self: flex-start; }
+        .dr-table td.dr-td-actions { display: block; padding-top: 10px; }
+        .dr-table td.dr-td-actions::before { display: none; }
+        .dr-actions { display: flex; width: 100%; }
+        .dr-actions form { flex: 1; }
+        .dr-actions .dr-btn { width: 100%; padding: 9px 13px; }
     }
 </style>
-{% endblock %}
 
-{% block content %}
-<div class="sky-dashboard">
-    <div class="container" style="max-width: 1100px;">
+<div class="dr-page">
 
-        <div class="sky-header">
-            <div>
-                <span class="sky-eyebrow">HR / Document Review</span>
-                <h1>Employee Documents</h1>
-            </div>
-        </div>
-
-        {% if messages %}
-            {% for message in messages %}
-                <div class="sky-calendar-message">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-
-        <div class="attendance-filter-bar">
-            <a href="?" class="attendance-filter-pill filter-all {% if not selected_type and not selected_status %}active{% endif %}">
-                All
-            </a>
-
-            {% for dtype in document_types %}
-                <a href="?document_type={{ dtype.id }}{% if selected_status %}&is_verified={{ selected_status }}{% endif %}"
-                   class="attendance-filter-pill filter-all {% if selected_type == dtype.id|stringformat:'s' %}active{% endif %}">
-                    {{ dtype.name }}
-                </a>
-            {% endfor %}
-        </div>
-
-        <div class="attendance-filter-bar">
-            <a href="?is_verified=false{% if selected_type %}&document_type={{ selected_type }}{% endif %}"
-               class="attendance-filter-pill legend-pending {% if selected_status == 'false' %}active{% endif %}">
-                Pending
-            </a>
-
-            <a href="?is_verified=true{% if selected_type %}&document_type={{ selected_type }}{% endif %}"
-               class="attendance-filter-pill legend-present {% if selected_status == 'true' %}active{% endif %}">
-                Verified
-            </a>
-
-            <a href="?is_rejected=true{% if selected_type %}&document_type={{ selected_type }}{% endif %}"
-               class="attendance-filter-pill legend-absent {% if selected_status == 'rejected' %}active{% endif %}">
-                Rejected
-            </a>
-        </div>
-
-        <div class="sky-panel">
-
-            <div class="sky-panel-head">
-                <h6>Documents</h6>
-                <span class="sky-count">{{ documents|length }} shown</span>
-            </div>
-
-            {% if documents %}
-                <div class="attendance-list-wrapper">
-                    <table class="sky-table">
-                        <thead>
-                            <tr>
-                                <th>Employee</th>
-                                <th>Type</th>
-                                <th>Uploaded</th>
-                                <th>Status</th>
-                                <th>File</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for doc in documents %}
-                            <tr>
-                                <td>
-                                    <a href="{% url 'editProfile' doc.employee.uuid %}" class="sky-edit-link">
-                                        {{ doc.employee }}
-                                    </a>
-                                </td>
-                                <td>{{ doc.document_type.name }}</td>
-                                <td class="sky-time">{{ doc.uploaded_at|date:"d M Y" }}</td>
-                                <td>
-                                    {% if doc.is_verified %}
-                                        <span class="sky-pill verified">Verified</span>
-                                    {% elif doc.is_rejected %}
-                                        <span class="sky-pill absent" title="{{ doc.rejection_reason|default:'' }}">
-                                            Rejected
-                                        </span>
-                                        {% if doc.rejection_reason %}
-                                            <div class="doc-reject-reason">{{ doc.rejection_reason }}</div>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="sky-pill pending">Pending</span>
-                                    {% endif %}
-                                </td>
-                                <td class="doc-file-cell">
-                                    <a href="{{ doc.file.url }}" target="_blank" class="sky-edit-link">View</a>
-                                </td>
-                                <td>
-                                    <div class="doc-actions">
-
-                                        {% if not doc.is_verified %}
-                                            <form method="post" action="{% url 'hr_verify_document' doc.id %}">
-                                                {% csrf_token %}
-                                                <button type="submit" class="doc-btn doc-btn-verify">Verify</button>
-                                            </form>
-                                        {% endif %}
-
-                                        {% if not doc.is_rejected %}
-                                            <form
-                                                method="post"
-                                                action="{% url 'hr_reject_document' doc.id %}"
-                                                class="doc-reject-form"
-                                                onsubmit="return prepareRejectForm(this);"
-                                            >
-                                                {% csrf_token %}
-                                                <input type="hidden" name="rejection_reason" value="">
-                                                <button type="submit" class="doc-btn doc-btn-reject">Reject</button>
-                                            </form>
-                                        {% endif %}
-
-                                    </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <p class="sky-empty">No documents match this filter.</p>
-            {% endif %}
-
-        </div>
-
+    <div class="dr-head">
+        <div class="dr-eyebrow">HR / Document Review</div>
+        <h1>Employee Documents</h1>
     </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="dr-alert">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="dr-filters">
+        <a href="?" class="dr-pill-link {% if not selected_type and not selected_status %}active{% endif %}">All</a>
+        {% for dtype in document_types %}
+            <a href="?document_type={{ dtype.id }}{% if selected_status %}&is_verified={{ selected_status }}{% endif %}"
+               class="dr-pill-link {% if selected_type == dtype.id|stringformat:'s' %}active{% endif %}">{{ dtype.name }}</a>
+        {% endfor %}
+    </div>
+
+    <div class="dr-filters">
+        <a href="?is_verified=false{% if selected_type %}&document_type={{ selected_type }}{% endif %}"
+           class="dr-pill-link pending {% if selected_status == 'false' %}active{% endif %}">Pending</a>
+        <a href="?is_verified=true{% if selected_type %}&document_type={{ selected_type }}{% endif %}"
+           class="dr-pill-link {% if selected_status == 'true' %}active{% endif %}">Verified</a>
+        <a href="?is_rejected=true{% if selected_type %}&document_type={{ selected_type }}{% endif %}"
+           class="dr-pill-link rejected {% if selected_status == 'rejected' %}active{% endif %}">Rejected</a>
+    </div>
+
+    <div class="dr-card">
+        <div class="dr-card-head">
+            <h2>Documents</h2>
+            <span class="dr-count">{{ documents|length }} shown</span>
+        </div>
+
+        {% if documents %}
+            <table class="dr-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Type</th>
+                        <th>Uploaded</th>
+                        <th>Status</th>
+                        <th>File</th>
+                        <th class="dr-th-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in documents %}
+                        <tr>
+                            <td class="dr-td-emp" data-label="Employee">
+                                <a href="{% url 'editProfile' doc.employee.uuid %}" class="dr-emp">{{ doc.employee }}</a>
+                            </td>
+                            <td data-label="Type">{{ doc.document_type.name }}</td>
+                            <td class="dr-muted" data-label="Uploaded">{{ doc.uploaded_at|date:"d M Y" }}</td>
+                            <td class="dr-td-status" data-label="Status">
+                                {% if doc.is_verified %}
+                                    <span class="dr-status dr-status-verified">Verified</span>
+                                {% elif doc.is_rejected %}
+                                    <span class="dr-status dr-status-rejected" title="{{ doc.rejection_reason|default:'' }}">Rejected</span>
+                                    {% if doc.rejection_reason %}<span class="dr-reason">{{ doc.rejection_reason }}</span>{% endif %}
+                                {% else %}
+                                    <span class="dr-status dr-status-pending">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="File">
+                                <a href="{{ doc.file.url }}" target="_blank" rel="noopener" class="dr-btn">View</a>
+                            </td>
+                            <td class="dr-td-actions" data-label="Actions">
+                                <div class="dr-actions">
+                                    {% if not doc.is_verified %}
+                                        <form method="post" action="{% url 'hr_verify_document' doc.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dr-btn dr-btn-verify">Verify</button>
+                                        </form>
+                                    {% endif %}
+
+                                    {% if not doc.is_rejected %}
+                                        <form method="post" action="{% url 'hr_reject_document' doc.id %}" onsubmit="return prepareRejectForm(this);">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="rejection_reason" value="">
+                                            <button type="submit" class="dr-btn dr-btn-reject">Reject</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="dr-empty">No documents match this filter.</p>
+        {% endif %}
+    </div>
+
 </div>
 
 <script>

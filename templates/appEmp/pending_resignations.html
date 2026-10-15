@@ -3,154 +3,253 @@
 
 {% block title %}Pending Resignations{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-{% endblock %}
-
 {% block content %}
 
-<div class="sky-dashboard">
+<style>
+    .pr-wrap { max-width: 1200px; margin: 0 auto; }
 
-    <div class="container" style="max-width: 1200px;">
+    .pr-header { margin-bottom: 20px; }
+    .pr-eyebrow {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--green-dark);
+        background: var(--green-soft-2);
+        padding: 4px 10px;
+        border-radius: 999px;
+        margin-bottom: 10px;
+    }
+    .pr-header h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        line-height: 1.2;
+        color: var(--navy);
+    }
+    .pr-help { margin: 0; font-size: 14px; color: var(--ink-soft); }
 
-        <div class="sky-header">
+    .pr-panel {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+    .pr-panel-head {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        background: var(--green-soft-2);
+    }
+    .pr-panel-head h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--green-dark);
+    }
+    .pr-panel-body { padding: 0; }
 
-            <div>
-                <span class="sky-eyebrow">
-                    HR / Employee Exit
-                </span>
+    .pr-table { width: 100%; border-collapse: collapse; }
+    .pr-table th {
+        text-align: left;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+    .pr-table td {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        font-size: 14px;
+        color: var(--navy);
+        vertical-align: middle;
+    }
+    .pr-table tbody tr:last-child td { border-bottom: 0; }
+    .pr-table tbody tr:hover td { background: #fafcfb; }
+    .pr-table th.pr-r, .pr-table td.pr-r { text-align: right; }
+    .pr-table td.pr-reason { max-width: 300px; color: var(--ink-soft); }
 
-                <h1>Pending Resignations</h1>
+    .pr-name { font-weight: 700; color: var(--navy); }
+    .pr-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
 
-                <p class="sky-help-text">
-                    Review resignation requests submitted by employees.
-                </p>
-            </div>
+    .pr-pill {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: var(--green-soft-2);
+        color: var(--green-dark);
+        white-space: nowrap;
+    }
+    .pr-pill-warn { background: var(--rose-soft); color: var(--rose-dark); }
 
+    .pr-btn {
+        display: inline-block;
+        padding: 8px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--green);
+        border-radius: 8px;
+        text-decoration: none;
+        transition: background .15s ease;
+    }
+    .pr-btn:hover { background: var(--green-dark); color: #fff; text-decoration: none; }
+
+    .pr-empty {
+        padding: 40px 20px;
+        text-align: center;
+        font-size: 14px;
+        color: var(--ink-soft);
+    }
+
+    @media (max-width: 700px) {
+        .pr-header h1 { font-size: 22px; }
+        .pr-panel-body { padding: 12px; }
+
+        .pr-table, .pr-table tbody, .pr-table tr, .pr-table td { display: block; width: 100%; }
+        .pr-table thead { display: none; }
+
+        .pr-table tr {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 6px 14px;
+            margin-bottom: 12px;
+            background: #fff;
+        }
+        .pr-table tbody tr:last-child { margin-bottom: 0; }
+        .pr-table tbody tr:hover td { background: transparent; }
+
+        .pr-table td,
+        .pr-table td.pr-r {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            text-align: right;
+        }
+        .pr-table td:last-child { border-bottom: 0; }
+        .pr-table td::before {
+            content: attr(data-label);
+            flex: 0 0 38%;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+        .pr-table td.pr-reason { max-width: none; }
+
+        .pr-table td.pr-actioncell { display: block; padding-top: 12px; }
+        .pr-table td.pr-actioncell::before { display: none; }
+        .pr-table td.pr-actioncell .pr-btn {
+            display: block;
+            text-align: center;
+            padding: 12px 18px;
+            font-size: 16px;
+        }
+    }
+</style>
+
+<div class="pr-wrap">
+
+    <div class="pr-header">
+        <span class="pr-eyebrow">HR / Employee Exit</span>
+        <h1>Pending Resignations</h1>
+        <p class="pr-help">Review resignation requests submitted by employees.</p>
+    </div>
+
+    <div class="pr-panel">
+
+        <div class="pr-panel-head">
+            <h2>Awaiting HR Review</h2>
         </div>
 
+        <div class="pr-panel-body">
 
-        <div class="sky-panel">
+            {% if pending_resignations %}
 
-            <div class="sky-panel-head">
-                <h6>
-                    Awaiting HR Review
-                </h6>
-            </div>
+                <table class="pr-table">
 
-            <div class="sky-panel-body">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Reporting Manager</th>
+                            <th>Submitted</th>
+                            <th>Proposed LWD</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th class="pr-r">Action</th>
+                        </tr>
+                    </thead>
 
-                {% if pending_resignations %}
+                    <tbody>
 
-                    <div class="table-responsive">
+                        {% for exit_request in pending_resignations %}
 
-                        <table class="table align-middle">
+                            <tr>
 
-                            <thead>
+                                <td data-label="Employee">
+                                    <div>
+                                        <div class="pr-name">
+                                            {{ exit_request.employee.user.get_full_name|default:exit_request.employee.user.username }}
+                                        </div>
+                                        <div class="pr-sub">
+                                            {{ exit_request.employee.user.username }}
+                                        </div>
+                                    </div>
+                                </td>
 
-                                <tr>
-                                    <th>Employee</th>
-                                    <th>Reporting Manager</th>
-                                    <th>Submitted</th>
-                                    <th>Proposed LWD</th>
-                                    <th>Reason</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
+                                <td data-label="Manager">
+                                    {% if exit_request.employee.manager %}
+                                        {{ exit_request.employee.manager.user.get_full_name|default:exit_request.employee.manager.user.username }}
+                                    {% else %}
+                                        <span class="pr-pill pr-pill-warn">No Manager Assigned</span>
+                                    {% endif %}
+                                </td>
 
-                            </thead>
+                                <td data-label="Submitted">
+                                    {{ exit_request.created_at|date:"d M Y, h:i A" }}
+                                </td>
 
+                                <td data-label="Proposed LWD">
+                                    {{ exit_request.proposed_last_working_date|date:"d M Y" }}
+                                </td>
 
-                            <tbody>
+                                <td data-label="Reason" class="pr-reason">
+                                    {{ exit_request.reason }}
+                                </td>
 
-                                {% for exit_request in pending_resignations %}
+                                <td data-label="Status">
+                                    <span class="pr-pill">{{ exit_request.get_status_display }}</span>
+                                </td>
 
-                                    <tr>
+                                <td data-label="Action" class="pr-r pr-actioncell">
+                                    <a href="{% url 'reviewResignation' exit_request.uuid %}" class="pr-btn">Review</a>
+                                </td>
 
-                                        <td>
+                            </tr>
 
-                                            <strong>
-                                                {{ exit_request.employee.user.get_full_name|default:exit_request.employee.user.username }}
-                                            </strong>
+                        {% endfor %}
 
-                                            <div class="sky-help-text">
-                                                {{ exit_request.employee.user.username }}
-                                            </div>
+                    </tbody>
 
-                                        </td>
+                </table>
 
+            {% else %}
 
-                                        <td>
+                <div class="pr-empty">
+                    There are no resignation requests waiting for HR review.
+                </div>
 
-                                            {% if exit_request.employee.manager %}
-
-                                                {{ exit_request.employee.manager.user.get_full_name|default:exit_request.employee.manager.user.username }}
-
-                                            {% else %}
-
-                                                <span class="text-danger">
-                                                    No Manager Assigned
-                                                </span>
-
-                                            {% endif %}
-
-                                        </td>
-
-
-                                        <td>
-                                            {{ exit_request.created_at|date:"d M Y, h:i A" }}
-                                        </td>
-
-
-                                        <td>
-                                            {{ exit_request.proposed_last_working_date|date:"d M Y" }}
-                                        </td>
-
-
-                                        <td style="max-width: 300px;">
-                                            {{ exit_request.reason }}
-                                        </td>
-
-
-                                        <td>
-                                            <strong>
-                                                {{ exit_request.get_status_display }}
-                                            </strong>
-                                        </td>
-
-
-                                        <td>
-
-                                            <a
-                                                href="{% url 'reviewResignation' exit_request.uuid %}"
-                                                class="sky-header-btn"
-                                            >
-                                                Review
-                                            </a>
-
-                                        </td>
-
-                                    </tr>
-
-                                {% endfor %}
-
-                            </tbody>
-
-                        </table>
-
-                    </div>
-
-                {% else %}
-
-                    <div class="sky-empty">
-
-                        There are no resignation requests waiting for HR review.
-
-                    </div>
-
-                {% endif %}
-
-            </div>
+            {% endif %}
 
         </div>
 

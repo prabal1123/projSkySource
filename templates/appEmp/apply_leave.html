@@ -1,108 +1,140 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block title %}Apply Leave{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-{% endblock %}
-
 {% block content %}
-<div class="sky-dashboard">
-    <div class="container" style="max-width: 850px;">
+<style>
+    .al-page { max-width: 880px; margin: 0 auto; animation: alIn .4s ease-out; }
+    @keyframes alIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-        <div class="sky-header">
-            <div>
-                <span class="sky-eyebrow">Leaves / Application</span>
-                <h1>Apply for Leave</h1>
-                <p class="sky-help-text">
-                    Submit a leave request to your reporting manager.
-                </p>
-            </div>
+    .al-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
+    .al-eyebrow { color: var(--green, #2F6B4F); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+    .al-head h1 { margin: 0; font-size: 30px; letter-spacing: -.03em; color: var(--navy, #183D2F); }
+    .al-head p { margin: 7px 0 0; color: var(--ink-soft, #69756E); font-size: 14px; }
 
-            <a href="{% url 'myLeaveRequests' %}" class="sky-header-btn">
-                My Requests
-            </a>
+    .al-btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 18px; border-radius: 9px; border: 1px solid var(--green, #2F6B4F); background: var(--green, #2F6B4F); color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; transition: .2s ease; white-space: nowrap; }
+    .al-btn:hover { background: var(--green-dark, #214F3B); border-color: var(--green-dark, #214F3B); color: #fff; transform: translateY(-1px); }
+    .al-btn-ghost { background: #fff; color: var(--green-dark, #214F3B); border-color: var(--border, #E1E7E3); }
+    .al-btn-ghost:hover { background: var(--green-soft-2, #EEF6F1); color: var(--green-dark, #214F3B); }
+
+    .al-card { background: #fff; border: 1px solid var(--border, #E1E7E3); border-radius: 18px; box-shadow: 0 6px 22px rgba(24,61,47,.04); margin-bottom: 18px; overflow: hidden; }
+    .al-card-head { padding: 16px 22px; border-bottom: 1px solid var(--border, #E1E7E3); }
+    .al-card-head h2 { margin: 0; font-size: 16px; color: #111827; }
+    .al-card-body { padding: 22px; }
+
+    /* Balances */
+    .al-balances { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+    .al-balance { padding: 16px; border: 1px solid #E4EBE6; border-radius: 13px; background: #F7FAF8; min-width: 0; }
+    .al-balance span { display: block; font-size: 12px; color: var(--ink-soft, #69756E); margin-bottom: 6px; overflow-wrap: anywhere; }
+    .al-balance strong { display: block; font-size: 26px; line-height: 1.1; color: var(--green-dark, #214F3B); }
+    .al-balance small { font-size: 11px; color: #8a93a1; }
+    .al-empty { padding: 28px 16px; text-align: center; border: 1px dashed #D4E3D9; border-radius: 13px; background: #F7FAF8; color: var(--ink-soft, #69756E); font-size: 13px; }
+
+    /* Form */
+    .al-error-banner { margin-bottom: 18px; padding: 12px 14px; border-radius: 10px; background: var(--rose-soft, #FAEEEB); border: 1px solid #EDCAC3; color: var(--rose-dark, #A95345); font-size: 13px; font-weight: 500; }
+    .al-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .al-field { min-width: 0; }
+    .al-field.full { grid-column: 1 / -1; }
+    .al-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #374151; }
+    .al-field input:not([type="checkbox"]):not([type="radio"]),
+    .al-field select,
+    .al-field textarea {
+        display: block; width: 100%; max-width: 100%; box-sizing: border-box;
+        padding: 10px 12px; border: 1px solid #D9E1DC; border-radius: 9px;
+        font-size: 14px; font-family: inherit; color: var(--ink, #1C2B24); background: #fff;
+        transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .al-field textarea { min-height: 110px; resize: vertical; }
+    .al-field input:focus, .al-field select:focus, .al-field textarea:focus {
+        outline: none; border-color: #8CB59B; box-shadow: 0 0 0 3px rgba(47,107,79,.12);
+    }
+    .al-help { margin-top: 5px; font-size: 12px; color: #8a93a1; line-height: 1.45; }
+    .al-field-error { margin-top: 5px; font-size: 12.5px; font-weight: 500; color: var(--rose-dark, #A95345); }
+    .al-actions { display: flex; gap: 10px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border, #E1E7E3); }
+
+    @media (max-width: 700px) {
+        .al-head { flex-direction: column; align-items: flex-start; }
+        .al-head h1 { font-size: 26px; }
+        .al-head .al-btn { width: 100%; }
+        .al-card-head { padding: 14px 16px; }
+        .al-card-body { padding: 16px; }
+        .al-balances { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .al-balance { padding: 13px; }
+        .al-balance strong { font-size: 22px; }
+        .al-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+        .al-actions .al-btn { width: 100%; }
+        /* 16px stops iOS from zooming in when a field is tapped */
+        .al-field input:not([type="checkbox"]):not([type="radio"]), .al-field select, .al-field textarea { font-size: 16px; }
+    }
+</style>
+
+<div class="al-page">
+
+    <div class="al-head">
+        <div>
+            <div class="al-eyebrow">Leaves / Application</div>
+            <h1>Apply for Leave</h1>
+            <p>Submit a leave request to your reporting manager.</p>
         </div>
+        <a href="{% url 'myLeaveRequests' %}" class="al-btn al-btn-ghost">My Requests</a>
+    </div>
 
-        <div class="sky-panel mb-4">
-            <div class="sky-panel-head">
-                <h6>{{ current_year }} Leave Balance</h6>
-            </div>
-
-            <div class="sky-panel-body">
-                <div class="row">
+    <div class="al-card">
+        <div class="al-card-head"><h2>{{ current_year }} Leave Balance</h2></div>
+        <div class="al-card-body">
+            {% if balances %}
+                <div class="al-balances">
                     {% for balance in balances %}
-                        <div class="col-md-4 mb-3">
-                            <div class="leave-balance-card">
-                                <span>{{ balance.leave_type.name }}</span>
-                                <strong>{{ balance.available_balance }}</strong>
-                                <small>days available</small>
-                            </div>
-                        </div>
-                    {% empty %}
-                        <div class="sky-empty">
-                            No leave balance has been assigned for {{ current_year }}.
+                        <div class="al-balance">
+                            <span>{{ balance.leave_type.name }}</span>
+                            <strong>{{ balance.available_balance }}</strong>
+                            <small>days available</small>
                         </div>
                     {% endfor %}
                 </div>
-            </div>
+            {% else %}
+                <div class="al-empty">No leave balance has been assigned for {{ current_year }}.</div>
+            {% endif %}
         </div>
-
-        <div class="sky-panel">
-            <div class="sky-panel-head">
-                <h6>Leave Details</h6>
-            </div>
-
-            <div class="sky-panel-body">
-
-                {% if form.non_field_errors %}
-                    <div class="sky-auth-error-banner">
-                        {% for error in form.non_field_errors %}
-                            {{ error }}
-                        {% endfor %}
-                    </div>
-                {% endif %}
-
-                <form method="post">
-                    {% csrf_token %}
-
-                    <div class="row">
-                        {% for field in form %}
-                            <div class="{% if field.name == 'reason' %}col-12{% else %}col-md-6{% endif %} mb-3">
-
-                                <label
-                                    class="sky-form-label"
-                                    for="{{ field.id_for_label }}"
-                                >
-                                    {{ field.label }}
-                                </label>
-
-                                {{ field }}
-
-                                {% if field.help_text %}
-                                    <div class="sky-help-text">
-                                        {{ field.help_text }}
-                                    </div>
-                                {% endif %}
-
-                                {% for error in field.errors %}
-                                    <div class="sky-form-error">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% endfor %}
-                    </div>
-
-                    <button type="submit" class="sky-header-btn">
-                        Submit Leave Request
-                    </button>
-                </form>
-
-            </div>
-        </div>
-
     </div>
+
+    <div class="al-card">
+        <div class="al-card-head"><h2>Leave Details</h2></div>
+        <div class="al-card-body">
+
+            {% if form.non_field_errors %}
+                <div class="al-error-banner">
+                    {% for error in form.non_field_errors %}{{ error }} {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="al-grid">
+                    {% for field in form %}
+                        <div class="al-field {% if field.name == 'reason' %}full{% endif %}">
+                            <label class="al-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+
+                            {% if field.help_text %}
+                                <div class="al-help">{{ field.help_text }}</div>
+                            {% endif %}
+
+                            {% for error in field.errors %}
+                                <div class="al-field-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="al-actions">
+                    <button type="submit" class="al-btn">Submit Leave Request</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
 </div>
 {% endblock %}

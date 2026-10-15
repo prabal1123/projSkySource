@@ -3,161 +3,257 @@
 
 {% block title %}Manager Clearances{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-{% endblock %}
-
 {% block content %}
 
-<div class="sky-dashboard">
+<style>
+    .mq-wrap { max-width: 1200px; margin: 0 auto; }
 
-    <div class="container" style="max-width: 1200px;">
+    .mq-header { margin-bottom: 20px; }
+    .mq-eyebrow {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--green-dark);
+        background: var(--green-soft-2);
+        padding: 4px 10px;
+        border-radius: 999px;
+        margin-bottom: 10px;
+    }
+    .mq-header h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        line-height: 1.2;
+        color: var(--navy);
+    }
+    .mq-help { margin: 0; font-size: 14px; color: var(--ink-soft); }
 
-        <div class="sky-header">
+    .mq-panel {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+    .mq-panel-head {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        background: var(--green-soft-2);
+    }
+    .mq-panel-head h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--green-dark);
+    }
+    .mq-panel-body { padding: 0; }
 
-            <div>
-                <span class="sky-eyebrow">
-                    Manager / Exit Clearance
-                </span>
+    .mq-table { width: 100%; border-collapse: collapse; }
+    .mq-table th {
+        text-align: left;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+    .mq-table td {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        font-size: 14px;
+        color: var(--navy);
+        vertical-align: middle;
+    }
+    .mq-table tbody tr:last-child td { border-bottom: 0; }
+    .mq-table tbody tr:hover td { background: #fafcfb; }
+    .mq-table th.mq-r, .mq-table td.mq-r { text-align: right; }
+    .mq-table td.mq-reason { max-width: 350px; color: var(--ink-soft); }
 
-                <h1>Pending Manager NOCs</h1>
+    .mq-name { font-weight: 700; color: var(--navy); }
+    .mq-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
 
-                <p class="sky-help-text">
-                    Review employee exit clearances assigned to you.
-                </p>
-            </div>
+    .mq-pill {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: var(--green-soft-2);
+        color: var(--green-dark);
+        white-space: nowrap;
+    }
 
+    .mq-btn {
+        display: inline-block;
+        padding: 8px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--green);
+        border-radius: 8px;
+        text-decoration: none;
+        transition: background .15s ease;
+    }
+    .mq-btn:hover { background: var(--green-dark); color: #fff; text-decoration: none; }
+
+    .mq-empty {
+        padding: 40px 20px;
+        text-align: center;
+        font-size: 14px;
+        color: var(--ink-soft);
+    }
+
+    @media (max-width: 700px) {
+        .mq-header h1 { font-size: 22px; }
+        .mq-panel-body { padding: 12px; }
+
+        .mq-table, .mq-table tbody, .mq-table tr, .mq-table td { display: block; width: 100%; }
+        .mq-table thead { display: none; }
+
+        .mq-table tr {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 6px 14px;
+            margin-bottom: 12px;
+            background: #fff;
+        }
+        .mq-table tbody tr:last-child { margin-bottom: 0; }
+        .mq-table tbody tr:hover td { background: transparent; }
+
+        .mq-table td,
+        .mq-table td.mq-r {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            text-align: right;
+        }
+        .mq-table td:last-child { border-bottom: 0; }
+        .mq-table td::before {
+            content: attr(data-label);
+            flex: 0 0 38%;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+        .mq-table td.mq-reason { max-width: none; }
+
+        .mq-table td.mq-actioncell { display: block; padding-top: 12px; }
+        .mq-table td.mq-actioncell::before { display: none; }
+        .mq-table td.mq-actioncell .mq-btn {
+            display: block;
+            text-align: center;
+            padding: 12px 18px;
+            font-size: 16px;
+        }
+    }
+</style>
+
+<div class="mq-wrap">
+
+    <div class="mq-header">
+        <span class="mq-eyebrow">Manager / Exit Clearance</span>
+        <h1>Pending Manager NOCs</h1>
+        <p class="mq-help">Review employee exit clearances assigned to you.</p>
+    </div>
+
+    <div class="mq-panel">
+
+        <div class="mq-panel-head">
+            <h2>Awaiting Your Review</h2>
         </div>
 
+        <div class="mq-panel-body">
 
-        <div class="sky-panel">
+            {% if pending_approvals %}
 
-            <div class="sky-panel-head">
-                <h6>Awaiting Your Review</h6>
-            </div>
+                <table class="mq-table">
 
-            <div class="sky-panel-body">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Exit Type</th>
+                            <th>Last Working Date</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th class="mq-r">Action</th>
+                        </tr>
+                    </thead>
 
-                {% if pending_approvals %}
+                    <tbody>
 
-                    <div class="table-responsive">
+                        {% for approval in pending_approvals %}
 
-                        <table class="table align-middle">
+                            <tr>
 
-                            <thead>
-                                <tr>
-                                    <th>Employee</th>
-                                    <th>Exit Type</th>
-                                    <th>Last Working Date</th>
-                                    <th>Reason</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
+                                <td data-label="Employee">
+                                    <div>
+                                        <div class="mq-name">
+                                            {{ approval.clearance_request.employee.user.get_full_name|default:approval.clearance_request.employee.user.username }}
+                                        </div>
+                                        <div class="mq-sub">
+                                            {{ approval.clearance_request.employee.user.username }}
+                                        </div>
+                                    </div>
+                                </td>
 
-                            <tbody>
+                                <td data-label="Exit Type">
+                                    {% if approval.clearance_request.employee_exit_request %}
+                                        {{ approval.clearance_request.employee_exit_request.get_exit_type_display }}
+                                    {% else %}
+                                        Clearance
+                                    {% endif %}
+                                </td>
 
-                                {% for approval in pending_approvals %}
+                                <td data-label="Last Working Date">
+                                    {% if approval.clearance_request.employee_exit_request.final_last_working_date %}
+                                        {{ approval.clearance_request.employee_exit_request.final_last_working_date|date:"d M Y" }}
+                                    {% elif approval.clearance_request.employee_exit_request.proposed_last_working_date %}
+                                        {{ approval.clearance_request.employee_exit_request.proposed_last_working_date|date:"d M Y" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
 
-                                    <tr>
+                                <td data-label="Reason" class="mq-reason">
+                                    {% if approval.clearance_request.employee_exit_request %}
+                                        {{ approval.clearance_request.employee_exit_request.reason }}
+                                    {% else %}
+                                        {{ approval.clearance_request.reason }}
+                                    {% endif %}
+                                </td>
 
-                                        <td>
-                                            <strong>
-                                                {{ approval.clearance_request.employee.user.get_full_name|default:approval.clearance_request.employee.user.username }}
-                                            </strong>
+                                <td data-label="Status">
+                                    <span class="mq-pill">{{ approval.get_status_display }}</span>
+                                </td>
 
-                                            <div class="sky-help-text">
-                                                {{ approval.clearance_request.employee.user.username }}
-                                            </div>
-                                        </td>
+                                <td data-label="Action" class="mq-r mq-actioncell">
+                                    <a href="{% url 'managerClearanceReview' approval.uuid %}" class="mq-btn">Review</a>
+                                </td>
 
+                            </tr>
 
-                                        <td>
+                        {% endfor %}
 
-                                            {% if approval.clearance_request.employee_exit_request %}
+                    </tbody>
 
-                                                {{ approval.clearance_request.employee_exit_request.get_exit_type_display }}
+                </table>
 
-                                            {% else %}
+            {% else %}
 
-                                                Clearance
+                <div class="mq-empty">
+                    You have no pending Manager NOC requests.
+                </div>
 
-                                            {% endif %}
-
-                                        </td>
-
-
-                                        <td>
-
-                                            {% if approval.clearance_request.employee_exit_request.final_last_working_date %}
-
-                                                {{ approval.clearance_request.employee_exit_request.final_last_working_date|date:"d M Y" }}
-
-                                            {% elif approval.clearance_request.employee_exit_request.proposed_last_working_date %}
-
-                                                {{ approval.clearance_request.employee_exit_request.proposed_last_working_date|date:"d M Y" }}
-
-                                            {% else %}
-
-                                                —
-
-                                            {% endif %}
-
-                                        </td>
-
-
-                                        <td style="max-width: 350px;">
-
-                                            {% if approval.clearance_request.employee_exit_request %}
-
-                                                {{ approval.clearance_request.employee_exit_request.reason }}
-
-                                            {% else %}
-
-                                                {{ approval.clearance_request.reason }}
-
-                                            {% endif %}
-
-                                        </td>
-
-
-                                        <td>
-                                            <strong>
-                                                {{ approval.get_status_display }}
-                                            </strong>
-                                        </td>
-
-
-                                        <td>
-
-                                            <a
-                                                href="{% url 'managerClearanceReview' approval.uuid %}"
-                                                class="sky-header-btn"
-                                            >
-                                                Review
-                                            </a>
-
-                                        </td>
-
-                                    </tr>
-
-                                {% endfor %}
-
-                            </tbody>
-
-                        </table>
-
-                    </div>
-
-                {% else %}
-
-                    <div class="sky-empty">
-                        You have no pending Manager NOC requests.
-                    </div>
-
-                {% endif %}
-
-            </div>
+            {% endif %}
 
         </div>
 
