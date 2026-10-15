@@ -95,3 +95,35 @@ class FilterVisibilityTests(FilterBase):
         self.assertIn(self.in_a.uuid, found)
         self.assertIn(self.in_b.uuid, found)
         self.assertIn(self.loose.uuid, found)
+
+
+class ProjectsOffFilterTests(FilterBase):
+    def setUp(self):
+        super().setUp()
+        from app_organizations.entitlements import org_modules
+        from app_organizations.models import OrganizationModule
+
+        OrganizationModule.objects.filter(organization=self.org1).delete()
+        self.assertNotIn("projects", org_modules(self.org1))
+
+    def test_dropdown_hidden_even_for_superuser(self):
+        request = RequestFactory().get("/")
+        request.user = self.su
+        request.current_org = self.org1
+        context = project_filter_context(request)
+        self.assertFalse(context["project_filter_show"])
+        self.assertEqual(context["project_filter_options"], [])
+
+    def test_url_filter_is_ignored(self):
+        response, found = self.listed(project=str(self.pa.uuid))
+        self.assertFalse(response.context["project_filter_show"])
+        self.assertEqual(response.context["project_filter_selected"], "")
+        self.assertIn(self.in_a.uuid, found)
+        self.assertIn(self.in_b.uuid, found)
+        self.assertIn(self.loose.uuid, found)
+
+    def test_unassigned_filter_is_ignored(self):
+        response, found = self.listed(project="unassigned")
+        self.assertEqual(response.context["project_filter_selected"], "")
+        self.assertIn(self.in_a.uuid, found)
+        self.assertIn(self.loose.uuid, found)
