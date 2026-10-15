@@ -123,3 +123,47 @@ class UrlCoverageTests(TestCase):
             if module_for_view(callback, name) is None:
                 missing.append(name)
         self.assertEqual(sorted(set(missing)), [], "URL names with no module")
+
+class SidebarGateTests(TestCase):
+    def setUp(self):
+        self.client.raise_request_exception = False
+        self.root = User.objects.create_superuser("root", "root@x.com", "pw")
+        self.org, _ = create_organization(
+            name="Org A", owner_email="a@x.com",
+            owner_first_name="A", created_by=self.root,
+        )
+        self.client.force_login(self.root)
+        session = self.client.session
+        session["switched_org_id"] = self.org.pk
+        session.save()
+
+    def page(self):
+        response = self.client.get(reverse("employeeList"))
+        self.assertEqual(response.status_code, 200)
+        return response.content.decode()
+
+    def link(self, name):
+        return f'href="{reverse(name)}"'
+
+    def test_nothing_bought_hides_module_links(self):
+        html = self.page()
+        for name in ["pendingLeaveRequests", "holidayList", "workScheduleList",
+                     "bcasPassDashboard", "hr_document_list",
+                     "pendingResignations", "employeeBulkImport"]:
+            self.assertNotIn(self.link(name), html, name)
+
+    def test_leave_shows_leave_and_holidays_only(self):
+        grant_modules(self.org, ["leave"])
+        html = self.page()
+        self.assertIn(self.link("pendingLeaveRequests"), html)
+        self.assertIn(self.link("holidayList"), html)
+        self.assertNotIn(self.link("workScheduleList"), html)
+        self.assertNotIn(self.link("pendingResignations"), html)
+
+    def test_all_modules_show_everything(self):
+        grant_modules(self.org)
+        html = self.page()
+        for name in ["pendingLeaveRequests", "holidayList", "workScheduleList",
+                     "bcasPassDashboard", "hr_document_list",
+                     "pendingResignations", "employeeBulkImport"]:
+            self.assertIn(self.link(name), html, name)

@@ -1,3 +1,5 @@
+from app_organizations.entitlements import modules_for_request
+
 from .models import (
     ClearanceApproval,
     empProfile,
@@ -28,6 +30,11 @@ def user_role(request):
             "can_apply_clearance_for_employee": False,
             "can_initiate_employee_exit": False,
             "can_finalize_employee_exit": False,
+
+            "show_time_menu": False,
+            "show_docs_menu": False,
+            "show_exit_menu": False,
+            "show_lifecycle_section": False,
         }
 
     user = request.user
@@ -181,6 +188,27 @@ def user_role(request):
             and current_org.pk != home_org.pk
         )
 
+    # Module switches: hide menus the organization has not bought
+    mods = modules_for_request(request)
+    show_time_menu = bool(mods & {"attendance", "leave", "holidays"}) and (
+        can_review_attendance_exception
+        or can_review_leave
+        or can_manage_leave_balance
+        or can_manage_attendance
+    )
+    show_docs_menu = bool(mods & {"documents", "bcas"}) and (
+        has_employee_profile or can_manage_employees
+    )
+    show_exit_menu = "exit_clearance" in mods and (
+        has_employee_profile
+        or can_review_manager_noc
+        or can_review_finance_noc
+        or can_view_all_clearance_requests
+        or can_initiate_employee_exit
+        or can_finalize_employee_exit
+    )
+    show_lifecycle_section = show_exit_menu or user.is_superuser
+
     return {
         "current_org": current_org,
         "home_org": home_org,
@@ -221,4 +249,9 @@ def user_role(request):
         "can_finalize_employee_exit": (
             can_finalize_employee_exit
         ),
+
+        "show_time_menu": show_time_menu,
+        "show_docs_menu": show_docs_menu,
+        "show_exit_menu": show_exit_menu,
+        "show_lifecycle_section": show_lifecycle_section,
     }

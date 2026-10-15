@@ -72,11 +72,11 @@
             {% endif %}
 
             {% if has_employee_profile %}
-                <a href="{% url 'attendanceCalendarSelf' %}" class="hr-sidebar-link {% if request.resolver_match.url_name == 'attendanceCalendarSelf' %}active{% endif %}">
+                {% if 'attendance' in org_modules %}<a href="{% url 'attendanceCalendarSelf' %}" class="hr-sidebar-link {% if request.resolver_match.url_name == 'attendanceCalendarSelf' %}active{% endif %}">
                     <i class="bi bi-calendar-check"></i>
                     <span>My Attendance</span>
                     <span class="hr-pill-badge">Punch</span>
-                </a>
+                </a>{% endif %}
             {% endif %}
         </div>
 
@@ -85,7 +85,7 @@
             <div class="hr-sidebar-section-title">CORE OPERATIONS</div>
 
             <!-- Time & Absence -->
-            {% if can_review_attendance_exception or can_review_leave or can_manage_leave_balance or can_manage_attendance %}
+            {% if show_time_menu %}
                 <button
                     class="hr-sidebar-link hr-sidebar-toggle {% if request.resolver_match.url_name in 'pendingAttendanceExceptions applyLeave myLeaveRequests pendingLeaveRequests allLeaveRequests leaveBalanceList optionalHolidayApply pendingOptionalHolidayRequests holidayList holidayCalendar holidayYear holidayBulkUpload workScheduleList' %}active-parent{% endif %}"
                     type="button"
@@ -103,36 +103,36 @@
                 <div class="collapse hr-sidebar-submenu {% if request.resolver_match.url_name in 'pendingAttendanceExceptions applyLeave myLeaveRequests pendingLeaveRequests allLeaveRequests leaveBalanceList optionalHolidayApply pendingOptionalHolidayRequests holidayList holidayCalendar holidayYear holidayBulkUpload workScheduleList' %}show{% endif %}" id="timeAbsenceMenu">
                     {% if can_review_attendance_exception %}
                         <div class="hr-sidebar-subheading">Attendance</div>
-                        <a href="{% url 'pendingAttendanceExceptions' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'pendingAttendanceExceptions' %}active{% endif %}">Attendance Exceptions</a>
+                        {% if 'attendance' in org_modules %}<a href="{% url 'pendingAttendanceExceptions' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'pendingAttendanceExceptions' %}active{% endif %}">Attendance Exceptions</a>{% endif %}
                     {% endif %}
 
                     {% if has_employee_profile or can_review_leave or can_manage_leave_balance %}
                         <div class="hr-sidebar-subheading">Leaves</div>
                         {% if has_employee_profile %}
-                            <a href="{% url 'applyLeave' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'applyLeave' %}active{% endif %}">Apply Leave</a>
-                            <a href="{% url 'myLeaveRequests' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'myLeaveRequests' %}active{% endif %}">My Leave Requests</a>
+                            {% if 'leave' in org_modules %}<a href="{% url 'applyLeave' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'applyLeave' %}active{% endif %}">Apply Leave</a>{% endif %}
+                            {% if 'leave' in org_modules %}<a href="{% url 'myLeaveRequests' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'myLeaveRequests' %}active{% endif %}">My Leave Requests</a>{% endif %}
                         {% endif %}
                         {% if can_review_leave %}
-                            <a href="{% url 'pendingLeaveRequests' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'pendingLeaveRequests' %}active{% endif %}">Pending Requests</a>
-                            <a href="{% url 'allLeaveRequests' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'allLeaveRequests' %}active{% endif %}">All Leave Requests</a>
+                            {% if 'leave' in org_modules %}<a href="{% url 'pendingLeaveRequests' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'pendingLeaveRequests' %}active{% endif %}">Pending Requests</a>{% endif %}
+                            {% if 'leave' in org_modules %}<a href="{% url 'allLeaveRequests' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'allLeaveRequests' %}active{% endif %}">All Leave Requests</a>{% endif %}
                         {% endif %}
                         {% if can_manage_leave_balance %}
-                            <a href="{% url 'leaveBalanceList' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'leaveBalanceList' %}active{% endif %}">Leave Balances</a>
+                            {% if 'leave' in org_modules %}<a href="{% url 'leaveBalanceList' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'leaveBalanceList' %}active{% endif %}">Leave Balances</a>{% endif %}
                         {% endif %}
                     {% endif %}
 
                     {% if has_employee_profile or can_review_leave or can_manage_attendance %}
                         <div class="hr-sidebar-subheading">Holidays &amp; Schedule</div>
                         {% if has_employee_profile %}
-                            <a href="{% url 'optionalHolidayApply' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'optionalHolidayApply' %}active{% endif %}">Optional Holidays</a>
+                            {% if 'holidays' in org_modules %}<a href="{% url 'optionalHolidayApply' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'optionalHolidayApply' %}active{% endif %}">Optional Holidays</a>{% endif %}
                         {% endif %}
                         {% if can_review_leave %}
-                            <a href="{% url 'pendingOptionalHolidayRequests' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'pendingOptionalHolidayRequests' %}active{% endif %}">Pending Holiday Req.</a>
+                            {% if 'holidays' in org_modules %}<a href="{% url 'pendingOptionalHolidayRequests' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'pendingOptionalHolidayRequests' %}active{% endif %}">Pending Holiday Req.</a>{% endif %}
                         {% endif %}
                         {% if can_manage_attendance %}
-                            <a href="{% url 'holidayList' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'holidayList' %}active{% endif %}">Holiday List</a>
-                            <a href="{% url 'holidayCalendar' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'holidayCalendar' %}active{% endif %}">Monthly Calendar</a>
-                            <a href="{% url 'workScheduleList' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'workScheduleList' %}active{% endif %}">Work Schedules</a>
+                            {% if 'holidays' in org_modules %}<a href="{% url 'holidayList' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'holidayList' %}active{% endif %}">Holiday List</a>{% endif %}
+                            {% if 'holidays' in org_modules %}<a href="{% url 'holidayCalendar' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'holidayCalendar' %}active{% endif %}">Monthly Calendar</a>{% endif %}
+                            {% if 'attendance' in org_modules %}<a href="{% url 'workScheduleList' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'workScheduleList' %}active{% endif %}">Work Schedules</a>{% endif %}
                         {% endif %}
                     {% endif %}
                 </div>
@@ -157,13 +157,13 @@
                 <div class="collapse hr-sidebar-submenu {% if request.resolver_match.url_name in 'register employeeList employeeBulkImport verificationStats' %}show{% endif %}" id="peopleMenu">
                     <a href="{% url 'register' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'register' %}active{% endif %}">Add Employee</a>
                     <a href="{% url 'employeeList' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'employeeList' %}active{% endif %}">View Employees</a>
-                    <a href="{% url 'employeeBulkImport' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'employeeBulkImport' %}active{% endif %}">Bulk Import</a>
+                    {% if 'bulk_import' in org_modules %}<a href="{% url 'employeeBulkImport' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'employeeBulkImport' %}active{% endif %}">Bulk Import</a>{% endif %}
                     <a href="{% url 'verificationStats' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'verificationStats' %}active{% endif %}">Verification Status</a>
                 </div>
             {% endif %}
 
             <!-- Documents & Passes -->
-            {% if has_employee_profile or can_manage_employees %}
+            {% if show_docs_menu %}
                 <button
                     class="hr-sidebar-link hr-sidebar-toggle {% if request.resolver_match.url_name in 'upload_document hr_document_list bcasPassDashboard' %}active-parent{% endif %}"
                     type="button"
@@ -180,22 +180,22 @@
 
                 <div class="collapse hr-sidebar-submenu {% if request.resolver_match.url_name in 'upload_document hr_document_list bcasPassDashboard' %}show{% endif %}" id="documentsPassesMenu">
                     {% if has_employee_profile %}
-                        <a href="{% url 'upload_document' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'upload_document' %}active{% endif %}">My Documents</a>
+                        {% if 'documents' in org_modules %}<a href="{% url 'upload_document' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'upload_document' %}active{% endif %}">My Documents</a>{% endif %}
                     {% endif %}
                     {% if can_manage_employees %}
-                        <a href="{% url 'hr_document_list' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'hr_document_list' %}active{% endif %}">Document Review</a>
-                        <a href="{% url 'bcasPassDashboard' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'bcasPassDashboard' %}active{% endif %}">BCAS Passes</a>
+                        {% if 'documents' in org_modules %}<a href="{% url 'hr_document_list' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'hr_document_list' %}active{% endif %}">Document Review</a>{% endif %}
+                        {% if 'bcas' in org_modules %}<a href="{% url 'bcasPassDashboard' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'bcasPassDashboard' %}active{% endif %}">BCAS Passes</a>{% endif %}
                     {% endif %}
                 </div>
             {% endif %}
         </div>
 
         <!-- LIFECYCLE & GOVERNANCE -->
-        {% if has_employee_profile or can_review_manager_noc or can_review_finance_noc or can_view_all_clearance_requests or can_initiate_employee_exit or can_finalize_employee_exit or user.is_superuser %}
+        {% if show_lifecycle_section %}
             <div class="hr-sidebar-section">
                 <div class="hr-sidebar-section-title">LIFECYCLE &amp; GOVERNANCE</div>
 
-                {% if has_employee_profile or can_review_manager_noc or can_review_finance_noc or can_view_all_clearance_requests or can_initiate_employee_exit or can_finalize_employee_exit %}
+                {% if show_exit_menu %}
                     <button
                         class="hr-sidebar-link hr-sidebar-toggle {% if request.resolver_match.url_name in 'submitResignation myResignations managerClearanceQueue financeClearanceQueue pendingResignations allExitRequests initiateTermination readyForFinalization' %}active-parent{% endif %}"
                         type="button"
@@ -213,29 +213,29 @@
                     <div class="collapse hr-sidebar-submenu {% if request.resolver_match.url_name in 'submitResignation myResignations managerClearanceQueue financeClearanceQueue pendingResignations allExitRequests initiateTermination readyForFinalization' %}show{% endif %}" id="exitMenu">
                         {% if has_employee_profile %}
                             <div class="hr-sidebar-subheading">My Exit</div>
-                            <a href="{% url 'submitResignation' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'submitResignation' %}active{% endif %}">Submit Resignation</a>
-                            <a href="{% url 'myResignations' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'myResignations' %}active{% endif %}">My Resignations</a>
+                            {% if 'exit_clearance' in org_modules %}<a href="{% url 'submitResignation' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'submitResignation' %}active{% endif %}">Submit Resignation</a>{% endif %}
+                            {% if 'exit_clearance' in org_modules %}<a href="{% url 'myResignations' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'myResignations' %}active{% endif %}">My Resignations</a>{% endif %}
                         {% endif %}
 
                         {% if can_review_manager_noc %}
                             <div class="hr-sidebar-subheading">Clearance</div>
-                            <a href="{% url 'managerClearanceQueue' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'managerClearanceQueue' %}active{% endif %}">Manager NOCs</a>
+                            {% if 'exit_clearance' in org_modules %}<a href="{% url 'managerClearanceQueue' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'managerClearanceQueue' %}active{% endif %}">Manager NOCs</a>{% endif %}
                         {% endif %}
                         {% if can_review_finance_noc %}
-                            <a href="{% url 'financeClearanceQueue' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'financeClearanceQueue' %}active{% endif %}">Finance NOCs</a>
+                            {% if 'exit_clearance' in org_modules %}<a href="{% url 'financeClearanceQueue' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'financeClearanceQueue' %}active{% endif %}">Finance NOCs</a>{% endif %}
                         {% endif %}
 
                         {% if can_view_all_clearance_requests or can_initiate_employee_exit or can_finalize_employee_exit %}
                             <div class="hr-sidebar-subheading">Administration</div>
                             {% if can_view_all_clearance_requests %}
-                                <a href="{% url 'pendingResignations' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'pendingResignations' %}active{% endif %}">Pending Resignations</a>
-                                <a href="{% url 'allExitRequests' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'allExitRequests' %}active{% endif %}">All Exit Requests</a>
+                                {% if 'exit_clearance' in org_modules %}<a href="{% url 'pendingResignations' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'pendingResignations' %}active{% endif %}">Pending Resignations</a>{% endif %}
+                                {% if 'exit_clearance' in org_modules %}<a href="{% url 'allExitRequests' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'allExitRequests' %}active{% endif %}">All Exit Requests</a>{% endif %}
                             {% endif %}
                             {% if can_initiate_employee_exit %}
-                                <a href="{% url 'initiateTermination' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'initiateTermination' %}active{% endif %}">Initiate Termination</a>
+                                {% if 'exit_clearance' in org_modules %}<a href="{% url 'initiateTermination' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'initiateTermination' %}active{% endif %}">Initiate Termination</a>{% endif %}
                             {% endif %}
                             {% if can_finalize_employee_exit %}
-                                <a href="{% url 'readyForFinalization' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'readyForFinalization' %}active{% endif %}">Ready for Finalization</a>
+                                {% if 'exit_clearance' in org_modules %}<a href="{% url 'readyForFinalization' %}" class="hr-sidebar-sub-link {% if request.resolver_match.url_name == 'readyForFinalization' %}active{% endif %}">Ready for Finalization</a>{% endif %}
                             {% endif %}
                         {% endif %}
                     </div>

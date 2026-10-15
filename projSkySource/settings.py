@@ -195,6 +195,7 @@ TEMPLATES = [
 
                 "appEmp.context_processors.user_role",
                 "app_projects.context_processors.project_nav",
+                "app_organizations.context_processors.module_flags",
             ],
         },
     },
