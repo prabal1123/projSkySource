@@ -1,0 +1,115 @@
+/*
+ * Wage register (daily-wage staff, bulk monthly entry).
+ * Builds on payroll_ui.css (load that first). Scoped under .wr-page so it
+ * cannot leak into other screens. Replaces the .wage-ledger-* rules that
+ * lived in dashboard.css for this page (those are left untouched).
+ */
+
+/* ---------- Helper / formulas ---------- */
+.pr-page.wr-page .wr-help {
+    background: var(--pr-surface); border: 1px solid var(--pr-border);
+    border-radius: var(--pr-radius-lg); box-shadow: var(--pr-shadow);
+    margin-bottom: 20px; overflow: hidden;
+}
+.wr-page .wr-help summary {
+    cursor: pointer; padding: 12px 20px; font-size: 0.85rem; font-weight: 600;
+    color: var(--pr-primary); list-style: none; display: flex; align-items: center; gap: 8px;
+}
+.wr-page .wr-help summary::-webkit-details-marker { display: none; }
+.wr-page .wr-help summary::before { content: "▸"; transition: transform 0.15s ease; }
+.wr-page .wr-help[open] summary::before { transform: rotate(90deg); }
+.wr-page .wr-help-body {
+    padding: 4px 20px 18px; border-top: 1px solid var(--pr-border);
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px 28px;
+}
+.wr-page .wr-help-body p { margin: 0; font-size: 0.83rem; color: var(--pr-muted); line-height: 1.5; }
+.wr-page .wr-help-body strong { color: var(--pr-text); }
+.wr-page .wr-help-lead {
+    grid-column: 1 / -1; padding-top: 14px; font-size: 0.86rem !important; color: var(--pr-text) !important;
+}
+
+/* ---------- Ledger table ---------- */
+.wr-page .wr-scroll { overflow-x: auto; position: relative; }
+.wr-page table.wr-table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 0; min-width: 1280px; }
+
+.wr-page .wr-table thead th {
+    padding: 10px 12px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--pr-muted); background: #fff; border-bottom: 1px solid var(--pr-border);
+    font-weight: 700; white-space: nowrap; text-align: right; vertical-align: bottom;
+}
+.wr-page .wr-table thead tr.wr-groups th {
+    text-align: center; font-size: 0.68rem; color: var(--pr-primary); background: var(--pr-primary-light);
+    border-bottom: 1px solid #c7d2fe; border-left: 1px solid #fff;
+}
+.wr-page .wr-table thead th.wr-left { text-align: left; }
+.wr-page .wr-table thead th.wr-strong { color: var(--pr-primary); }
+
+.wr-page .wr-table td {
+    padding: 10px 12px; font-size: 0.86rem; border-bottom: 1px solid var(--pr-border);
+    vertical-align: middle; background: var(--pr-surface); white-space: nowrap;
+}
+.wr-page .wr-table tbody tr:nth-child(even) td { background: var(--pr-surface-alt); }
+.wr-page .wr-table tbody tr:hover td { background: #f1f5ff; }
+
+/* sticky employee column */
+.wr-page .wr-sticky {
+    position: sticky; left: 0; z-index: 2; min-width: 220px;
+    box-shadow: 1px 0 0 var(--pr-border);
+}
+.wr-page .wr-table thead .wr-sticky { z-index: 3; background: #fff; text-align: left; }
+.wr-page .wr-table thead tr.wr-groups .wr-sticky { background: var(--pr-primary-light); }
+
+.wr-page .wr-emp { display: flex; align-items: center; gap: 10px; }
+.wr-page .wr-avatar {
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+    background: var(--pr-primary-light); color: var(--pr-primary);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 700;
+}
+.wr-page .wr-name { font-weight: 700; color: var(--pr-text); line-height: 1.2; }
+.wr-page .wr-role { font-size: 0.75rem; color: var(--pr-muted); }
+.wr-page .wr-state { margin-top: 3px; }
+
+/* editable cells */
+.wr-page .wr-input { min-width: 108px; }
+.wr-page .wr-input .form-control {
+    width: 100%; height: 34px; padding: 4px 8px; font-size: 0.85rem;
+    border: 1px solid var(--pr-border); border-radius: var(--pr-radius-sm);
+    background: #fff; color: var(--pr-text); text-align: right;
+}
+.wr-page .wr-input .form-control[type="text"],
+.wr-page .wr-input .form-control[type="date"] { text-align: left; }
+.wr-page .wr-input .form-control:focus {
+    outline: none; border-color: var(--pr-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+.wr-page .wr-auto {
+    display: block; margin-top: 3px; font-size: 0.68rem; color: var(--pr-muted);
+    text-align: right; font-variant-numeric: tabular-nums;
+}
+
+/* computed cells */
+.wr-page .wr-calc { text-align: right; font-variant-numeric: tabular-nums; }
+.wr-page .wr-calc.is-gross { font-weight: 700; color: var(--pr-primary); }
+.wr-page .wr-calc.is-net { font-weight: 700; }
+.wr-page .wr-calc.is-minus { color: var(--pr-danger); }
+
+/* footer totals */
+.wr-page .wr-table tfoot td {
+    padding: 12px; font-size: 0.86rem; font-weight: 700; background: var(--pr-surface-alt);
+    border-top: 2px solid var(--pr-border); border-bottom: none;
+}
+.wr-page .wr-table tfoot .wr-sticky { background: var(--pr-surface-alt); }
+
+/* row errors */
+.wr-page .wr-error-row td { background: var(--pr-danger-light) !important; color: #991b1b; font-size: 0.82rem; white-space: normal; }
+.wr-page .wr-error-row ul { margin: 0; padding-left: 18px; }
+
+/* save bar */
+.wr-page .wr-savebar {
+    position: sticky; bottom: 0; z-index: 4;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+    padding: 14px 20px; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(6px);
+    border-top: 1px solid var(--pr-border);
+}
+.wr-page .wr-savebar-hint { font-size: 0.8rem; color: var(--pr-muted); }
