@@ -79,6 +79,10 @@
         <span class="stat-value">₹{{ salary.basic_salary|floatformat:2 }}</span>
       </div>
       <div class="stat-box">
+        <span class="stat-label">Wage Type</span>
+        <span class="stat-value">{{ salary.get_wage_type_display }}{% if salary.wage_type == "DAILY" and salary.daily_rate %} · ₹{{ salary.daily_rate|floatformat:2 }}/day{% endif %}</span>
+      </div>
+      <div class="stat-box">
         <span class="stat-label">HRA</span>
         <span class="stat-value">₹{{ salary.hra|floatformat:2 }}</span>
       </div>
@@ -127,6 +131,21 @@
           {% csrf_token %}
           
           <div class="salary-form-grid mb-3">
+            <div class="salary-field">
+              <label for="{{ salary_form.wage_type.id_for_label }}">Wage Type</label>
+              {{ salary_form.wage_type }}
+              {% for error in salary_form.wage_type.errors %}<div class="field-error" style="color: var(--danger);">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="salary-field" id="dailyRateField">
+              <label for="{{ salary_form.daily_rate.id_for_label }}">Daily Rate (daily-wage only)</label>
+              <div class="currency-input">
+                <span class="symbol">₹</span>
+                {{ salary_form.daily_rate }}
+              </div>
+              {% for error in salary_form.daily_rate.errors %}<div class="field-error" style="color: var(--danger);">{{ error }}</div>{% endfor %}
+            </div>
+
             <div class="salary-field">
               <label for="{{ salary_form.basic_salary.id_for_label }}">Basic Salary</label>
               <div class="currency-input">
@@ -189,3 +208,14 @@
     </div>
   {% endif %}
 </div>
+
+<script>
+  (function () {
+    var sel = document.getElementById("{{ salary_form.wage_type.id_for_label }}");
+    var box = document.getElementById("dailyRateField");
+    if (!sel || !box) return;
+    function sync() { box.style.display = sel.value === "DAILY" ? "" : "none"; }
+    sel.addEventListener("change", sync);
+    sync();
+  })();
+</script>

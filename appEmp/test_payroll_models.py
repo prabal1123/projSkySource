@@ -47,11 +47,35 @@ class SalaryDeductionFieldTests(common.Base):
 
     def test_salary_form_accepts_new_fields(self):
         form = SalaryForm({
+            "wage_type": "MONTHLY",
             "basic_salary": "40000", "hra": "10000", "pf": "4800",
             "esi": "375", "other_deductions": "50", "effective_date": "2026-10-01",
         })
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data["esi"], Decimal("375"))
+
+    def test_salary_form_daily_wage_requires_a_daily_rate(self):
+        data = {
+            "wage_type": "DAILY",
+            "basic_salary": "20000", "hra": "0", "pf": "0",
+            "esi": "0", "other_deductions": "0", "effective_date": "2026-10-01",
+        }
+        form = SalaryForm(data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("daily_rate", form.errors)
+
+        form = SalaryForm({**data, "daily_rate": "800"})
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["daily_rate"], Decimal("800"))
+
+    def test_salary_form_monthly_clears_daily_rate(self):
+        form = SalaryForm({
+            "wage_type": "MONTHLY", "daily_rate": "800",
+            "basic_salary": "40000", "hra": "0", "pf": "0",
+            "esi": "0", "other_deductions": "0", "effective_date": "2026-10-01",
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIsNone(form.cleaned_data["daily_rate"])
 
 
 class PayrollRecordTests(common.Base):

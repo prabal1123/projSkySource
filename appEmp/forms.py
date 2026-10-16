@@ -640,7 +640,9 @@ class SalaryForm(forms.ModelForm):
     class Meta:
         model = Salary
         fields = [
+            "wage_type",
             "basic_salary",
+            "daily_rate",
             "hra",
             "pf",
             "esi",
@@ -649,6 +651,10 @@ class SalaryForm(forms.ModelForm):
         ]
 
         widgets = {
+            "wage_type": forms.Select(attrs={"class": "form-control"}),
+            "daily_rate": forms.NumberInput(
+                attrs={"step": "0.01", "min": "0", "class": "form-control"}
+            ),
             "effective_date": forms.DateInput(
                 attrs={
                     "type": "date",
@@ -701,6 +707,24 @@ class SalaryForm(forms.ModelForm):
             )
 
         return value
+
+    def clean(self):
+        cleaned = super().clean()
+        wage_type = cleaned.get("wage_type")
+        daily_rate = cleaned.get("daily_rate")
+
+        if wage_type == "DAILY":
+            if not daily_rate or daily_rate <= 0:
+                self.add_error(
+                    "daily_rate",
+                    "Enter a daily rate greater than zero for daily-wage staff.",
+                )
+        elif wage_type == "MONTHLY":
+            # a monthly employee must not carry a stale daily rate
+            cleaned["daily_rate"] = None
+
+        return cleaned
+
 
 class AttendanceExceptionForm(forms.ModelForm):
     class Meta:
