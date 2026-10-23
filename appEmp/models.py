@@ -664,6 +664,22 @@ class Salary(models.Model):
     )
     basic_salary = EncryptedDecimalField(max_digits=12, decimal_places=2)
     hra = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    da = EncryptedDecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Dearness allowance (monthly). Counts as wages for PF.",
+    )
+    special_allowance = EncryptedDecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Balancing allowance (monthly). Not counted as wages unless the 50% rule applies.",
+    )
+    other_allowances = EncryptedDecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Any other fixed monthly allowance.",
+    )
+    use_statutory_wages = models.BooleanField(
+        default=False,
+        help_text="Calculate PF on statutory wages (Basic + DA, at least 50% of pay) instead of full pay.",
+    )
     pf = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)  # employee contribution, deducted not added
     esi = EncryptedDecimalField(
         max_digits=12, decimal_places=2, default=0,
@@ -722,12 +738,15 @@ class Salary(models.Model):
     # ── Derived figures ────────────────────────────────────────────────
     @property
     def gross_monthly(self):
-        return self.basic_salary + self.hra
+        return (
+            self.basic_salary + self.hra + self.da
+            + self.special_allowance + self.other_allowances
+        )
 
     @property
     def ctc_monthly(self):
-        """CTC = Basic + HRA only. PF is an employee deduction, NOT added to CTC."""
-        return self.basic_salary + self.hra
+        """Gross pay of all components. Employer PF/ESI are not added here."""
+        return self.gross_monthly
 
     @property
     def ctc_annual(self):
@@ -1097,6 +1116,12 @@ class PayrollRecord(models.Model):
     employer_pf_admin = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
     employer_esi = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
 
+    # ── Salary components and statutory wages (snapshot) ───────────────
+    da = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    special_allowance = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    other_allowances = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    statutory_wages = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+
     # ── Lock state ─────────────────────────────────────────────────────
     is_locked = models.BooleanField(default=False)
     locked_by = models.ForeignKey(
@@ -1194,6 +1219,7 @@ class StatutoryRule(models.Model):
         'ESIC_EMPLOYEE_RATE': 'ESIC employee rate',
         'ESIC_EMPLOYER_RATE': 'ESIC employer rate',
         'ESIC_DAILY_WAGE_EXEMPTION': 'ESIC daily wage below which employee share is exempt (Rs)',
+        'WAGES_MIN_SHARE': 'Minimum share of total pay counted as wages (50% rule)',
     }
 
     key = models.CharField(

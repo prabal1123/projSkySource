@@ -14,7 +14,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-from .payroll_service import earned_split
+from .payroll_service import earned_components, earned_split
 
 NAVY = colors.HexColor("#0F172A")
 TEAL = colors.HexColor("#0F9E96")
@@ -133,12 +133,21 @@ def build_payslip_pdf(record, compress=True):
     ]))
     elements += [t_att, Spacer(1, 6 * mm)]
 
+    parts = earned_components(record)
     earnings = [
         ["Earnings", "Amount (INR)"],
         ["Basic Salary", _inr(basic_earned)],
-        ["HRA", _inr(hra_earned)],
-        ["Gross Earnings", _inr(record.gross_earned)],
     ]
+    if record.da > ZERO:
+        earnings.append(["Dearness Allowance (DA)", _inr(parts["da"])])
+    earnings.append(["HRA", _inr(hra_earned)])
+    if record.special_allowance > ZERO:
+        earnings.append(["Special Allowance", _inr(parts["special"])])
+    if record.other_allowances > ZERO:
+        earnings.append(["Other Allowances", _inr(parts["other"])])
+    earnings.append(["Gross Earnings", _inr(record.gross_earned)])
+    if record.statutory_wages > ZERO and record.statutory_wages != record.gross_earned and record.pf > ZERO:
+        earnings.append([f"(PF calculated on statutory wages of {_inr(record.statutory_wages)})", ""])
     prorated = record.payable_days != Decimal(record.days_in_period)
     if prorated:
         earnings.append([
@@ -169,7 +178,7 @@ def build_payslip_pdf(record, compress=True):
         for i, row in enumerate(rows):
             if row[0] in ("Gross Earnings", "Total Deductions", "Total Employer Contribution"):
                 style.append(("FONTNAME", (0, i), (-1, i), "Helvetica-Bold"))
-            if row[0].startswith("(Pro-rated"):
+            if row[0].startswith("("):
                 style += [
                     ("FONTSIZE", (0, i), (-1, i), 8),
                     ("FONTNAME", (0, i), (-1, i), "Helvetica-Oblique"),

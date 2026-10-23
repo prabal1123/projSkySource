@@ -162,6 +162,15 @@ class PayrollResult:
     total_deductions: Decimal = ZERO
     net_pay: Decimal = ZERO
 
+    # Other salary components and statutory wages (Phase 3)
+    da: Decimal = ZERO
+    special_allowance: Decimal = ZERO
+    other_allowances: Decimal = ZERO
+    da_earned: Decimal = ZERO
+    special_earned: Decimal = ZERO
+    other_earned: Decimal = ZERO
+    statutory_wages: Decimal = ZERO
+
     # Employer share and wage bases (not deducted from the employee)
     pf_wage_base: Decimal = ZERO
     esi_wage_base: Decimal = ZERO
@@ -202,6 +211,10 @@ class PayrollResult:
             "total_deductions": self.total_deductions,
             "net_pay": self.net_pay,
             "pf_wage_base": self.pf_wage_base,
+            "da": self.da,
+            "special_allowance": self.special_allowance,
+            "other_allowances": self.other_allowances,
+            "statutory_wages": self.statutory_wages,
             "esi_wage_base": self.esi_wage_base,
             "employer_eps": self.employer_eps,
             "employer_epf": self.employer_epf,
@@ -392,15 +405,29 @@ def _calculate_one(employee, year, month, start, end, as_of, data):
     ratio = result.payable_days / Decimal(result.days_in_period)
     result.basic_salary = _money(salary.basic_salary)
     result.hra = _money(salary.hra)
-    result.gross_monthly = result.basic_salary + result.hra
-    result.basic_earned = _money(result.basic_salary * ratio)
+    result.da = _money(salary.da)
+    result.special_allowance = _money(salary.special_allowance)
+    result.other_allowances = _money(salary.other_allowances)
+    result.gross_monthly = (
+        result.basic_salary + result.hra + result.da
+        + result.special_allowance + result.other_allowances
+    )
     result.gross_earned = _money(result.gross_monthly * ratio)
-    result.hra_earned = result.gross_earned - result.basic_earned
+    parts = _split_earned(
+        result.basic_salary, result.da, result.special_allowance,
+        result.other_allowances, ratio, result.gross_earned,
+    )
+    result.basic_earned = parts["basic"]
+    result.hra_earned = parts["hra"]
+    result.da_earned = parts["da"]
+    result.special_earned = parts["special"]
+    result.other_earned = parts["other"]
 
     try:
+        result.statutory_wages = _statutory_wages(salary, result, data)
         stat = _statutory_amounts(
             salary, data.profiles.get(employee.pk),
-            result.gross_monthly, result.gross_earned, data,
+            result.gross_monthly, result.gross_earned, result.statutory_wages, data,
         )
     except StatutoryRuleMissing as exc:
         result.skipped = True
@@ -423,7 +450,42 @@ def _calculate_one(employee, year, month, start, end, as_of, data):
     return result
 
 
-def _statutory_amounts(salary, profile, gross_monthly, gross_earned, data):
+def _split_earned(basic, da, special, other, ratio, gross_earned):
+    """
+    Earned amount of each component. HRA takes the rounding remainder so the
+    parts always add up to gross_earned exactly.
+    """
+    parts = {
+        "basic": _money(basic * ratio),
+        "da": _money(da * ratio),
+        "special": _money(special * ratio),
+        "other": _money(other * ratio),
+    }
+    parts["hra"] = gross_earned - sum(parts.values())
+    return parts
+
+
+def _statutory_wages(salary, result, data):
+    """
+    Earned wages counted for PF. Salaries on the new structure follow the 50%
+    wages rule: Basic + DA, but never less than 50% of earned pay. Older
+    salaries keep using the full earned gross (Phase 2 behaviour).
+    """
+    if not salary.use_statutory_wages:
+        return result.gross_earned
+    share = data.rule("WAGES_MIN_SHARE")
+    wages = result.basic_earned + result.da_earned
+    floor = _money(result.gross_earned * share)
+    if wages < floor:
+        result.warnings.append(
+            f"Basic + DA (Rs {wages:,.2f}) is below {share * 100:.0f}% of earned pay, "
+            f"so PF is calculated on Rs {floor:,.2f} (the wages rule)."
+        )
+        return floor
+    return wages
+
+
+def _statutory_amounts(salary, profile, gross_monthly, gross_earned, pf_wages, data):
     """
     PF and ESI for one month, plus the employer's share.
 
@@ -449,9 +511,9 @@ def _statutory_amounts(salary, profile, gross_monthly, gross_earned, data):
 
     # ── PF ─────────────────────────────────────────────────────────────
     if pf_mode != "NA":
-        base = gross_earned
+        base = pf_wages
         if not on_full_wage:
-            base = min(gross_earned, rule("EPF_WAGE_CEILING"))
+            base = min(pf_wages, rule("EPF_WAGE_CEILING"))
         calc_pf = _money(base * rule("EPF_EMPLOYEE_RATE"))
         if pf_mode == "AUTO":
             out["pf"] = calc_pf
@@ -637,6 +699,14 @@ def earned_split(record):
     (basic_earned, hra_earned) for a saved record, using the same proration as
     the calculation. Used by the payslip so it matches the stored gross exactly.
     """
+    parts = earned_components(record)
+    return parts["basic"], parts["hra"]
+
+
+def earned_components(record):
+    """Earned amount of each salary component for a saved record."""
     ratio = record.payable_days / Decimal(record.days_in_period)
-    basic_earned = _money(record.basic_salary * ratio)
-    return basic_earned, record.gross_earned - basic_earned
+    return _split_earned(
+        record.basic_salary, record.da, record.special_allowance,
+        record.other_allowances, ratio, record.gross_earned,
+    )
