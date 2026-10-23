@@ -34,7 +34,7 @@ from .models import PayrollRecord, empProfile
 from .payslip_pdf import build_payroll_summary_pdf, build_payslip_pdf
 from .payroll_service import (
     calculate_payroll_for_employees,
-    earned_split,
+    earned_components,
     get_month_range,
     save_payroll_record,
 )
@@ -372,13 +372,20 @@ def payroll_employee_view(request, year, month, uuid):
     # Money lines: the snapshot when locked, otherwise the live calculation.
     result, record = row["result"], row["record"]
     if row["locked"]:
-        basic_earned, hra_earned = earned_split(record)
+        parts = earned_components(record)
         money = {
             "basic_salary": record.basic_salary,
             "hra": record.hra,
+            "da": record.da,
+            "special_allowance": record.special_allowance,
+            "other_allowances": record.other_allowances,
             "gross_monthly": record.gross_monthly,
-            "basic_earned": basic_earned,
-            "hra_earned": hra_earned,
+            "basic_earned": parts["basic"],
+            "hra_earned": parts["hra"],
+            "da_earned": parts["da"],
+            "special_earned": parts["special"],
+            "other_earned": parts["other"],
+            "statutory_wages": record.statutory_wages,
             "gross_earned": record.gross_earned,
             "pf": record.pf,
             "esi": record.esi,
@@ -391,7 +398,9 @@ def payroll_employee_view(request, year, month, uuid):
         money = {
             name: getattr(result, name)
             for name in (
-                "basic_salary", "hra", "gross_monthly", "basic_earned", "hra_earned",
+                "basic_salary", "hra", "da", "special_allowance", "other_allowances",
+                "gross_monthly", "basic_earned", "hra_earned", "da_earned",
+                "special_earned", "other_earned", "statutory_wages",
                 "gross_earned", "pf", "esi", "other_deductions", "tds",
                 "total_deductions", "net_pay",
             )

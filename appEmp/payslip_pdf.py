@@ -259,35 +259,64 @@ def build_payroll_summary_pdf(records, organization_name, year, month, project_l
         Spacer(1, 5 * mm),
     ]
 
-    header = [
-        "Employee", "Designation", "Payable\ndays", "LOP\ndays",
-        "Gross earned", "PF", "ESI", "Other", "TDS", "Net pay",
+    # DA, Special and Other allowance columns appear only when someone in this
+    # month's payroll has an amount, so older months print exactly as before.
+    extra = [
+        (label, key, key_earned)
+        for label, key, key_earned in (
+            ("DA", "da", "da"),
+            ("Special\nallowance", "special_allowance", "special"),
+            ("Other\nallowance", "other_allowances", "other"),
+        )
+        if any(getattr(r, key) > ZERO for r in records)
     ]
+    header = (
+        ["Employee", "Designation", "Payable\ndays", "LOP\ndays"]
+        + [label for label, _, _ in extra]
+        + ["Gross earned", "PF", "ESI", "Other", "TDS", "Net pay"]
+    )
     rows = [header]
     totals = {k: ZERO for k in ("gross", "pf", "esi", "other", "tds", "net")}
+    extra_totals = [ZERO for _ in extra]
     for r in records:
-        rows.append([
-            _employee_name(r.employee),
-            str(r.employee.designation) if r.employee.designation_id else "-",
-            _days(r.payable_days), _days(r.lop_days),
-            _inr(r.gross_earned), _inr(r.pf), _inr(r.esi), _inr(r.other_deductions),
-            _inr(r.tds), _inr(r.net_pay),
-        ])
+        parts = earned_components(r) if extra else {}
+        extra_cells = [parts[key_earned] for _, _, key_earned in extra]
+        rows.append(
+            [
+                _employee_name(r.employee),
+                str(r.employee.designation) if r.employee.designation_id else "-",
+                _days(r.payable_days), _days(r.lop_days),
+            ]
+            + [_inr(v) for v in extra_cells]
+            + [
+                _inr(r.gross_earned), _inr(r.pf), _inr(r.esi), _inr(r.other_deductions),
+                _inr(r.tds), _inr(r.net_pay),
+            ]
+        )
+        for i, v in enumerate(extra_cells):
+            extra_totals[i] += v
         totals["gross"] += r.gross_earned
         totals["pf"] += r.pf
         totals["esi"] += r.esi
         totals["other"] += r.other_deductions
         totals["tds"] += r.tds
         totals["net"] += r.net_pay
-    rows.append([
-        "Total", "", "", "", _inr(totals["gross"]), _inr(totals["pf"]), _inr(totals["esi"]),
-        _inr(totals["other"]), _inr(totals["tds"]), _inr(totals["net"]),
-    ])
-
-    table = Table(
-        rows, repeatRows=1,
-        colWidths=[48 * mm, 38 * mm, 16 * mm, 14 * mm, 28 * mm, 22 * mm, 20 * mm, 20 * mm, 22 * mm, 30 * mm],
+    rows.append(
+        ["Total", "", "", ""]
+        + [_inr(v) for v in extra_totals]
+        + [
+            _inr(totals["gross"]), _inr(totals["pf"]), _inr(totals["esi"]),
+            _inr(totals["other"]), _inr(totals["tds"]), _inr(totals["net"]),
+        ]
     )
+
+    widths = (
+        [48, 38, 16, 14] + [20] * len(extra) + [28, 22, 20, 20, 22, 30]
+    )
+    page_width = 273  # landscape A4 (297 mm) less the 12 mm margins
+    if sum(widths) > page_width:
+        widths = [w * page_width / sum(widths) for w in widths]
+    table = Table(rows, repeatRows=1, colWidths=[w * mm for w in widths])
     table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), NAVY),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),

@@ -143,8 +143,14 @@
                             <span class="val">₹ {{ money.gross_monthly|floatformat:2|intcomma }}</span>
                         </div>
                         <div class="pr-metric"><span>Basic (earned)</span><span class="val">₹ {{ money.basic_earned|floatformat:2|intcomma }}</span></div>
+                        {% if money.da > 0 %}<div class="pr-metric"><span>DA (earned)</span><span class="val">₹ {{ money.da_earned|floatformat:2|intcomma }}</span></div>{% endif %}
                         <div class="pr-metric"><span>HRA (earned)</span><span class="val">₹ {{ money.hra_earned|floatformat:2|intcomma }}</span></div>
+                        {% if money.special_allowance > 0 %}<div class="pr-metric"><span>Special Allowance (earned)</span><span class="val">₹ {{ money.special_earned|floatformat:2|intcomma }}</span></div>{% endif %}
+                        {% if money.other_allowances > 0 %}<div class="pr-metric"><span>Other Allowances (earned)</span><span class="val">₹ {{ money.other_earned|floatformat:2|intcomma }}</span></div>{% endif %}
                         <div class="pr-metric"><span>Gross Earned</span><span class="val">₹ {{ money.gross_earned|floatformat:2|intcomma }}</span></div>
+                        {% if money.pf > 0 and money.statutory_wages > 0 and money.statutory_wages != money.gross_earned %}
+                        <div class="pr-sub">PF is calculated on statutory wages of ₹ {{ money.statutory_wages|floatformat:2|intcomma }}.</div>
+                        {% endif %}
 
                         <div class="pr-metric is-section"><span>Deductions</span></div>
                         <div class="pr-metric"><span>PF Deduction</span><span class="val is-danger">- ₹ {{ money.pf|floatformat:2|intcomma }}</span></div>
