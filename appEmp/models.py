@@ -808,6 +808,8 @@ class WageRegisterEntry(models.Model):
     OT_UNIT_CHOICES = (('HOURS', 'Hours'), ('DAYS', 'Day-equivalent'))
 
     EPF_WAGE_CEILING = Decimal('15000')
+    EPF_WAGE_CEILING_NEW = Decimal('25000')
+    EPF_NEW_CEILING_FROM = (2026, 10)
     ESIC_WAGE_CEILING = Decimal('21000')
     BONUS_WAGE_CEILING = Decimal('21000')
 
@@ -980,8 +982,14 @@ class WageRegisterEntry(models.Model):
         return self.total_wages_workday_nh + self.bonus
 
     @property
+    def epf_wage_ceiling(self):
+        if (self.wage_month.year, self.wage_month.month) >= self.EPF_NEW_CEILING_FROM:
+            return self.EPF_WAGE_CEILING_NEW
+        return self.EPF_WAGE_CEILING
+
+    @property
     def epf_wage_base(self):
-        return min(self.total_wages_workday, self.EPF_WAGE_CEILING)
+        return min(self.total_wages_workday, self.epf_wage_ceiling)
 
     @property
     def epf_employee(self):                   # min(K,15000)×12% = O
@@ -993,7 +1001,9 @@ class WageRegisterEntry(models.Model):
 
     @property
     def esic_wage_base(self):
-        return min(self.total_wages_workday, self.ESIC_WAGE_CEILING)
+        if self.total_wages_workday > self.ESIC_WAGE_CEILING:
+            return Decimal('0.00')
+        return self.total_wages_workday
 
     @property
     def esic(self):                           # min(K,21000)×0.75% = P
@@ -1141,6 +1151,137 @@ class PayrollRecord(models.Model):
     @property
     def period_label(self):
         return date(self.year, self.month, 1).strftime("%B %Y")
+
+
+class StatutoryRule(models.Model):
+    """
+    A government-set rate or ceiling that applies to every organization.
+    Looked up by key and date (see appEmp/statutory.py), never hardcoded.
+    Rates are stored as fractions: 0.12 means 12%.
+    Edited by superusers only (Django admin).
+    """
+    KEY_LABELS = {
+        'EPF_WAGE_CEILING': 'EPF wage ceiling (monthly, Rs)',
+        'EPF_EMPLOYEE_RATE': 'EPF employee rate',
+        'EPF_EMPLOYER_EPS_RATE': 'EPF employer share to EPS',
+        'EPF_EMPLOYER_EPF_RATE': 'EPF employer share to EPF',
+        'EDLI_RATE': 'EDLI employer rate',
+        'EPF_ADMIN_RATE': 'EPF admin charges rate',
+        'ESIC_WAGE_CEILING': 'ESIC wage ceiling (monthly, Rs)',
+        'ESIC_EMPLOYEE_RATE': 'ESIC employee rate',
+        'ESIC_EMPLOYER_RATE': 'ESIC employer rate',
+        'ESIC_DAILY_WAGE_EXEMPTION': 'ESIC daily wage below which employee share is exempt (Rs)',
+    }
+
+    key = models.CharField(
+        max_length=40,
+        db_index=True,
+        help_text="Rule name, for example EPF_WAGE_CEILING."
+    )
+    value = models.DecimalField(max_digits=12, decimal_places=4)
+    effective_from = models.DateField()
+    effective_to = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Last day this value applies. Leave blank if it is still in force."
+    )
+    note = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Source or notification reference."
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['key', '-effective_from']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['key', 'effective_from'],
+                name='uniq_statutory_rule_key_from',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(effective_to__isnull=True)
+                | models.Q(effective_to__gte=models.F('effective_from')),
+                name='statutory_rule_to_after_from',
+            ),
+        ]
+
+    def clean(self):
+        if self.key not in self.KEY_LABELS:
+            raise ValidationError({'key': 'Unknown rule key.'})
+        if self.effective_from and self.effective_to and self.effective_to < self.effective_from:
+            raise ValidationError({'effective_to': 'Must be on or after the start date.'})
+        if self.effective_from:
+            my_end = self.effective_to or date.max
+            for other in StatutoryRule.objects.filter(key=self.key).exclude(pk=self.pk):
+                other_end = other.effective_to or date.max
+                if self.effective_from <= other_end and other.effective_from <= my_end:
+                    raise ValidationError(
+                        'These dates overlap another rule with the same key.'
+                    )
+
+    def __str__(self):
+        end = self.effective_to or 'open'
+        return f"{self.key} = {self.value} ({self.effective_from} to {end})"
+
+
+class EmployeeStatutoryProfile(models.Model):
+    """
+    Per-employee PF, ESI and tax settings.
+    PF and ESI amounts can be calculated automatically, kept as the fixed
+    amounts typed on Salary, or switched off for this employee.
+    UAN, ESIC number and PAN stay on empProfile.
+    An employee with no profile row is treated as FIXED.
+    """
+    MODE_AUTO = 'AUTO'
+    MODE_FIXED = 'FIXED'
+    MODE_NA = 'NA'
+    MODE_CHOICES = (
+        (MODE_AUTO, 'Auto-calculate'),
+        (MODE_FIXED, 'Fixed amount'),
+        (MODE_NA, 'Not applicable'),
+    )
+    REGIME_CHOICES = (
+        ('NEW', 'New regime'),
+        ('OLD', 'Old regime'),
+    )
+
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    employee = models.OneToOneField(
+        empProfile,
+        on_delete=models.CASCADE,
+        related_name='statutory_profile',
+    )
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        editable=False,
+        related_name="statutory_profiles",
+    )
+    pf_mode = models.CharField(max_length=5, choices=MODE_CHOICES, default=MODE_AUTO)
+    pf_on_full_wage = models.BooleanField(
+        default=False,
+        help_text="Contribute PF on the full wage instead of stopping at the ceiling."
+    )
+    esi_mode = models.CharField(max_length=5, choices=MODE_CHOICES, default=MODE_AUTO)
+    tax_regime = models.CharField(max_length=3, choices=REGIME_CHOICES, default='NEW')
+    work_state = models.CharField(
+        max_length=40,
+        blank=True,
+        help_text="State where the employee works. Used for professional tax later."
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['organization'])]
+
+    def save(self, *args, **kwargs):
+        self.organization_id = self.employee.organization_id
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Statutory profile: {self.employee}"
 
 
 class WorkSchedule(models.Model):
