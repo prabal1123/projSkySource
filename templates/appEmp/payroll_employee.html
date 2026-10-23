@@ -157,6 +157,9 @@
                         <div class="pr-metric"><span>ESI Deduction</span><span class="val is-danger">- ₹ {{ money.esi|floatformat:2|intcomma }}</span></div>
                         <div class="pr-metric"><span>Other Deductions</span><span class="val is-danger">- ₹ {{ money.other_deductions|floatformat:2|intcomma }}</span></div>
                         <div class="pr-metric"><span>TDS</span><span class="val is-danger">- ₹ {{ money.tds|floatformat:2|intcomma }}</span></div>
+                        {% if money.professional_tax > 0 %}
+                        <div class="pr-metric"><span>Professional Tax</span><span class="val is-danger">- ₹ {{ money.professional_tax|floatformat:2|intcomma }}</span></div>
+                        {% endif %}
                         <div class="pr-metric"><span>Total Deductions</span><span class="val is-danger">- ₹ {{ money.total_deductions|floatformat:2|intcomma }}</span></div>
 
                         <div class="pr-metric highlight">

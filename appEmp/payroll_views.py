@@ -391,6 +391,7 @@ def payroll_employee_view(request, year, month, uuid):
             "esi": record.esi,
             "other_deductions": record.other_deductions,
             "tds": record.tds,
+            "professional_tax": record.professional_tax,
             "total_deductions": record.total_deductions,
             "net_pay": record.net_pay,
         }
@@ -402,7 +403,7 @@ def payroll_employee_view(request, year, month, uuid):
                 "gross_monthly", "basic_earned", "hra_earned", "da_earned",
                 "special_earned", "other_earned", "statutory_wages",
                 "gross_earned", "pf", "esi", "other_deductions", "tds",
-                "total_deductions", "net_pay",
+                "professional_tax", "total_deductions", "net_pay",
             )
         }
     else:

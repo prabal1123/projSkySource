@@ -33,6 +33,8 @@ PF and ESI follow the employee's statutory profile (Auto / Fixed / Not applicabl
 the employer's share is calculated too. Other deductions are the fixed monthly
 amount on the Salary.
 TDS is the monthly TDS on the full (un-prorated) gross.
+Professional tax follows the state slabs for the employee's work state, on
+EARNED pay; a blank work state means no professional tax and no warning.
 Net pay is floored at zero, with a warning when that happens.
 
 Salary revision used: the latest one effective on or before the period end, so
@@ -47,6 +49,7 @@ import calendar
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from .models import (
@@ -57,9 +60,11 @@ from .models import (
     LeaveRequest,
     OptionalHolidayRequest,
     PayrollRecord,
+    ProfessionalTaxSlab,
     Salary,
     WorkSchedule,
 )
+from .professional_tax import professional_tax as compute_professional_tax, state_key
 from .statutory import StatutoryRuleMissing, get_rule
 
 ZERO = Decimal("0")
@@ -159,6 +164,7 @@ class PayrollResult:
     esi: Decimal = ZERO
     other_deductions: Decimal = ZERO
     tds: Decimal = ZERO
+    professional_tax: Decimal = ZERO
     total_deductions: Decimal = ZERO
     net_pay: Decimal = ZERO
 
@@ -208,6 +214,7 @@ class PayrollResult:
             "esi": self.esi,
             "other_deductions": self.other_deductions,
             "tds": self.tds,
+            "professional_tax": self.professional_tax,
             "total_deductions": self.total_deductions,
             "net_pay": self.net_pay,
             "pf_wage_base": self.pf_wage_base,
@@ -313,12 +320,30 @@ class _MonthData:
         }
         self._rule_date = start
         self._rules = {}
+        self._pt_slabs = None
 
     def rule(self, key):
         """Statutory rule value on the first day of the month (cached)."""
         if key not in self._rules:
             self._rules[key] = get_rule(key, self._rule_date)
         return self._rules[key]
+
+    def pt_slabs_for(self, state):
+        """
+        Professional tax slabs in force on the first day of the month for one
+        state. All states are loaded with one query, the first time any
+        employee has a work state, so months without one cost no extra query.
+        """
+        if self._pt_slabs is None:
+            self._pt_slabs = defaultdict(list)
+            slabs = ProfessionalTaxSlab.objects.filter(
+                effective_from__lte=self._rule_date
+            ).filter(
+                Q(effective_to__isnull=True) | Q(effective_to__gte=self._rule_date)
+            )
+            for slab in slabs:
+                self._pt_slabs[state_key(slab.state)].append(slab)
+        return self._pt_slabs.get(state_key(state), [])
 
     def schedule_for(self, employee):
         if employee.work_schedule_id and employee.work_schedule_id in self.schedules:
@@ -438,7 +463,13 @@ def _calculate_one(employee, year, month, start, end, as_of, data):
         setattr(result, name, value)
     result.other_deductions = _money(salary.other_deductions)
     result.tds = _money(salary.calculate_monthly_tds())
-    result.total_deductions = result.pf + result.esi + result.other_deductions + result.tds
+    result.professional_tax = _professional_tax(
+        data.profiles.get(employee.pk), result, data
+    )
+    result.total_deductions = (
+        result.pf + result.esi + result.other_deductions + result.tds
+        + result.professional_tax
+    )
 
     net = result.gross_earned - result.total_deductions
     if net < ZERO:
@@ -448,6 +479,30 @@ def _calculate_one(employee, year, month, start, end, as_of, data):
         net = ZERO
     result.net_pay = net
     return result
+
+
+def _professional_tax(profile, result, data):
+    """
+    Professional tax for one month, on EARNED pay.
+    No work state on the profile = not applicable: zero and no warning.
+    A work state with no slabs set up = zero with a warning.
+    """
+    state = (profile.work_state if profile else "").strip()
+    if not state:
+        return ZERO
+    slabs = data.pt_slabs_for(state)
+    if not slabs:
+        result.warnings.append(
+            f"No professional tax slabs are set up for {state}; "
+            "professional tax was taken as zero."
+        )
+        return ZERO
+    amount, warning = compute_professional_tax(
+        slabs, profile.gender, result.gross_earned, result.month
+    )
+    if warning:
+        result.warnings.append(warning)
+    return amount
 
 
 def _split_earned(basic, da, special, other, ratio, gross_earned):

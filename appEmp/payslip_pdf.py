@@ -161,8 +161,10 @@ def build_payslip_pdf(record, compress=True):
         ["ESI", _inr(record.esi)],
         ["Other Deductions", _inr(record.other_deductions)],
         ["TDS (Tax Deducted at Source)", _inr(record.tds)],
-        ["Total Deductions", _inr(record.total_deductions)],
     ]
+    if record.professional_tax > ZERO:
+        deductions.append(["Professional Tax", _inr(record.professional_tax)])
+    deductions.append(["Total Deductions", _inr(record.total_deductions)])
 
     def block(rows, header_color):
         table = Table(rows, colWidths=[120 * mm, 50 * mm])
@@ -270,13 +272,16 @@ def build_payroll_summary_pdf(records, organization_name, year, month, project_l
         )
         if any(getattr(r, key) > ZERO for r in records)
     ]
+    has_pt = any(r.professional_tax > ZERO for r in records)
     header = (
         ["Employee", "Designation", "Payable\ndays", "LOP\ndays"]
         + [label for label, _, _ in extra]
-        + ["Gross earned", "PF", "ESI", "Other", "TDS", "Net pay"]
+        + ["Gross earned", "PF", "ESI", "Other", "TDS"]
+        + (["Prof.\ntax"] if has_pt else [])
+        + ["Net pay"]
     )
     rows = [header]
-    totals = {k: ZERO for k in ("gross", "pf", "esi", "other", "tds", "net")}
+    totals = {k: ZERO for k in ("gross", "pf", "esi", "other", "tds", "pt", "net")}
     extra_totals = [ZERO for _ in extra]
     for r in records:
         parts = earned_components(r) if extra else {}
@@ -290,8 +295,10 @@ def build_payroll_summary_pdf(records, organization_name, year, month, project_l
             + [_inr(v) for v in extra_cells]
             + [
                 _inr(r.gross_earned), _inr(r.pf), _inr(r.esi), _inr(r.other_deductions),
-                _inr(r.tds), _inr(r.net_pay),
+                _inr(r.tds),
             ]
+            + ([_inr(r.professional_tax)] if has_pt else [])
+            + [_inr(r.net_pay)]
         )
         for i, v in enumerate(extra_cells):
             extra_totals[i] += v
@@ -300,18 +307,21 @@ def build_payroll_summary_pdf(records, organization_name, year, month, project_l
         totals["esi"] += r.esi
         totals["other"] += r.other_deductions
         totals["tds"] += r.tds
+        totals["pt"] += r.professional_tax
         totals["net"] += r.net_pay
     rows.append(
         ["Total", "", "", ""]
         + [_inr(v) for v in extra_totals]
         + [
             _inr(totals["gross"]), _inr(totals["pf"]), _inr(totals["esi"]),
-            _inr(totals["other"]), _inr(totals["tds"]), _inr(totals["net"]),
+            _inr(totals["other"]), _inr(totals["tds"]),
         ]
+        + ([_inr(totals["pt"])] if has_pt else [])
+        + [_inr(totals["net"])]
     )
 
     widths = (
-        [48, 38, 16, 14] + [20] * len(extra) + [28, 22, 20, 20, 22, 30]
+        [48, 38, 16, 14] + [20] * len(extra) + [28, 22, 20, 20, 22] + ([20] if has_pt else []) + [30]
     )
     page_width = 273  # landscape A4 (297 mm) less the 12 mm margins
     if sum(widths) > page_width:

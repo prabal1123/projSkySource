@@ -100,6 +100,7 @@ from django import forms
 from django.contrib.auth.models import Group
 from django.db.models import Q
 from .models import empDocument, DocumentTypeMaster, empProfile
+from .professional_tax import INDIAN_STATES, state_key
 from .models import Airport, BCASPass, PASS_TYPE_CHOICES, MANUAL_STATUS_CHOICES
 
 
@@ -767,11 +768,26 @@ class SalaryForm(forms.ModelForm):
 
 
 class StatutoryProfileForm(forms.ModelForm):
-    """How PF and ESI are worked out for one employee (Auto / Fixed / Not applicable)."""
+    """
+    How PF and ESI are worked out for one employee (Auto / Fixed / Not applicable),
+    plus the work state and gender that professional tax needs.
+    """
+
+    work_state = forms.ChoiceField(
+        required=False,
+        label="Work state (professional tax)",
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+    gender = forms.ChoiceField(
+        required=False,
+        label="Gender",
+        choices=[("", "Not set"), ("M", "Male"), ("F", "Female")],
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
 
     class Meta:
         model = EmployeeStatutoryProfile
-        fields = ["pf_mode", "pf_on_full_wage", "esi_mode"]
+        fields = ["pf_mode", "pf_on_full_wage", "esi_mode", "work_state", "gender"]
         labels = {
             "pf_mode": "PF",
             "pf_on_full_wage": "PF on full wage (no ceiling)",
@@ -782,6 +798,32 @@ class StatutoryProfileForm(forms.ModelForm):
             "esi_mode": forms.Select(attrs={"class": "form-control"}),
             "pf_on_full_wage": forms.CheckboxInput(),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        choices = [("", "Not set")] + [(name, name) for name in INDIAN_STATES]
+        saved = (self.instance.work_state or "").strip()
+        if saved:
+            by_key = {state_key(name): name for name in INDIAN_STATES}
+            canonical = by_key.get(state_key(saved))
+            if canonical:
+                self.initial["work_state"] = canonical
+            else:
+                # An older typed value that is not in the list stays selectable.
+                choices.append((saved, f"{saved} (typed earlier)"))
+        self.fields["work_state"].choices = choices
+
+    # A field missing from the POST keeps its saved value, so a request that
+    # only changes the PF and ESI modes never wipes the work state or gender.
+    def clean_work_state(self):
+        if "work_state" not in self.data:
+            return self.instance.work_state
+        return (self.cleaned_data.get("work_state") or "").strip()
+
+    def clean_gender(self):
+        if "gender" not in self.data:
+            return self.instance.gender
+        return self.cleaned_data.get("gender") or ""
 
 
 class AttendanceExceptionForm(forms.ModelForm):

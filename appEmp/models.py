@@ -1104,6 +1104,7 @@ class PayrollRecord(models.Model):
     esi = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
     other_deductions = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
     tds = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    professional_tax = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
     total_deductions = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
     net_pay = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
 
@@ -1275,6 +1276,79 @@ class StatutoryRule(models.Model):
         return f"{self.key} = {self.value} ({self.effective_from} to {end})"
 
 
+class ProfessionalTaxSlab(models.Model):
+    """
+    One professional tax slab of one state, monthly pay in rupees.
+
+    A slab matches when above < pay <= up_to (up_to blank = no upper limit).
+    month blank = every month; a month-specific slab (for example February)
+    wins over an every-month slab whenever both match.
+    gender A = everyone, M = men, F = women; a state that has any M or F slab
+    needs the employee's gender (see appEmp/professional_tax.py).
+    Edited by superusers only (Django admin).
+    """
+    GENDER_CHOICES = (
+        ('A', 'Everyone'),
+        ('M', 'Men'),
+        ('F', 'Women'),
+    )
+
+    state = models.CharField(max_length=40, db_index=True)
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default='A')
+    above = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Monthly pay must be more than this (this amount itself is not included)."
+    )
+    up_to = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True,
+        help_text="Monthly pay up to and including this amount. Leave blank for no upper limit."
+    )
+    month = models.PositiveSmallIntegerField(
+        null=True, blank=True,
+        help_text="Calendar month 1-12 if this slab applies to one month only. Leave blank for every month."
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    effective_from = models.DateField()
+    effective_to = models.DateField(
+        null=True, blank=True,
+        help_text="Last day this slab applies. Leave blank if it is still in force."
+    )
+    note = models.CharField(
+        max_length=255, blank=True,
+        help_text="Source or notification reference."
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['state', 'gender', 'above', 'month']
+        indexes = [models.Index(fields=['state', 'effective_from'])]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(amount__gte=0),
+                name='pt_slab_amount_not_negative',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(effective_to__isnull=True)
+                | models.Q(effective_to__gte=models.F('effective_from')),
+                name='pt_slab_to_after_from',
+            ),
+        ]
+
+    def clean(self):
+        if self.month is not None and not 1 <= self.month <= 12:
+            raise ValidationError({'month': 'Month must be between 1 and 12.'})
+        if self.up_to is not None and self.above is not None and self.up_to <= self.above:
+            raise ValidationError({'up_to': 'Must be more than the "above" amount.'})
+        if self.effective_from and self.effective_to and self.effective_to < self.effective_from:
+            raise ValidationError({'effective_to': 'Must be on or after the start date.'})
+
+    def __str__(self):
+        top = self.up_to if self.up_to is not None else 'no limit'
+        when = f"month {self.month}" if self.month else "every month"
+        return f"{self.state} {self.gender}: {self.above} to {top}, {when} = {self.amount}"
+
+
 class EmployeeStatutoryProfile(models.Model):
     """
     Per-employee PF, ESI and tax settings.
@@ -1319,6 +1393,12 @@ class EmployeeStatutoryProfile(models.Model):
         max_length=40,
         blank=True,
         help_text="State where the employee works. Used for professional tax later."
+    )
+    gender = models.CharField(
+        max_length=1,
+        choices=(('M', 'Male'), ('F', 'Female')),
+        blank=True,
+        help_text="Needed for professional tax in states whose slabs differ for men and women."
     )
     updated_at = models.DateTimeField(auto_now=True)
 

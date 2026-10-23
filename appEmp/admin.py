@@ -564,7 +564,7 @@ class WageRegisterEntryAdmin(OrgColumnMixin, admin.ModelAdmin):
 # =========================================================
 # Statutory rules and employee statutory settings
 # =========================================================
-from .models import StatutoryRule, EmployeeStatutoryProfile
+from .models import StatutoryRule, EmployeeStatutoryProfile, ProfessionalTaxSlab
 
 
 class SuperuserOnlyMixin:
@@ -592,9 +592,20 @@ class StatutoryRuleAdmin(SuperuserOnlyMixin, admin.ModelAdmin):
     ordering = ('key', '-effective_from')
 
 
+@admin.register(ProfessionalTaxSlab)
+class ProfessionalTaxSlabAdmin(SuperuserOnlyMixin, admin.ModelAdmin):
+    list_display = (
+        'state', 'gender', 'above', 'up_to', 'month', 'amount',
+        'effective_from', 'effective_to', 'note',
+    )
+    list_filter = ('state', 'gender')
+    search_fields = ('state', 'note')
+    ordering = ('state', 'gender', 'above', 'month')
+
+
 @admin.register(EmployeeStatutoryProfile)
 class EmployeeStatutoryProfileAdmin(SuperuserOnlyMixin, OrgColumnMixin, admin.ModelAdmin):
-    list_display = ('employee', 'pf_mode', 'esi_mode', 'tax_regime', 'work_state')
+    list_display = ('employee', 'pf_mode', 'esi_mode', 'tax_regime', 'work_state', 'gender')
     list_filter = ('pf_mode', 'esi_mode', 'tax_regime')
     raw_id_fields = ('employee',)
     search_fields = (
