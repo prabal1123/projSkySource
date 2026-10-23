@@ -80,6 +80,7 @@ from .models import (
     empProfile,
     Attendance,
     Salary,
+    EmployeeStatutoryProfile,
     DesignationMaster,
     ShiftMaster,
     AttendanceException,
@@ -644,6 +645,10 @@ class SalaryForm(forms.ModelForm):
             "basic_salary",
             "daily_rate",
             "hra",
+            "da",
+            "special_allowance",
+            "other_allowances",
+            "use_statutory_wages",
             "pf",
             "esi",
             "other_deductions",
@@ -652,6 +657,16 @@ class SalaryForm(forms.ModelForm):
 
         widgets = {
             "wage_type": forms.Select(attrs={"class": "form-control"}),
+            "da": forms.NumberInput(
+                attrs={"step": "0.01", "min": "0", "class": "form-control"}
+            ),
+            "special_allowance": forms.NumberInput(
+                attrs={"step": "0.01", "min": "0", "class": "form-control"}
+            ),
+            "other_allowances": forms.NumberInput(
+                attrs={"step": "0.01", "min": "0", "class": "form-control"}
+            ),
+            "use_statutory_wages": forms.CheckboxInput(),
             "daily_rate": forms.NumberInput(
                 attrs={"step": "0.01", "min": "0", "class": "form-control"}
             ),
@@ -698,6 +713,31 @@ class SalaryForm(forms.ModelForm):
             ),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # An empty box means zero, so the older salary form posts still work.
+        for name in self.OPTIONAL_AMOUNTS:
+            self.fields[name].required = False
+
+    OPTIONAL_AMOUNTS = ("da", "special_allowance", "other_allowances")
+
+    def _optional_amount(self, name, label):
+        value = self.cleaned_data.get(name)
+        if value is None:
+            return Decimal("0")
+        if value < 0:
+            raise forms.ValidationError(f"{label} cannot be negative.")
+        return value
+
+    def clean_da(self):
+        return self._optional_amount("da", "DA")
+
+    def clean_special_allowance(self):
+        return self._optional_amount("special_allowance", "Special allowance")
+
+    def clean_other_allowances(self):
+        return self._optional_amount("other_allowances", "Other allowances")
+
     def clean_basic_salary(self):
         value = self.cleaned_data["basic_salary"]
 
@@ -724,6 +764,24 @@ class SalaryForm(forms.ModelForm):
             cleaned["daily_rate"] = None
 
         return cleaned
+
+
+class StatutoryProfileForm(forms.ModelForm):
+    """How PF and ESI are worked out for one employee (Auto / Fixed / Not applicable)."""
+
+    class Meta:
+        model = EmployeeStatutoryProfile
+        fields = ["pf_mode", "pf_on_full_wage", "esi_mode"]
+        labels = {
+            "pf_mode": "PF",
+            "pf_on_full_wage": "PF on full wage (no ceiling)",
+            "esi_mode": "ESI",
+        }
+        widgets = {
+            "pf_mode": forms.Select(attrs={"class": "form-control"}),
+            "esi_mode": forms.Select(attrs={"class": "form-control"}),
+            "pf_on_full_wage": forms.CheckboxInput(),
+        }
 
 
 class AttendanceExceptionForm(forms.ModelForm):

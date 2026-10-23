@@ -58,6 +58,7 @@ MODULES = {
         "label": "Payroll", "requires": ["attendance"],
         "url_names": [
             "salaryUpdate", "salarySlipSelf", "salarySlipAdmin",
+            "salaryCtcPreview", "statutoryProfileUpdate",
             "wageRegisterBulk",
             "payroll", "payrollCycle", "payrollEmployee",
             "payrollPayslip", "payrollSummaryPdf",

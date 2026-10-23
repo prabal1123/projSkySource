@@ -61,6 +61,31 @@
   }
   .salary-meta { font-size: 0.85rem; color: var(--text-muted); }
   .salary-meta .mono { font-family: monospace; font-weight: 600; color: var(--text-main); }
+
+  .salary-check { display: flex; align-items: flex-start; gap: 10px; }
+  .salary-check input { margin-top: 4px; }
+  .salary-check label {
+    text-transform: none; letter-spacing: 0; font-size: 0.88rem; margin: 0; font-weight: 500;
+    color: var(--text-main, #111827);
+  }
+  .salary-hint { font-size: 0.78rem; color: var(--text-muted, #62736a); margin-top: 4px; }
+
+  .ctc-calc, .statutory-box {
+    background: var(--surface, #ffffff); border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius-md, 10px); padding: 18px; margin-bottom: 20px;
+  }
+  .ctc-calc h4, .statutory-box h4 { font-size: 0.95rem; font-weight: 700; margin: 0 0 4px; }
+  .ctc-calc .salary-form-grid { margin-top: 12px; }
+  .ctc-calc input[type="number"] {
+    width: 100%; height: 42px; padding: 9px 12px; box-sizing: border-box; font-size: 0.95rem;
+    border: 1px solid var(--border, #e5e7eb); border-radius: var(--radius-sm, 6px);
+    background: var(--surface, #ffffff); color: var(--text-main, #111827);
+  }
+  .ctc-result { margin-top: 12px; font-size: 0.88rem; }
+  .ctc-result .ctc-error { color: var(--danger, #b91c1c); }
+  .ctc-result ul { margin: 6px 0 0; padding-left: 18px; color: var(--text-muted, #62736a); }
+  .statutory-box select { height: 42px; width: 100%; }
+  .statutory-box .salary-field { margin-bottom: 0; }
 </style>
 
 <div class="salary-body">
@@ -86,6 +111,24 @@
         <span class="stat-label">HRA</span>
         <span class="stat-value">₹{{ salary.hra|floatformat:2 }}</span>
       </div>
+      {% if salary.da > 0 %}
+      <div class="stat-box">
+        <span class="stat-label">DA</span>
+        <span class="stat-value">₹{{ salary.da|floatformat:2 }}</span>
+      </div>
+      {% endif %}
+      {% if salary.special_allowance > 0 %}
+      <div class="stat-box">
+        <span class="stat-label">Special Allowance</span>
+        <span class="stat-value">₹{{ salary.special_allowance|floatformat:2 }}</span>
+      </div>
+      {% endif %}
+      {% if salary.other_allowances > 0 %}
+      <div class="stat-box">
+        <span class="stat-label">Other Allowances</span>
+        <span class="stat-value">₹{{ salary.other_allowances|floatformat:2 }}</span>
+      </div>
+      {% endif %}
       <div class="stat-box">
         <span class="stat-label">PF</span>
         <span class="stat-value">₹{{ salary.pf|floatformat:2 }}</span>
@@ -129,7 +172,33 @@
       <div class="salary-form-box">
         <form method="post" action="{% url 'salaryUpdate' uuid=target_uuid %}">
           {% csrf_token %}
-          
+
+          <div class="ctc-calc" id="ctcCalc" data-url="{% url 'salaryCtcPreview' uuid=target_uuid %}">
+            <h4>CTC calculator</h4>
+            <div class="salary-hint">
+              Enter the monthly CTC (employer PF and ESI inside it). Basic, HRA and Special Allowance are filled in below for you to review.
+              DA and Other Allowances are taken from the boxes below; Special Allowance is the balance.
+            </div>
+            <div class="salary-form-grid">
+              <div class="salary-field">
+                <label for="ctcMonthly">Monthly CTC</label>
+                <div class="currency-input"><span class="symbol">₹</span><input type="number" id="ctcMonthly" step="0.01" min="0"></div>
+              </div>
+              <div class="salary-field">
+                <label for="ctcBasicPct">Basic (% of gross)</label>
+                <input type="number" id="ctcBasicPct" step="0.01" min="0" max="100" value="50">
+              </div>
+              <div class="salary-field">
+                <label for="ctcHraPct">HRA (% of Basic)</label>
+                <input type="number" id="ctcHraPct" step="0.01" min="0" value="40">
+              </div>
+            </div>
+            <div style="margin-top: 12px;">
+              <button type="button" class="btn btn-primary" id="ctcCalcBtn" style="width: auto; padding: 8px 16px; font-size: 0.85rem;">Fill the form</button>
+            </div>
+            <div class="ctc-result" id="ctcResult" aria-live="polite"></div>
+          </div>
+
           <div class="salary-form-grid mb-3">
             <div class="salary-field">
               <label for="{{ salary_form.wage_type.id_for_label }}">Wage Type</label>
@@ -165,6 +234,33 @@
             </div>
 
             <div class="salary-field">
+              <label for="{{ salary_form.da.id_for_label }}">DA (Dearness Allowance)</label>
+              <div class="currency-input">
+                <span class="symbol">₹</span>
+                {{ salary_form.da }}
+              </div>
+              {% for error in salary_form.da.errors %}<div class="field-error" style="color: var(--danger);">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="salary-field">
+              <label for="{{ salary_form.special_allowance.id_for_label }}">Special Allowance</label>
+              <div class="currency-input">
+                <span class="symbol">₹</span>
+                {{ salary_form.special_allowance }}
+              </div>
+              {% for error in salary_form.special_allowance.errors %}<div class="field-error" style="color: var(--danger);">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="salary-field">
+              <label for="{{ salary_form.other_allowances.id_for_label }}">Other Allowances</label>
+              <div class="currency-input">
+                <span class="symbol">₹</span>
+                {{ salary_form.other_allowances }}
+              </div>
+              {% for error in salary_form.other_allowances.errors %}<div class="field-error" style="color: var(--danger);">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="salary-field">
               <label for="{{ salary_form.pf.id_for_label }}">Provident Fund (PF)</label>
               <div class="currency-input">
                 <span class="symbol">₹</span>
@@ -196,6 +292,14 @@
               {{ salary_form.effective_date }}
               {% for error in salary_form.effective_date.errors %}<div class="field-error" style="color: var(--danger);">{{ error }}</div>{% endfor %}
             </div>
+
+            <div class="salary-field salary-check" style="grid-column: 1 / -1;">
+              {{ salary_form.use_statutory_wages }}
+              <div>
+                <label for="{{ salary_form.use_statutory_wages.id_for_label }}">Calculate PF on statutory wages</label>
+                <div class="salary-hint">{{ salary_form.use_statutory_wages.help_text }}</div>
+              </div>
+            </div>
           </div>
 
           <div style="text-align: right; margin-top: 16px;">
@@ -206,6 +310,35 @@
         </form>
       </div>
     </div>
+
+    {% if statutory_form %}
+      <div class="statutory-box" style="margin-top: 20px;">
+        <h4>PF and ESI settings</h4>
+        <div class="salary-hint" style="margin-bottom: 12px;">
+          Auto-calculate works PF and ESI out each month from earned pay; Fixed uses the PF and ESI amounts typed on the salary; Not applicable switches it off for this employee.
+        </div>
+        <form method="post" action="{% url 'statutoryProfileUpdate' uuid=target_uuid %}">
+          {% csrf_token %}
+          <div class="salary-form-grid">
+            <div class="salary-field">
+              <label for="{{ statutory_form.pf_mode.id_for_label }}">PF</label>
+              {{ statutory_form.pf_mode }}
+            </div>
+            <div class="salary-field">
+              <label for="{{ statutory_form.esi_mode.id_for_label }}">ESI</label>
+              {{ statutory_form.esi_mode }}
+            </div>
+            <div class="salary-field salary-check" style="align-self: end;">
+              {{ statutory_form.pf_on_full_wage }}
+              <label for="{{ statutory_form.pf_on_full_wage.id_for_label }}">{{ statutory_form.pf_on_full_wage.label }}</label>
+            </div>
+          </div>
+          <div style="text-align: right; margin-top: 14px;">
+            <button type="submit" class="btn btn-primary" style="width: auto; padding: 8px 20px; font-size: 0.9rem;">Save PF and ESI settings</button>
+          </div>
+        </form>
+      </div>
+    {% endif %}
   {% endif %}
 </div>
 
@@ -217,5 +350,82 @@
     function sync() { box.style.display = sel.value === "DAILY" ? "" : "none"; }
     sel.addEventListener("change", sync);
     sync();
+  })();
+
+  (function () {
+    var calc = document.getElementById("ctcCalc");
+    if (!calc) return;
+    var btn = document.getElementById("ctcCalcBtn");
+    var out = document.getElementById("ctcResult");
+    var ids = {
+      basic: "{{ salary_form.basic_salary.id_for_label }}",
+      hra: "{{ salary_form.hra.id_for_label }}",
+      da: "{{ salary_form.da.id_for_label }}",
+      special: "{{ salary_form.special_allowance.id_for_label }}",
+      other: "{{ salary_form.other_allowances.id_for_label }}",
+      statutory: "{{ salary_form.use_statutory_wages.id_for_label }}",
+      date: "{{ salary_form.effective_date.id_for_label }}"
+    };
+    function el(id) { return document.getElementById(id); }
+    function value(id) { var e = el(id); return e ? e.value : ""; }
+    function show(text, isError, notes) {
+      out.textContent = "";
+      var line = document.createElement("div");
+      line.textContent = text;
+      if (isError) line.className = "ctc-error";
+      out.appendChild(line);
+      if (notes && notes.length) {
+        var ul = document.createElement("ul");
+        notes.forEach(function (n) {
+          var li = document.createElement("li");
+          li.textContent = n;
+          ul.appendChild(li);
+        });
+        out.appendChild(ul);
+      }
+    }
+    function inr(v) {
+      return "₹" + Number(v).toLocaleString("en-IN", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+    btn.addEventListener("click", function () {
+      var params = new URLSearchParams({
+        ctc: el("ctcMonthly").value,
+        basic_pct: el("ctcBasicPct").value,
+        hra_pct: el("ctcHraPct").value,
+        da: value(ids.da),
+        other_allowances: value(ids.other),
+        on_date: value(ids.date)
+      });
+      btn.disabled = true;
+      show("Calculating…", false);
+      fetch(calc.dataset.url + "?" + params.toString(), {
+        credentials: "same-origin",
+        headers: {"Accept": "application/json"}
+      }).then(function (resp) {
+        return resp.json().then(function (data) { return {ok: resp.ok, data: data}; });
+      }).then(function (r) {
+        if (!r.ok) { show(r.data.error || "Could not calculate this CTC.", true); return; }
+        var d = r.data;
+        el(ids.basic).value = d.basic;
+        el(ids.hra).value = d.hra;
+        el(ids.da).value = d.da;
+        el(ids.special).value = d.special_allowance;
+        el(ids.other).value = d.other_allowances;
+        var box = el(ids.statutory);
+        if (box) box.checked = true;
+        var notes = d.warnings.slice();
+        if (Number(d.difference) !== 0) {
+          notes.push("Rounding difference against the CTC: " + inr(d.difference) + ".");
+        }
+        show(
+          "Gross " + inr(d.gross) + " + employer PF " + inr(d.employer_pf) +
+          " + employer ESI " + inr(d.employer_esi) + " = " + inr(d.ctc_check) +
+          ". Review the form below, then save.",
+          false, notes
+        );
+      }).catch(function () {
+        show("Could not reach the server. Try again.", true);
+      }).then(function () { btn.disabled = false; });
+    });
   })();
 </script>

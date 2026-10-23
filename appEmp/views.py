@@ -45,6 +45,7 @@ from .forms import (
     LeaveRequestReviewForm,
     ProfileFormAdmin,
     SalaryForm,
+    StatutoryProfileForm,
     ResignationForm,
     ResignationReviewForm,
     ClearanceApprovalDecisionForm,
@@ -77,6 +78,7 @@ from .models import (
     LeaveRequest,
     LeaveTypeMaster,
     Salary,
+    EmployeeStatutoryProfile,
     WageRegisterEntry, 
     empProfile,
     ClearanceRequest,
@@ -907,6 +909,10 @@ def profileDetail_view(request, uuid):
             "can_edit_profile": True,
             "salary_form": (
                 SalaryForm(instance=target_salary)
+                if "payroll" in mods else None
+            ),
+            "statutory_form": (
+                _statutory_form_for(employee)
                 if "payroll" in mods else None
             ),
             "target_uuid": employee.uuid,
@@ -2312,6 +2318,124 @@ def salary_update_view(request, uuid):
         "editProfile",
         uuid=target.uuid,
     )
+
+
+def _statutory_form_for(employee):
+    """
+    The PF/ESI mode editor for one employee. An employee with no profile row is
+    treated as FIXED by payroll, so that is what the form shows for them.
+    """
+    profile = EmployeeStatutoryProfile.objects.filter(employee=employee).first()
+    if profile is not None:
+        return StatutoryProfileForm(instance=profile)
+    return StatutoryProfileForm(initial={
+        "pf_mode": EmployeeStatutoryProfile.MODE_FIXED,
+        "esi_mode": EmployeeStatutoryProfile.MODE_FIXED,
+    })
+
+
+@login_required
+def statutory_profile_update_view(request, uuid):
+    if not user_has_permission(request.user, "manage_salary"):
+        messages.error(request, "You don't have permission to do this.")
+        return redirect("dashboard")
+
+    target = get_object_or_404(
+        empProfile,
+        uuid=uuid,
+        organization=request.current_org,
+    )
+
+    if request.method == "POST":
+        profile = (
+            EmployeeStatutoryProfile.objects.filter(employee=target).first()
+            or EmployeeStatutoryProfile(employee=target)
+        )
+        form = StatutoryProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "PF and ESI settings saved.")
+        else:
+            messages.error(
+                request, "Please choose a valid PF and ESI setting."
+            )
+
+    return redirect("editProfile", uuid=target.uuid)
+
+
+@login_required
+def salary_ctc_preview_view(request, uuid):
+    """
+    Splits a monthly CTC into Basic / HRA / DA / Special / Other for the salary
+    form. Read-only: nothing is saved; HR reviews the filled form and saves it.
+    """
+    from decimal import InvalidOperation
+
+    from .ctc import CtcStructureError, solve_ctc_structure
+    from .statutory import StatutoryRuleMissing
+
+    if not user_has_permission(request.user, "manage_salary"):
+        return JsonResponse({"error": "You don't have permission to do this."}, status=403)
+
+    target = get_object_or_404(
+        empProfile,
+        uuid=uuid,
+        organization=request.current_org,
+    )
+
+    def amount(name, default="0"):
+        raw = (request.GET.get(name) or "").strip() or default
+        try:
+            value = Decimal(raw)
+        except InvalidOperation:
+            raise ValueError(f"{name} must be a number.")
+        if not value.is_finite():
+            raise ValueError(f"{name} must be a number.")
+        return value
+
+    try:
+        ctc = amount("ctc", default="")
+    except ValueError:
+        return JsonResponse({"error": "Enter the monthly CTC."}, status=400)
+
+    try:
+        basic_pct = amount("basic_pct")
+        hra_pct = amount("hra_pct")
+        da = amount("da")
+        other = amount("other_allowances")
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    if da < 0 or other < 0:
+        return JsonResponse({"error": "DA and other allowances cannot be negative."}, status=400)
+
+    try:
+        on_date = date.fromisoformat(request.GET.get("on_date") or "")
+    except ValueError:
+        on_date = timezone.localdate()
+
+    profile = EmployeeStatutoryProfile.objects.filter(employee=target).first()
+    pf_applicable = profile is None or profile.pf_mode != EmployeeStatutoryProfile.MODE_NA
+    esi_applicable = profile is None or profile.esi_mode != EmployeeStatutoryProfile.MODE_NA
+    pf_on_full_wage = bool(profile and profile.pf_on_full_wage)
+
+    try:
+        result = solve_ctc_structure(
+            ctc, basic_pct, hra_pct, on_date,
+            da=da, other_allowances=other,
+            pf_applicable=pf_applicable, esi_applicable=esi_applicable,
+            pf_on_full_wage=pf_on_full_wage,
+        )
+    except CtcStructureError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    except StatutoryRuleMissing as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    payload = {
+        key: (str(value) if isinstance(value, Decimal) else value)
+        for key, value in result.items()
+    }
+    payload["on_date"] = on_date.isoformat()
+    return JsonResponse(payload)
 
 
 # The old salary slip (full current salary, attendance ignored) was replaced by

@@ -182,6 +182,16 @@ path("hr/documents/<int:doc_id>/reject/", views.hr_reject_document, name="hr_rej
         views.salary_update_view,
         name="salaryUpdate",
     ),
+    path(
+        "salary/ctc-preview/<uuid:uuid>/",
+        views.salary_ctc_preview_view,
+        name="salaryCtcPreview",
+    ),
+    path(
+        "statutory/save/<uuid:uuid>/",
+        views.statutory_profile_update_view,
+        name="statutoryProfileUpdate",
+    ),
     path('whatsapp/webhook/', views.whatsapp_webhook, name='whatsapp_webhook'),
     path(
         "salary/slip/<int:year>/<int:month>/",
