@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from datetime import time
 from django.utils import timezone
 from decimal import Decimal
+from .statutory import get_rule
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 import calendar
@@ -807,10 +808,6 @@ class WageRegisterEntry(models.Model):
     """
     OT_UNIT_CHOICES = (('HOURS', 'Hours'), ('DAYS', 'Day-equivalent'))
 
-    EPF_WAGE_CEILING = Decimal('15000')
-    EPF_WAGE_CEILING_NEW = Decimal('25000')
-    EPF_NEW_CEILING_FROM = (2026, 10)
-    ESIC_WAGE_CEILING = Decimal('21000')
     BONUS_WAGE_CEILING = Decimal('21000')
 
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
@@ -981,11 +978,15 @@ class WageRegisterEntry(models.Model):
     def gross_total(self):                    # L+M = N
         return self.total_wages_workday_nh + self.bonus
 
+    def _rule(self, key):
+        cache = self.__dict__.setdefault('_rule_cache', {})
+        if key not in cache:
+            cache[key] = get_rule(key, self.month_start)
+        return cache[key]
+
     @property
     def epf_wage_ceiling(self):
-        if (self.wage_month.year, self.wage_month.month) >= self.EPF_NEW_CEILING_FROM:
-            return self.EPF_WAGE_CEILING_NEW
-        return self.EPF_WAGE_CEILING
+        return self._rule('EPF_WAGE_CEILING')
 
     @property
     def epf_wage_base(self):
@@ -993,21 +994,27 @@ class WageRegisterEntry(models.Model):
 
     @property
     def epf_employee(self):                   # min(K,15000)×12% = O
-        return (self.epf_wage_base * Decimal('0.12')).quantize(Decimal('0.01'))
+        return (self.epf_wage_base * self._rule('EPF_EMPLOYEE_RATE')).quantize(Decimal('0.01'))
 
     @property
     def epf_employer(self):                   # min(K,15000)×13% — display only, not deducted
-        return (self.epf_wage_base * Decimal('0.13')).quantize(Decimal('0.01'))
+        employer_rate = (
+            self._rule('EPF_EMPLOYER_EPS_RATE')
+            + self._rule('EPF_EMPLOYER_EPF_RATE')
+            + self._rule('EDLI_RATE')
+            + self._rule('EPF_ADMIN_RATE')
+        )
+        return (self.epf_wage_base * employer_rate).quantize(Decimal('0.01'))
 
     @property
     def esic_wage_base(self):
-        if self.total_wages_workday > self.ESIC_WAGE_CEILING:
+        if self.total_wages_workday > self._rule('ESIC_WAGE_CEILING'):
             return Decimal('0.00')
         return self.total_wages_workday
 
     @property
     def esic(self):                           # min(K,21000)×0.75% = P
-        return (self.esic_wage_base * Decimal('0.0075')).quantize(Decimal('0.01'))
+        return (self.esic_wage_base * self._rule('ESIC_EMPLOYEE_RATE')).quantize(Decimal('0.01'))
 
     @property
     def total_deduction(self):                # O+P = Q

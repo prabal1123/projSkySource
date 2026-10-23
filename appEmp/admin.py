@@ -559,3 +559,46 @@ class WageRegisterEntryAdmin(OrgColumnMixin, admin.ModelAdmin):
             'fields': ('mode_of_payment', 'payment_date')
         }),
     )
+
+
+# =========================================================
+# Statutory rules and employee statutory settings
+# =========================================================
+from .models import StatutoryRule, EmployeeStatutoryProfile
+
+
+class SuperuserOnlyMixin:
+    def has_module_permission(self, request):
+        return request.user.is_superuser
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def has_add_permission(self, request):
+        return request.user.is_superuser
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+
+@admin.register(StatutoryRule)
+class StatutoryRuleAdmin(SuperuserOnlyMixin, admin.ModelAdmin):
+    list_display = ('key', 'value', 'effective_from', 'effective_to', 'note')
+    list_filter = ('key',)
+    search_fields = ('key', 'note')
+    ordering = ('key', '-effective_from')
+
+
+@admin.register(EmployeeStatutoryProfile)
+class EmployeeStatutoryProfileAdmin(SuperuserOnlyMixin, OrgColumnMixin, admin.ModelAdmin):
+    list_display = ('employee', 'pf_mode', 'esi_mode', 'tax_regime', 'work_state')
+    list_filter = ('pf_mode', 'esi_mode', 'tax_regime')
+    raw_id_fields = ('employee',)
+    search_fields = (
+        'employee__user__username',
+        'employee__user__first_name',
+        'employee__user__last_name',
+    )
