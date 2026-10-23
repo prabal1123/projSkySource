@@ -29,7 +29,9 @@ Money
 -----
 payable_days = days employed in the month - loss-of-pay days
 gross_earned = gross_monthly x payable_days / days_in_month
-PF, ESI and other deductions are the fixed monthly amounts on the Salary.
+PF and ESI follow the employee's statutory profile (Auto / Fixed / Not applicable);
+the employer's share is calculated too. Other deductions are the fixed monthly
+amount on the Salary.
 TDS is the monthly TDS on the full (un-prorated) gross.
 Net pay is floored at zero, with a warning when that happens.
 
@@ -50,6 +52,7 @@ from django.utils import timezone
 from .models import (
     Attendance,
     EmployeeExitRequest,
+    EmployeeStatutoryProfile,
     Holiday,
     LeaveRequest,
     OptionalHolidayRequest,
@@ -57,6 +60,7 @@ from .models import (
     Salary,
     WorkSchedule,
 )
+from .statutory import StatutoryRuleMissing, get_rule
 
 ZERO = Decimal("0")
 HALF = Decimal("0.5")
@@ -158,6 +162,15 @@ class PayrollResult:
     total_deductions: Decimal = ZERO
     net_pay: Decimal = ZERO
 
+    # Employer share and wage bases (not deducted from the employee)
+    pf_wage_base: Decimal = ZERO
+    esi_wage_base: Decimal = ZERO
+    employer_eps: Decimal = ZERO
+    employer_epf: Decimal = ZERO
+    employer_edli: Decimal = ZERO
+    employer_pf_admin: Decimal = ZERO
+    employer_esi: Decimal = ZERO
+
     @property
     def period_label(self):
         return date(self.year, self.month, 1).strftime("%B %Y")
@@ -188,6 +201,13 @@ class PayrollResult:
             "tds": self.tds,
             "total_deductions": self.total_deductions,
             "net_pay": self.net_pay,
+            "pf_wage_base": self.pf_wage_base,
+            "esi_wage_base": self.esi_wage_base,
+            "employer_eps": self.employer_eps,
+            "employer_epf": self.employer_epf,
+            "employer_edli": self.employer_edli,
+            "employer_pf_admin": self.employer_pf_admin,
+            "employer_esi": self.employer_esi,
         }
 
 
@@ -272,6 +292,20 @@ class _MonthData:
             "employee_id", "-effective_date", "-created_at"
         ):
             self.salaries[sal.employee_id].append(sal)
+
+        # Statutory profiles: employee_id -> profile (none = FIXED)
+        self.profiles = {
+            p.employee_id: p
+            for p in EmployeeStatutoryProfile.objects.filter(employee_id__in=emp_ids)
+        }
+        self._rule_date = start
+        self._rules = {}
+
+    def rule(self, key):
+        """Statutory rule value on the first day of the month (cached)."""
+        if key not in self._rules:
+            self._rules[key] = get_rule(key, self._rule_date)
+        return self._rules[key]
 
     def schedule_for(self, employee):
         if employee.work_schedule_id and employee.work_schedule_id in self.schedules:
@@ -363,8 +397,18 @@ def _calculate_one(employee, year, month, start, end, as_of, data):
     result.gross_earned = _money(result.gross_monthly * ratio)
     result.hra_earned = result.gross_earned - result.basic_earned
 
-    result.pf = _money(salary.pf)
-    result.esi = _money(salary.esi)
+    try:
+        stat = _statutory_amounts(
+            salary, data.profiles.get(employee.pk),
+            result.gross_monthly, result.gross_earned, data,
+        )
+    except StatutoryRuleMissing as exc:
+        result.skipped = True
+        result.skip_reason = f"Statutory rule missing: {exc}"
+        return result
+    result.warnings.extend(stat.pop("warnings"))
+    for name, value in stat.items():
+        setattr(result, name, value)
     result.other_deductions = _money(salary.other_deductions)
     result.tds = _money(salary.calculate_monthly_tds())
     result.total_deductions = result.pf + result.esi + result.other_deductions + result.tds
@@ -377,6 +421,80 @@ def _calculate_one(employee, year, month, start, end, as_of, data):
         net = ZERO
     result.net_pay = net
     return result
+
+
+def _statutory_amounts(salary, profile, gross_monthly, gross_earned, data):
+    """
+    PF and ESI for one month, plus the employer's share.
+
+    Modes (from the employee's EmployeeStatutoryProfile; no profile = FIXED):
+      AUTO  employee amount is calculated from the statutory rules on earned wages
+      FIXED employee amount is the typed amount on Salary (as before)
+      NA    employee and employer amounts are zero
+    The employer share is always calculated from the rules, except when the
+    employee's amount is FIXED at zero (that means "does not contribute") or NA.
+    Rules are looked up on the first day of the month, same as the wage register.
+    ESI applies only when the full monthly gross is within the ESIC ceiling.
+    """
+    pf_mode = profile.pf_mode if profile else "FIXED"
+    esi_mode = profile.esi_mode if profile else "FIXED"
+    on_full_wage = bool(profile and profile.pf_on_full_wage)
+    rule = data.rule
+    warnings = []
+    out = {
+        "pf": ZERO, "esi": ZERO, "pf_wage_base": ZERO, "esi_wage_base": ZERO,
+        "employer_eps": ZERO, "employer_epf": ZERO, "employer_edli": ZERO,
+        "employer_pf_admin": ZERO, "employer_esi": ZERO,
+    }
+
+    # ── PF ─────────────────────────────────────────────────────────────
+    if pf_mode != "NA":
+        base = gross_earned
+        if not on_full_wage:
+            base = min(gross_earned, rule("EPF_WAGE_CEILING"))
+        calc_pf = _money(base * rule("EPF_EMPLOYEE_RATE"))
+        if pf_mode == "AUTO":
+            out["pf"] = calc_pf
+        else:
+            out["pf"] = _money(salary.pf)
+            if abs(out["pf"] - calc_pf) > ONE:
+                warnings.append(
+                    f"PF is a fixed Rs {out['pf']:,.2f}, but Rs {calc_pf:,.2f} "
+                    "would be calculated on earned wages."
+                )
+        if out["pf"] > ZERO:
+            out["pf_wage_base"] = _money(base)
+            out["employer_eps"] = _money(base * rule("EPF_EMPLOYER_EPS_RATE"))
+            out["employer_epf"] = _money(base * rule("EPF_EMPLOYER_EPF_RATE"))
+            out["employer_edli"] = _money(base * rule("EDLI_RATE"))
+            out["employer_pf_admin"] = _money(base * rule("EPF_ADMIN_RATE"))
+
+    # ── ESI ────────────────────────────────────────────────────────────
+    if esi_mode != "NA":
+        ceiling = rule("ESIC_WAGE_CEILING")
+        eligible = gross_monthly <= ceiling
+        base = gross_earned if eligible else ZERO
+        calc_esi = _money(base * rule("ESIC_EMPLOYEE_RATE"))
+        if esi_mode == "AUTO":
+            out["esi"] = calc_esi
+        else:
+            out["esi"] = _money(salary.esi)
+            if out["esi"] > ZERO and not eligible:
+                warnings.append(
+                    f"ESI is a fixed Rs {out['esi']:,.2f}, but the monthly gross "
+                    f"Rs {gross_monthly:,.2f} is above the ESI ceiling of Rs {ceiling:,.2f}."
+                )
+            elif abs(out["esi"] - calc_esi) > ONE:
+                warnings.append(
+                    f"ESI is a fixed Rs {out['esi']:,.2f}, but Rs {calc_esi:,.2f} "
+                    "would be calculated on earned wages."
+                )
+        if esi_mode == "AUTO" or out["esi"] > ZERO:
+            out["esi_wage_base"] = _money(base)
+            out["employer_esi"] = _money(base * rule("ESIC_EMPLOYER_RATE"))
+
+    out["warnings"] = warnings
+    return out
 
 
 def _classify_day(cur, emp_id, org_id, schedule, hired, last_day, as_of, data, result):

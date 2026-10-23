@@ -1088,6 +1088,15 @@ class PayrollRecord(models.Model):
     total_deductions = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
     net_pay = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
 
+    # ── Employer share and wage bases (snapshot, not deducted) ─────────
+    pf_wage_base = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    esi_wage_base = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    employer_eps = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    employer_epf = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    employer_edli = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    employer_pf_admin = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    employer_esi = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+
     # ── Lock state ─────────────────────────────────────────────────────
     is_locked = models.BooleanField(default=False)
     locked_by = models.ForeignKey(
@@ -1158,6 +1167,13 @@ class PayrollRecord(models.Model):
     @property
     def period_label(self):
         return date(self.year, self.month, 1).strftime("%B %Y")
+
+    @property
+    def employer_contribution_total(self):
+        return (
+            self.employer_eps + self.employer_epf + self.employer_edli
+            + self.employer_pf_admin + self.employer_esi
+        )
 
 
 class StatutoryRule(models.Model):

@@ -40,6 +40,25 @@ def _employee_name(employee):
     return employee.user.get_full_name() or employee.user.username
 
 
+def _employer_rows(record):
+    """Rows for the employer-contribution block; empty if there is nothing to show."""
+    items = [
+        ("Employer PF - EPS", record.employer_eps),
+        ("Employer PF - EPF", record.employer_epf),
+        ("Employer EDLI", record.employer_edli),
+        ("PF admin charges", record.employer_pf_admin),
+        ("Employer ESI", record.employer_esi),
+    ]
+    rows = [[label, _inr(value)] for label, value in items if value > ZERO]
+    if not rows:
+        return []
+    return (
+        [["Employer contributions (not deducted from pay)", "Amount (INR)"]]
+        + rows
+        + [["Total Employer Contribution", _inr(record.employer_contribution_total)]]
+    )
+
+
 def build_payslip_pdf(record, compress=True):
     """
     Payslip for one LOCKED PayrollRecord. Returns a BytesIO positioned at 0.
@@ -148,7 +167,7 @@ def build_payslip_pdf(record, compress=True):
             ("ALIGN", (1, 0), (1, -1), "RIGHT"),
         ]
         for i, row in enumerate(rows):
-            if row[0] in ("Gross Earnings", "Total Deductions"):
+            if row[0] in ("Gross Earnings", "Total Deductions", "Total Employer Contribution"):
                 style.append(("FONTNAME", (0, i), (-1, i), "Helvetica-Bold"))
             if row[0].startswith("(Pro-rated"):
                 style += [
@@ -173,6 +192,10 @@ def build_payslip_pdf(record, compress=True):
         ("ALIGN", (1, 0), (1, -1), "RIGHT"),
     ]))
     elements.append(net_table)
+
+    employer_rows = _employer_rows(record)
+    if employer_rows:
+        elements += [Spacer(1, 6 * mm), block(employer_rows, MUTED)]
 
     if record.mode_of_payment or record.payment_date:
         paid_bits = []
