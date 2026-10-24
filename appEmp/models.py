@@ -801,7 +801,9 @@ class Salary(models.Model):
         return tax.quantize(Decimal('0.01'))
 
     def calculate_monthly_tds(self):
-        return (self.calculate_annual_tax() / Decimal('12')).quantize(Decimal('0.01'))
+        """Estimated monthly TDS on a full year of this salary (see appEmp/tds.py)."""
+        from .tds import estimate_monthly_tds
+        return estimate_monthly_tds(self)
 
     @property
     def fixed_deductions_monthly(self):
@@ -1221,6 +1223,14 @@ class StatutoryRule(models.Model):
         'ESIC_EMPLOYER_RATE': 'ESIC employer rate',
         'ESIC_DAILY_WAGE_EXEMPTION': 'ESIC daily wage below which employee share is exempt (Rs)',
         'WAGES_MIN_SHARE': 'Minimum share of total pay counted as wages (50% rule)',
+        'TAX_STD_DEDUCTION_NEW': 'Standard deduction, new regime (yearly, Rs)',
+        'TAX_STD_DEDUCTION_OLD': 'Standard deduction, old regime (yearly, Rs)',
+        'TAX_REBATE_LIMIT_NEW': 'Rebate limit, new regime (taxable income, Rs)',
+        'TAX_REBATE_MAX_NEW': 'Maximum rebate, new regime (Rs)',
+        'TAX_REBATE_LIMIT_OLD': 'Rebate limit, old regime (taxable income, Rs)',
+        'TAX_REBATE_MAX_OLD': 'Maximum rebate, old regime (Rs)',
+        'TAX_CESS_RATE': 'Health and education cess rate on income tax',
+        'TAX_SURCHARGE_FROM': 'Taxable income above which surcharge applies (yearly, Rs)',
     }
 
     key = models.CharField(
@@ -1349,6 +1359,70 @@ class ProfessionalTaxSlab(models.Model):
         return f"{self.state} {self.gender}: {self.above} to {top}, {when} = {self.amount}"
 
 
+class IncomeTaxSlab(models.Model):
+    """
+    One income tax slab (yearly taxable income, rupees) of one tax regime.
+    A slab covers above < income <= up_to (up_to blank = no upper limit).
+    rate is a fraction: 0.05 means 5%.
+    Standard deduction, rebate and cess are StatutoryRule keys (TAX_...).
+    Used for TDS on salary (see appEmp/tds.py). Edited by superusers only.
+    """
+    REGIME_CHOICES = (
+        ('NEW', 'New regime'),
+        ('OLD', 'Old regime'),
+    )
+
+    regime = models.CharField(max_length=3, choices=REGIME_CHOICES, db_index=True)
+    above = models.DecimalField(
+        max_digits=14, decimal_places=2, default=0,
+        help_text="Yearly taxable income must be more than this."
+    )
+    up_to = models.DecimalField(
+        max_digits=14, decimal_places=2, null=True, blank=True,
+        help_text="Up to and including this amount. Leave blank for no upper limit."
+    )
+    rate = models.DecimalField(
+        max_digits=6, decimal_places=4,
+        help_text="As a fraction: 0.05 means 5%."
+    )
+    effective_from = models.DateField()
+    effective_to = models.DateField(
+        null=True, blank=True,
+        help_text="Last day this slab applies. Leave blank if it is still in force."
+    )
+    note = models.CharField(
+        max_length=255, blank=True,
+        help_text="Source or notification reference."
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['regime', '-effective_from', 'above']
+        indexes = [models.Index(fields=['regime', 'effective_from'])]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(rate__gte=0) & models.Q(rate__lte=1),
+                name='it_slab_rate_is_a_fraction',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(effective_to__isnull=True)
+                | models.Q(effective_to__gte=models.F('effective_from')),
+                name='it_slab_to_after_from',
+            ),
+        ]
+
+    def clean(self):
+        if self.up_to is not None and self.above is not None and self.up_to <= self.above:
+            raise ValidationError({'up_to': 'Must be more than the "above" amount.'})
+        if self.effective_from and self.effective_to and self.effective_to < self.effective_from:
+            raise ValidationError({'effective_to': 'Must be on or after the start date.'})
+
+    def __str__(self):
+        top = self.up_to if self.up_to is not None else 'no limit'
+        return f"{self.regime}: {self.above} to {top} at {self.rate}"
+
+
 class EmployeeStatutoryProfile(models.Model):
     """
     Per-employee PF, ESI and tax settings.
@@ -1389,6 +1463,16 @@ class EmployeeStatutoryProfile(models.Model):
     )
     esi_mode = models.CharField(max_length=5, choices=MODE_CHOICES, default=MODE_AUTO)
     tax_regime = models.CharField(max_length=3, choices=REGIME_CHOICES, default='NEW')
+    tds_mode = models.CharField(
+        max_length=5,
+        choices=(('AUTO', 'Auto-calculate'), ('NA', 'Not applicable')),
+        default='AUTO',
+        help_text="Auto-calculate TDS on salary, or switch it off for this employee."
+    )
+    declared_deductions = EncryptedDecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Old regime only: total yearly deductions and exemptions declared (80C, HRA and so on)."
+    )
     work_state = models.CharField(
         max_length=40,
         blank=True,

@@ -109,9 +109,9 @@ class DayClassificationTests(PayrollBase):
         self.assertEqual((r.days_in_period, r.weekly_off_days, r.working_days), (30, 8, 22))
         self.assertEqual((r.present_days, r.lop_days, r.payable_days), (D("22.0"), D("0"), D("30")))
         self.assertEqual(r.gross_earned, D("60000.00"))
-        self.assertEqual(r.tds, D("2340.00"))  # 28,080 annual tax / 12
-        self.assertEqual(r.total_deductions, D("4140.00"))  # 1800 PF + 2340 TDS
-        self.assertEqual(r.net_pay, D("55860.00"))
+        self.assertEqual(r.tds, D("0.00"))  # 7,20,000 a year is inside the 12 lakh rebate
+        self.assertEqual(r.total_deductions, D("1800.00"))  # 1800 PF
+        self.assertEqual(r.net_pay, D("58200.00"))
         self.assertFalse(r.provisional)
         self.assertEqual(r.warnings, [])
 
@@ -375,8 +375,8 @@ class SalarySelectionTests(PayrollBase):
         self.full_attendance(p)
         r = self.calc(p)
         self.assertEqual((r.esi, r.other_deductions), (D("450.00"), D("100.00")))
-        self.assertEqual(r.total_deductions, D("4690.00"))  # 1800+450+100+2340
-        self.assertEqual(r.net_pay, D("55310.00"))
+        self.assertEqual(r.total_deductions, D("2350.00"))  # 1800+450+100, TDS is 0
+        self.assertEqual(r.net_pay, D("57650.00"))
 
     def test_net_pay_never_goes_below_zero(self):
         p = self.employee(pf="70000")

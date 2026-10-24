@@ -56,7 +56,7 @@ class AdminPayslipTests(PdfBase):
         self.assertEqual(response["Content-Type"], "application/pdf")
         self.assertTrue(response["Content-Disposition"].startswith('attachment; filename="payslip_'))
         text = pdf_text(response.content)
-        for expected in ("Payslip", "September 2026", "Alice", "60,000.00", "4,140.00", "55,860.00"):
+        for expected in ("Payslip", "September 2026", "Alice", "60,000.00", "1,800.00", "58,200.00"):
             self.assertIn(expected, text)
 
     def test_not_locked_means_no_payslip(self):
@@ -79,7 +79,7 @@ class AdminPayslipTests(PdfBase):
         self.post("lock")
         Attendance.objects.filter(employee=p, date=date(YEAR, MONTH, 9)).delete()
         text = pdf_text(self.client.get(self.payslip_url(p)).content)
-        self.assertIn("55,860.00", text)
+        self.assertIn("58,200.00", text)
         self.assertNotIn("Pro-rated", text)
 
     def test_access_rules(self):
@@ -157,7 +157,7 @@ class MyPayslipsTests(PdfBase):
         text = pdf_text(response.content)
         self.assertIn("Alice", text)
         self.assertNotIn("Bob", text)
-        self.assertIn("55,860.00", text)
+        self.assertIn("58,200.00", text)
 
     def test_month_without_a_finalised_payslip_is_refused(self):
         a = self.named("Alice")

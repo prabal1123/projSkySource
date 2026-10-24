@@ -787,16 +787,27 @@ class StatutoryProfileForm(forms.ModelForm):
 
     class Meta:
         model = EmployeeStatutoryProfile
-        fields = ["pf_mode", "pf_on_full_wage", "esi_mode", "work_state", "gender"]
+        fields = [
+            "pf_mode", "pf_on_full_wage", "esi_mode", "work_state", "gender",
+            "tax_regime", "tds_mode", "declared_deductions",
+        ]
         labels = {
             "pf_mode": "PF",
             "pf_on_full_wage": "PF on full wage (no ceiling)",
             "esi_mode": "ESI",
+            "tax_regime": "Tax regime (TDS)",
+            "tds_mode": "TDS",
+            "declared_deductions": "Declared deductions per year (old regime, Rs)",
         }
         widgets = {
             "pf_mode": forms.Select(attrs={"class": "form-control"}),
             "esi_mode": forms.Select(attrs={"class": "form-control"}),
             "pf_on_full_wage": forms.CheckboxInput(),
+            "tax_regime": forms.Select(attrs={"class": "form-control"}),
+            "tds_mode": forms.Select(attrs={"class": "form-control"}),
+            "declared_deductions": forms.NumberInput(
+                attrs={"class": "form-control", "step": "0.01", "min": "0"}
+            ),
         }
 
     def __init__(self, *args, **kwargs):
@@ -812,6 +823,8 @@ class StatutoryProfileForm(forms.ModelForm):
                 # An older typed value that is not in the list stays selectable.
                 choices.append((saved, f"{saved} (typed earlier)"))
         self.fields["work_state"].choices = choices
+        for name in ("tax_regime", "tds_mode", "declared_deductions"):
+            self.fields[name].required = False
 
     # A field missing from the POST keeps its saved value, so a request that
     # only changes the PF and ESI modes never wipes the work state or gender.
@@ -824,6 +837,28 @@ class StatutoryProfileForm(forms.ModelForm):
         if "gender" not in self.data:
             return self.instance.gender
         return self.cleaned_data.get("gender") or ""
+
+    def clean_tax_regime(self):
+        if "tax_regime" not in self.data:
+            return self.instance.tax_regime
+        return self.cleaned_data.get("tax_regime") or "NEW"
+
+    def clean_tds_mode(self):
+        if "tds_mode" not in self.data:
+            return self.instance.tds_mode
+        return self.cleaned_data.get("tds_mode") or "AUTO"
+
+    def clean_declared_deductions(self):
+        from decimal import Decimal
+
+        if "declared_deductions" not in self.data:
+            return self.instance.declared_deductions
+        value = self.cleaned_data.get("declared_deductions")
+        if value is None:
+            return Decimal("0")
+        if value < 0:
+            raise forms.ValidationError("Must not be negative.")
+        return value
 
 
 class AttendanceExceptionForm(forms.ModelForm):

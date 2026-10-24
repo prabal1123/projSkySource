@@ -32,7 +32,7 @@ class SalaryDeductionFieldTests(common.Base):
         self.assertEqual(s.esi, Decimal("0"))
         self.assertEqual(s.other_deductions, Decimal("0"))
         # Same figures as test_phase2_salary.test_calculations_are_unchanged
-        self.assertEqual(s.net_monthly_pay, Decimal("60620.00"))
+        self.assertEqual(s.net_monthly_pay, Decimal("64000.00"))
 
     def test_esi_and_other_deductions_reduce_net_pay_and_are_encrypted(self):
         s = self.make_salary(
@@ -42,8 +42,8 @@ class SalaryDeductionFieldTests(common.Base):
             self.assertTrue(raw_in("appEmp_salary", s.pk, col).startswith("enc1:"), col)
         fresh = Salary.objects.get(pk=s.pk)
         self.assertEqual(fresh.fixed_deductions_monthly, Decimal("6625.00"))
-        self.assertEqual(fresh.total_deductions_monthly, Decimal("10005.00"))  # + TDS 3380
-        self.assertEqual(fresh.net_monthly_pay, Decimal("59995.00"))
+        self.assertEqual(fresh.total_deductions_monthly, Decimal("6625.00"))  # TDS is 0
+        self.assertEqual(fresh.net_monthly_pay, Decimal("63375.00"))
 
     def test_salary_form_accepts_new_fields(self):
         form = SalaryForm({

@@ -71,7 +71,7 @@ class RetiredSalarySlipTests(PdfBase):
         response = self.client.get(self.old_self(), follow=True)
         self.assertEqual(response["Content-Type"], "application/pdf")
         self.assertIn("payslip_", response["Content-Disposition"])
-        self.assertIn("55,860.00", pdf_text(response.content))
+        self.assertIn("58,200.00", pdf_text(response.content))
 
     def test_self_slip_url_without_finalised_payroll_explains(self):
         p = self.named("Alice")
@@ -131,7 +131,7 @@ class EndToEndMonthTests(PdfBase):
             n: self.row_for(roster, p)["figures"]["net_pay"]
             for n, p in (("alice", alice), ("bob", bob), ("cara", cara))
         }
-        self.assertEqual(net, {"alice": D("55860.00"), "bob": D("51310.00"), "cara": D("55860.00")})
+        self.assertEqual(net, {"alice": D("58200.00"), "bob": D("53650.00"), "cara": D("58200.00")})
 
         self.post("calculate")
         self.login_as(alice)
@@ -144,12 +144,12 @@ class EndToEndMonthTests(PdfBase):
         summary = pdf_text(self.client.get(self.summary_url()).content)
         self.assertIn("3 employees", summary)
         self.assertIn("176,000.00", summary)
-        self.assertIn("163,030.00", summary)
+        self.assertIn("170,050.00", summary)
 
         for profile, name, expected_net in (
-            (alice, "Alice", "55,860.00"),
-            (bob, "Bob", "51,310.00"),
-            (cara, "Cara", "55,860.00"),
+            (alice, "Alice", "58,200.00"),
+            (bob, "Bob", "53,650.00"),
+            (cara, "Cara", "58,200.00"),
         ):
             self.login_as(profile)
             listing = self.get(reverse("myPayslips"))
@@ -164,7 +164,7 @@ class EndToEndMonthTests(PdfBase):
         Attendance.objects.filter(employee=alice, date=date(YEAR, MONTH, 9)).delete()
         self.login_as(alice)
         self.assertIn(
-            "55,860.00", pdf_text(self.get(reverse("myPayslipPdf", args=[YEAR, MONTH])).content)
+            "58,200.00", pdf_text(self.get(reverse("myPayslipPdf", args=[YEAR, MONTH])).content)
         )
         self.client.force_login(self.hr.user)
         self.assertTrue(self.row_for(self.get(), alice)["stale"])
@@ -182,6 +182,6 @@ class EndToEndMonthTests(PdfBase):
         text = pdf_text(self.get(reverse("myPayslipPdf", args=[YEAR, MONTH])).content)
         self.assertIn("Pro-rated: 29 of 30 days", text)
         self.assertIn("58,000.00", text)
-        self.assertIn("53,860.00", text)
+        self.assertIn("56,200.00", text)
         record = PayrollRecord.objects.get(employee=alice)
-        self.assertEqual((record.gross_earned, record.net_pay), (D("58000.00"), D("53860.00")))
+        self.assertEqual((record.gross_earned, record.net_pay), (D("58000.00"), D("56200.00")))

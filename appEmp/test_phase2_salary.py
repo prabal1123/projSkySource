@@ -44,8 +44,8 @@ class SalaryEncryptionTests(common.Base):
         s = Salary.objects.get(pk=self.make_salary("zz_s2@example.com").pk)
         self.assertEqual(s.gross_monthly, Decimal("70000.00"))
         self.assertEqual(s.ctc_annual, Decimal("840000.00"))
-        self.assertEqual(s.calculate_monthly_tds(), Decimal("3380.00"))
-        self.assertEqual(s.net_monthly_pay, Decimal("60620.00"))
+        self.assertEqual(s.calculate_monthly_tds(), Decimal("0.00"))
+        self.assertEqual(s.net_monthly_pay, Decimal("64000.00"))
 
     def test_daily_rate_from_salary_and_from_daily_wage(self):
         monthly = Salary.objects.get(

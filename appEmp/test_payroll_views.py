@@ -130,7 +130,7 @@ class RosterTests(PayrollViewBase):
         row = self.row_for(response, a)
         self.assertEqual(row["state"], "new")
         self.assertEqual(row["figures"]["payable_days"], D("30"))
-        self.assertEqual(row["figures"]["net_pay"], D("55860.00"))
+        self.assertEqual(row["figures"]["net_pay"], D("58200.00"))
         self.assertContains(response, "Payroll — September 2026")
 
     def test_totals_add_up_the_displayed_rows(self):
@@ -294,7 +294,7 @@ class EmployeePageTests(PayrollViewBase):
         p = self.full_employee()
         response = self.get(self.page(p))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["money"]["net_pay"], D("55860.00"))
+        self.assertEqual(response.context["money"]["net_pay"], D("58200.00"))
         self.assertEqual(len(response.context["result"].days), 30)
         self.assertContains(response, "Weekly off")
         self.assertContains(response, "Net pay")

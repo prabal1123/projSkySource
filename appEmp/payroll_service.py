@@ -32,7 +32,8 @@ gross_earned = gross_monthly x payable_days / days_in_month
 PF and ESI follow the employee's statutory profile (Auto / Fixed / Not applicable);
 the employer's share is calculated too. Other deductions are the fixed monthly
 amount on the Salary.
-TDS is the monthly TDS on the full (un-prorated) gross.
+TDS is projected for the whole financial year (April to March) and spread over
+the months left (see appEmp/tds.py). No statutory profile means new regime.
 Professional tax follows the state slabs for the employee's work state, on
 EARNED pay; a blank work state means no professional tax and no warning.
 Net pay is floored at zero, with a warning when that happens.
@@ -65,6 +66,13 @@ from .models import (
     WorkSchedule,
 )
 from .professional_tax import professional_tax as compute_professional_tax, state_key
+from .tds import (
+    TaxRulesMissing,
+    compute_tds,
+    fy_start_year,
+    load_tax_rules,
+    months_left_in_fy,
+)
 from .statutory import StatutoryRuleMissing, get_rule
 
 ZERO = Decimal("0")
@@ -321,6 +329,10 @@ class _MonthData:
         self._rule_date = start
         self._rules = {}
         self._pt_slabs = None
+        self._start = start
+        self._emp_ids = emp_ids
+        self._tax_state = None
+        self._prior = None
 
     def rule(self, key):
         """Statutory rule value on the first day of the month (cached)."""
@@ -344,6 +356,34 @@ class _MonthData:
             for slab in slabs:
                 self._pt_slabs[state_key(slab.state)].append(slab)
         return self._pt_slabs.get(state_key(state), [])
+
+    def tax_rules(self):
+        """(rules, error) for income tax on the first day of the month (cached)."""
+        if self._tax_state is None:
+            try:
+                self._tax_state = (load_tax_rules(self._rule_date), None)
+            except TaxRulesMissing as exc:
+                self._tax_state = (None, exc)
+        return self._tax_state
+
+    def prior_payroll(self, employee_id):
+        """
+        {(year, month): (gross_earned, tds)} of the saved payroll records of
+        this financial year before this month. One query for all employees.
+        """
+        if self._prior is None:
+            self._prior = defaultdict(dict)
+            fy = fy_start_year(self._start.year, self._start.month)
+            in_fy = Q(year=fy, month__gte=4) | Q(year=fy + 1, month__lte=3)
+            rows = PayrollRecord.objects.filter(
+                employee_id__in=self._emp_ids
+            ).filter(in_fy).values_list(
+                "employee_id", "year", "month", "gross_earned", "tds"
+            )
+            for emp_id, y, m, gross, tds in rows:
+                if (y, m) < (self._start.year, self._start.month):
+                    self._prior[emp_id][(y, m)] = (Decimal(gross), Decimal(tds))
+        return self._prior.get(employee_id, {})
 
     def schedule_for(self, employee):
         if employee.work_schedule_id and employee.work_schedule_id in self.schedules:
@@ -462,7 +502,7 @@ def _calculate_one(employee, year, month, start, end, as_of, data):
     for name, value in stat.items():
         setattr(result, name, value)
     result.other_deductions = _money(salary.other_deductions)
-    result.tds = _money(salary.calculate_monthly_tds())
+    result.tds = _income_tax(employee, data.profiles.get(employee.pk), result, data)
     result.professional_tax = _professional_tax(
         data.profiles.get(employee.pk), result, data
     )
@@ -479,6 +519,60 @@ def _calculate_one(employee, year, month, start, end, as_of, data):
         net = ZERO
     result.net_pay = net
     return result
+
+
+def _income_tax(employee, profile, result, data):
+    """
+    TDS for one month, projected over the financial year (April to March).
+    Earlier months come from saved payroll records; a month with no record
+    is assumed to have paid the full monthly gross with no TDS deducted.
+    TDS off (NA) = zero. Missing tax rules = zero with a warning.
+    """
+    mode = profile.tds_mode if profile else "AUTO"
+    if mode == "NA":
+        return ZERO
+    rules, error = data.tax_rules()
+    if error:
+        result.warnings.append(
+            f"Income tax rules are not set up for this period ({error}); "
+            "TDS was taken as zero."
+        )
+        return ZERO
+    regime = profile.tax_regime if profile else "NEW"
+    declared = _money(profile.declared_deductions) if profile and regime == "OLD" else ZERO
+
+    prior = data.prior_payroll(employee.pk)
+    hired = employee.date_hired
+    ytd_gross = ZERO
+    ytd_tds = ZERO
+    missing = 0
+    y, m = fy_start_year(result.year, result.month), 4
+    while (y, m) < (result.year, result.month):
+        if hired and (y, m) < (hired.year, hired.month):
+            pass
+        elif (y, m) in prior:
+            gross, tds = prior[(y, m)]
+            ytd_gross += gross
+            ytd_tds += tds
+        else:
+            ytd_gross += result.gross_monthly
+            missing += 1
+        m += 1
+        if m == 13:
+            y, m = y + 1, 1
+
+    months_left = months_left_in_fy(result.month)
+    projected = (
+        ytd_gross + result.gross_earned + result.gross_monthly * (months_left - 1)
+    )
+    out = compute_tds(rules, regime, projected, declared, ytd_tds, months_left)
+    result.warnings.extend(out.warnings)
+    if missing and out.monthly > ZERO:
+        result.warnings.append(
+            f"{missing} earlier month(s) of this financial year have no payroll "
+            "record; they were assumed to have paid full salary with no TDS deducted."
+        )
+    return out.monthly
 
 
 def _professional_tax(profile, result, data):

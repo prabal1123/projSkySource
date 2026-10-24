@@ -592,6 +592,19 @@ class StatutoryRuleAdmin(SuperuserOnlyMixin, admin.ModelAdmin):
     ordering = ('key', '-effective_from')
 
 
+from .models import IncomeTaxSlab
+
+
+@admin.register(IncomeTaxSlab)
+class IncomeTaxSlabAdmin(SuperuserOnlyMixin, admin.ModelAdmin):
+    list_display = (
+        'regime', 'above', 'up_to', 'rate', 'effective_from', 'effective_to', 'note',
+    )
+    list_filter = ('regime',)
+    search_fields = ('note',)
+    ordering = ('regime', '-effective_from', 'above')
+
+
 @admin.register(ProfessionalTaxSlab)
 class ProfessionalTaxSlabAdmin(SuperuserOnlyMixin, admin.ModelAdmin):
     list_display = (

@@ -340,6 +340,19 @@
               <label for="{{ statutory_form.gender.id_for_label }}">{{ statutory_form.gender.label }}</label>
               {{ statutory_form.gender }}
             </div>
+            <div class="salary-field">
+              <label for="{{ statutory_form.tax_regime.id_for_label }}">{{ statutory_form.tax_regime.label }}</label>
+              {{ statutory_form.tax_regime }}
+            </div>
+            <div class="salary-field">
+              <label for="{{ statutory_form.tds_mode.id_for_label }}">{{ statutory_form.tds_mode.label }}</label>
+              {{ statutory_form.tds_mode }}
+            </div>
+            <div class="salary-field">
+              <label for="{{ statutory_form.declared_deductions.id_for_label }}">{{ statutory_form.declared_deductions.label }}</label>
+              {{ statutory_form.declared_deductions }}
+              <div class="salary-hint">Used only for the old regime: total of 80C, HRA exemption and similar deductions for the year.</div>
+            </div>
           </div>
           <div style="text-align: right; margin-top: 14px;">
             <button type="submit" class="btn btn-primary" style="width: auto; padding: 8px 20px; font-size: 0.9rem;">Save settings</button>
