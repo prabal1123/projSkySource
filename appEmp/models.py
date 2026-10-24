@@ -1125,6 +1125,12 @@ class PayrollRecord(models.Model):
     other_allowances = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
     statutory_wages = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
 
+    # ── Deduction cap (snapshot) ───────────────────────────────────────
+    deferred_deductions = EncryptedDecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        help_text="Other deductions not taken this month because total deductions are capped."
+    )
+
     # ── Lock state ─────────────────────────────────────────────────────
     is_locked = models.BooleanField(default=False)
     locked_by = models.ForeignKey(
@@ -1231,6 +1237,7 @@ class StatutoryRule(models.Model):
         'TAX_REBATE_MAX_OLD': 'Maximum rebate, old regime (Rs)',
         'TAX_CESS_RATE': 'Health and education cess rate on income tax',
         'TAX_SURCHARGE_FROM': 'Taxable income above which surcharge applies (yearly, Rs)',
+        'DEDUCTION_CAP_SHARE': 'Maximum share of earned pay that total deductions may take (50% cap)',
     }
 
     key = models.CharField(

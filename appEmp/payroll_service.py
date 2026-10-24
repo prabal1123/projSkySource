@@ -36,6 +36,10 @@ TDS is projected for the whole financial year (April to March) and spread over
 the months left (see appEmp/tds.py). No statutory profile means new regime.
 Professional tax follows the state slabs for the employee's work state, on
 EARNED pay; a blank work state means no professional tax and no warning.
+Total deductions are capped at a share of earned pay (rule DEDUCTION_CAP_SHARE,
+50%). Only other deductions are trimmed; the trimmed amount is kept as
+deferred_deductions and a warning is attached. PF, ESI, TDS and professional
+tax are never trimmed.
 Net pay is floored at zero, with a warning when that happens.
 
 Salary revision used: the latest one effective on or before the period end, so
@@ -173,6 +177,7 @@ class PayrollResult:
     other_deductions: Decimal = ZERO
     tds: Decimal = ZERO
     professional_tax: Decimal = ZERO
+    deferred_deductions: Decimal = ZERO
     total_deductions: Decimal = ZERO
     net_pay: Decimal = ZERO
 
@@ -223,6 +228,7 @@ class PayrollResult:
             "other_deductions": self.other_deductions,
             "tds": self.tds,
             "professional_tax": self.professional_tax,
+            "deferred_deductions": self.deferred_deductions,
             "total_deductions": self.total_deductions,
             "net_pay": self.net_pay,
             "pf_wage_base": self.pf_wage_base,
@@ -506,6 +512,7 @@ def _calculate_one(employee, year, month, start, end, as_of, data):
     result.professional_tax = _professional_tax(
         data.profiles.get(employee.pk), result, data
     )
+    _apply_deduction_cap(result, data)
     result.total_deductions = (
         result.pf + result.esi + result.other_deductions + result.tds
         + result.professional_tax
@@ -519,6 +526,41 @@ def _calculate_one(employee, year, month, start, end, as_of, data):
         net = ZERO
     result.net_pay = net
     return result
+
+
+def _apply_deduction_cap(result, data):
+    """
+    Total deductions may not exceed a share of EARNED pay (rule
+    DEDUCTION_CAP_SHARE). Only other deductions are trimmed, down to what the
+    cap allows after PF, ESI, TDS and professional tax. The trimmed amount is
+    kept in deferred_deductions; nothing is carried to the next month.
+    """
+    try:
+        share = data.rule("DEDUCTION_CAP_SHARE")
+    except StatutoryRuleMissing:
+        result.warnings.append(
+            "The deduction cap rule is not set up; no cap was applied."
+        )
+        return
+    cap = _money(result.gross_earned * share)
+    statutory = result.pf + result.esi + result.tds + result.professional_tax
+    if statutory + result.other_deductions <= cap:
+        return
+    allowed_other = max(ZERO, cap - statutory)
+    trimmed = result.other_deductions - allowed_other
+    if trimmed > ZERO:
+        result.other_deductions = allowed_other
+        result.deferred_deductions = trimmed
+        result.warnings.append(
+            f"Deductions are capped at {share * 100:.0f}% of earned pay "
+            f"(Rs {cap:,.2f}); Rs {trimmed:,.2f} of other deductions was not "
+            "deducted this month. Adjust next month's deductions if it is still due."
+        )
+    if statutory > cap:
+        result.warnings.append(
+            f"PF, ESI, TDS and professional tax alone (Rs {statutory:,.2f}) are above "
+            f"the {share * 100:.0f}% cap (Rs {cap:,.2f}); they were not reduced."
+        )
 
 
 def _income_tax(employee, profile, result, data):

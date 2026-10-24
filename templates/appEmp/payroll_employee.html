@@ -161,6 +161,9 @@
                         <div class="pr-metric"><span>Professional Tax</span><span class="val is-danger">- ₹ {{ money.professional_tax|floatformat:2|intcomma }}</span></div>
                         {% endif %}
                         <div class="pr-metric"><span>Total Deductions</span><span class="val is-danger">- ₹ {{ money.total_deductions|floatformat:2|intcomma }}</span></div>
+                        {% if money.deferred_deductions > 0 %}
+                        <div class="pr-sub">₹ {{ money.deferred_deductions|floatformat:2|intcomma }} of other deductions was not deducted this month because total deductions are capped.</div>
+                        {% endif %}
 
                         <div class="pr-metric highlight">
                             <span>Net pay</span>
