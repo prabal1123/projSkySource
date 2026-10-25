@@ -31,6 +31,7 @@ from django.utils.text import slugify
 from app_projects.filters import apply_project_filter, project_filter_context
 
 from .bank_file import split_for_bank, write_bank_csv
+from .ecr import ecr_line, split_for_ecr
 from .models import PayrollAuditLog, PayrollRecord, empProfile
 from .payslip_pdf import build_payroll_summary_pdf, build_payslip_pdf
 from .payroll_service import (
@@ -579,6 +580,62 @@ def payroll_bank_file_view(request, year, month):
         f'attachment; filename="bank_file_{slugify(request.current_org.name)}_{year}_{month:02d}.csv"'
     )
     write_bank_csv(response, included, narration)
+    return response
+
+
+@login_required
+def payroll_ecr_view(request, year, month):
+    """PF ECR text file of the month's locked payroll, respecting the project filter."""
+    denied = _guard(request)
+    if denied:
+        return denied
+    _validate_month(year, month)
+
+    project_ctx = project_filter_context(request)
+    selected = project_ctx["project_filter_selected"]
+    target = reverse("payrollCycle", args=[year, month])
+    back = redirect(f"{target}?project={selected}" if selected else target)
+
+    records = list(
+        apply_project_filter(
+            PayrollRecord.objects.filter(
+                organization=request.current_org, year=year, month=month, is_locked=True
+            ).select_related("employee__user", "organization"),
+            selected,
+            path="employee__project",
+        ).order_by("employee__user__first_name", "employee__user__last_name", "pk")
+    )
+    if not records:
+        messages.error(request, "There is no locked payroll to export for this month.")
+        return back
+
+    included, left_out = split_for_ecr(records)
+    if not included:
+        messages.error(
+            request,
+            "No ECR was made: no locked employee has PF for this month together with a valid UAN.",
+        )
+        return back
+
+    with transaction.atomic():
+        for record, _details in included:
+            PayrollAuditLog.record_event(
+                record, PayrollAuditLog.ACTION_EXPORTED, request.user, "PF ECR"
+            )
+
+    if left_out:
+        shown = "; ".join(f"{name} ({why})" for name, why in left_out[:5])
+        more = f" and {len(left_out) - 5} more" if len(left_out) > 5 else ""
+        messages.warning(
+            request,
+            f"{len(left_out)} member(s) were left out of the ECR: {shown}{more}.",
+        )
+
+    text = "\n".join(ecr_line(record, details) for record, details in included) + "\n"
+    response = HttpResponse(text, content_type="text/plain")
+    response["Content-Disposition"] = (
+        f'attachment; filename="ECR_{slugify(request.current_org.name)}_{year}_{month:02d}.txt"'
+    )
     return response
 
 

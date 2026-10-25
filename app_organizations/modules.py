@@ -61,7 +61,7 @@ MODULES = {
             "salaryCtcPreview", "statutoryProfileUpdate",
             "wageRegisterBulk",
             "payroll", "payrollCycle", "payrollEmployee",
-            "payrollPayslip", "payrollSummaryPdf", "payrollBankFile",
+            "payrollPayslip", "payrollSummaryPdf", "payrollBankFile", "payrollEcr",
             "myPayslips", "myPayslipPdf",
         ],
     },

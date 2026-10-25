@@ -99,6 +99,10 @@
                        href="{% url 'payrollBankFile' year=year month=month %}{{ querystring }}">
                         Download bank file (CSV)
                     </a>
+                    <a class="pr-btn pr-btn-sm"
+                       href="{% url 'payrollEcr' year=year month=month %}{{ querystring }}">
+                        Download PF ECR (TXT)
+                    </a>
                     {% endif %}
                     <span class="pr-count">{{ rows|length }} Employee{{ rows|length|pluralize }}</span>
                 </div>
