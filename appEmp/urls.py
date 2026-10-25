@@ -40,6 +40,8 @@ urlpatterns = [
     path("payroll/<int:year>/<int:month>/bank-file/", payroll_views.payroll_bank_file_view, name="payrollBankFile"),
     path("payroll/<int:year>/<int:month>/ecr/", payroll_views.payroll_ecr_view, name="payrollEcr"),
     path("payroll/<int:year>/<int:month>/esi-return/", payroll_views.payroll_esi_return_view, name="payrollEsiReturn"),
+    path("settlement/<uuid:uuid>/", payroll_views.final_settlement_view, name="finalSettlement"),
+    path("settlement/<uuid:uuid>/pdf/", payroll_views.final_settlement_pdf_view, name="finalSettlementPdf"),
     path("my-payslips/", payroll_views.my_payslips_view, name="myPayslips"),
     path("my-payslips/<int:year>/<int:month>/", payroll_views.my_payslip_pdf_view, name="myPayslipPdf"),
     path(

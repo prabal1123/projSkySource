@@ -622,6 +622,41 @@ class PayrollAuditLogAdmin(SuperuserOnlyMixin, OrgColumnMixin, admin.ModelAdmin)
         return False
 
 
+from .models import FinalSettlement, FinalSettlementLog
+
+
+@admin.register(FinalSettlement)
+class FinalSettlementAdmin(SuperuserOnlyMixin, OrgColumnMixin, admin.ModelAdmin):
+    list_display = ('employee', 'status', 'approved_by', 'approved_at', 'paid_at', 'created_at')
+    list_filter = ('status',)
+    raw_id_fields = ('employee', 'exit_request', 'approved_by')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(FinalSettlementLog)
+class FinalSettlementLogAdmin(SuperuserOnlyMixin, admin.ModelAdmin):
+    list_display = ('created_at', 'settlement', 'action', 'user_name', 'reason')
+    list_filter = ('action',)
+    raw_id_fields = ('settlement', 'user')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(IncomeTaxSlab)
 class IncomeTaxSlabAdmin(SuperuserOnlyMixin, admin.ModelAdmin):
     list_display = (

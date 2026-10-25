@@ -374,6 +374,9 @@
 
                                 <td data-label="Status">
                                     <span class="ae-pill">{{ row.exit_request.get_status_display }}</span>
+                                    {% if perms.appEmp.manage_salary or user.is_superuser %}{% if row.exit_request.status == "READY_FOR_FINALIZATION" or row.exit_request.status == "COMPLETED" %}
+                                    <a href="{% url 'finalSettlement' uuid=row.exit_request.uuid %}" class="ae-btn">Settlement</a>
+                                    {% endif %}{% endif %}
                                 </td>
 
                                 <td data-label="Initiated By">

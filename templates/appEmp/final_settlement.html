@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Final settlement{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/payroll_ui.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="pr-page">
+    <div class="container-fluid">
+
+        <div class="pr-head pr-anim">
+            <div>
+                <div class="pr-eyebrow">Exit</div>
+                <h1>Final settlement</h1>
+                <p>
+                    <strong>{{ exit_request.employee.user.get_full_name|default:exit_request.employee.user.username }}</strong>
+                    · {{ exit_request.get_exit_type_display }} · {{ exit_request.get_status_display }}
+                    {% if last_day %}· Last working day {{ last_day|date:"d M Y" }}{% endif %}
+                </p>
+            </div>
+            <a href="{% url 'allExitRequests' %}" class="pr-btn">&larr; All exits</a>
+        </div>
+
+        {% if reference %}
+        <div class="pr-alert pr-anim">
+            Final month salary ({{ reference.label }}) is paid through payroll and is not part of this settlement.
+            {% if reference.locked %}Payroll is locked: net pay ₹ {{ reference.net_pay|floatformat:2|intcomma }}.
+            {% else %}Payroll for that month is not locked yet.{% endif %}
+        </div>
+        {% endif %}
+
+        {% if not settlement %}
+        <div class="pr-card pr-anim"><div class="pr-card-body">
+            {% if can_create %}
+            <p>No settlement has been started for this exit.</p>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create">
+                <button type="submit" class="pr-btn pr-btn-primary">Start settlement</button>
+            </form>
+            {% else %}
+            <p class="pr-skip" style="margin: 0;">A settlement can be started once the exit is ready for finalization.</p>
+            {% endif %}
+        </div></div>
+        {% else %}
+
+        <div class="pr-card pr-anim">
+            <div class="pr-card-head">
+                <h2>Items</h2>
+                <span class="pr-count">{{ settlement.get_status_display }}</span>
+            </div>
+
+            <div class="pr-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Particulars</th>
+                            <th>Type</th>
+                            <th style="text-align: right;">Amount (₹)</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>{{ item.label }}{% if item.note %} <small>({{ item.note }})</small>{% endif %}</td>
+                            <td>{{ item.get_kind_display }}</td>
+                            <td style="text-align: right;">{{ item.amount|floatformat:2|intcomma }}</td>
+                            <td style="text-align: right;">
+                                {% if settlement.status == "DRAFT" %}
+                                <form method="post" style="margin: 0;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_item">
+                                    <input type="hidden" name="item" value="{{ item.pk }}">
+                                    <button type="submit" class="pr-btn pr-btn-sm pr-btn-danger">Remove</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="pr-empty">No items yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if settlement.status == "DRAFT" %}
+            <div class="pr-actions">
+                <form method="post" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_item">
+                    <select name="kind" class="form-control" style="width: 140px;">
+                        <option value="EARNING">Earning</option>
+                        <option value="DEDUCTION">Deduction</option>
+                    </select>
+                    <input type="text" name="label" class="form-control" required maxlength="100" placeholder="Particulars (e.g. Bonus, Advance recovery)" style="width: 260px;">
+                    <input type="number" name="amount" class="form-control" required min="0.01" step="0.01" placeholder="Amount" style="width: 140px;">
+                    <input type="text" name="note" class="form-control" maxlength="255" placeholder="Note (optional)" style="width: 200px;">
+                    <button type="submit" class="pr-btn">Add item</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="pr-card pr-anim"><div class="pr-card-body">
+            <div class="pr-metric"><span>Total earnings</span><span class="val">₹ {{ total_earnings|floatformat:2|intcomma }}</span></div>
+            <div class="pr-metric"><span>Total deductions</span><span class="val is-danger">- ₹ {{ total_deductions|floatformat:2|intcomma }}</span></div>
+            <div class="pr-metric highlight">
+                <span>{% if recoverable %}Recoverable from employee{% else %}Net payable{% endif %}</span>
+                <span class="val">₹ {{ net_abs|floatformat:2|intcomma }}</span>
+            </div>
+        </div></div>
+
+        <div class="pr-card pr-anim"><div class="pr-card-body">
+            <div class="pr-actions">
+                {% if settlement.status == "DRAFT" %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="pr-btn pr-btn-primary"
+                            onclick="return confirm('Approve this settlement? Items cannot be changed after approval.');">
+                        Approve settlement
+                    </button>
+                </form>
+                {% else %}
+                <a class="pr-btn" target="_blank" href="{% url 'finalSettlementPdf' uuid=exit_request.uuid %}">Download statement (PDF)</a>
+                {% endif %}
+                {% if settlement.status == "APPROVED" %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="paid">
+                    <button type="submit" class="pr-btn pr-btn-primary"
+                            onclick="return confirm('Mark this settlement as paid?');">Mark as paid</button>
+                </form>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="unlock">
+                    <input type="text" name="reason" class="form-control" required minlength="10" maxlength="255" placeholder="Reason for unlocking (min 10 characters)" style="width: 260px; padding: 6px 10px; font-size: 0.85rem;">
+                    <button type="submit" class="pr-btn pr-btn-danger"
+                            onclick="return confirm('Unlock this settlement so its items can be changed?');">Unlock</button>
+                </form>
+                {% endif %}
+            </div>
+        </div></div>
+
+        <div class="pr-card pr-anim">
+            <div class="pr-card-head"><h2>History</h2></div>
+            <div class="pr-table-wrap">
+                <table>
+                    <thead><tr><th>When</th><th>Action</th><th>By</th><th>Reason</th><th style="text-align: right;">Net payable (₹)</th></tr></thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ log.created_at|date:"d M Y, h:i A" }}</td>
+                            <td>{{ log.get_action_display }}</td>
+                            <td>{{ log.user_name|default:"-" }}</td>
+                            <td>{{ log.reason|default:"-" }}</td>
+                            <td style="text-align: right;">{{ log.net_payable|floatformat:2|intcomma }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

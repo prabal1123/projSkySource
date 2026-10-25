@@ -1446,6 +1446,180 @@ class PayrollAuditLog(models.Model):
         )
 
 
+class FinalSettlement(models.Model):
+    """
+    Full and final settlement of one employee exit. Items are added by HR while
+    the settlement is a draft; approving it freezes them. The final month's
+    salary is paid through payroll and is NOT an item here (shown as a
+    reference only), so it can never be paid twice.
+    """
+    STATUS_DRAFT = "DRAFT"
+    STATUS_APPROVED = "APPROVED"
+    STATUS_PAID = "PAID"
+    STATUS_CHOICES = (
+        (STATUS_DRAFT, "Draft"),
+        (STATUS_APPROVED, "Approved"),
+        (STATUS_PAID, "Paid"),
+    )
+
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        editable=False,
+        related_name="final_settlements",
+    )
+    exit_request = models.OneToOneField(
+        "EmployeeExitRequest", on_delete=models.PROTECT, related_name="settlement",
+    )
+    employee = models.ForeignKey(
+        empProfile, on_delete=models.PROTECT, related_name="final_settlements",
+    )
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_DRAFT)
+    approved_by = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="settlements_approved",
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["organization", "status"])]
+
+    def __str__(self):
+        return f"Settlement: {self.employee} ({self.status})"
+
+    def save(self, *args, **kwargs):
+        self.organization_id = self.employee.organization_id
+        super().save(*args, **kwargs)
+
+    @property
+    def total_earnings(self):
+        return sum(
+            (i.amount for i in self.items.all() if i.kind == FinalSettlementItem.KIND_EARNING),
+            Decimal("0"),
+        )
+
+    @property
+    def total_deductions(self):
+        return sum(
+            (i.amount for i in self.items.all() if i.kind == FinalSettlementItem.KIND_DEDUCTION),
+            Decimal("0"),
+        )
+
+    @property
+    def net_payable(self):
+        return self.total_earnings - self.total_deductions
+
+    def approve(self, user):
+        self.status = self.STATUS_APPROVED
+        self.approved_by = user
+        self.approved_at = timezone.now()
+        self.save(update_fields=["status", "approved_by", "approved_at", "updated_at"])
+
+    def unlock(self):
+        self.status = self.STATUS_DRAFT
+        self.approved_by = None
+        self.approved_at = None
+        self.save(update_fields=["status", "approved_by", "approved_at", "updated_at"])
+
+    def mark_paid(self):
+        self.status = self.STATUS_PAID
+        self.paid_at = timezone.now()
+        self.save(update_fields=["status", "paid_at", "updated_at"])
+
+
+class FinalSettlementItem(models.Model):
+    """One earning or deduction line of a final settlement (draft only)."""
+    KIND_EARNING = "EARNING"
+    KIND_DEDUCTION = "DEDUCTION"
+    KIND_CHOICES = (
+        (KIND_EARNING, "Earning"),
+        (KIND_DEDUCTION, "Deduction"),
+    )
+
+    settlement = models.ForeignKey(
+        FinalSettlement, on_delete=models.CASCADE, related_name="items",
+    )
+    kind = models.CharField(max_length=10, choices=KIND_CHOICES)
+    label = models.CharField(max_length=100)
+    amount = EncryptedDecimalField(max_digits=12, decimal_places=2)
+    note = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"{self.kind} {self.label}"
+
+    def save(self, *args, **kwargs):
+        if self.settlement.status != FinalSettlement.STATUS_DRAFT:
+            raise ValidationError("Items can only be changed while the settlement is a draft.")
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.settlement.status != FinalSettlement.STATUS_DRAFT:
+            raise ValidationError("Items can only be changed while the settlement is a draft.")
+        return super().delete(*args, **kwargs)
+
+
+class FinalSettlementLog(models.Model):
+    """Append-only history of a final settlement (create, approve, unlock, paid)."""
+    ACTION_CREATED = "CREATED"
+    ACTION_APPROVED = "APPROVED"
+    ACTION_UNLOCKED = "UNLOCKED"
+    ACTION_PAID = "PAID"
+    ACTION_CHOICES = (
+        (ACTION_CREATED, "Created"),
+        (ACTION_APPROVED, "Approved"),
+        (ACTION_UNLOCKED, "Unlocked"),
+        (ACTION_PAID, "Marked paid"),
+    )
+
+    settlement = models.ForeignKey(
+        FinalSettlement, on_delete=models.PROTECT, related_name="logs",
+    )
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
+    user = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="settlement_log_entries",
+    )
+    user_name = models.CharField(max_length=150, blank=True)
+    reason = models.CharField(max_length=255, blank=True)
+    net_payable = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return f"{self.action} {self.settlement}"
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValidationError("Settlement log entries cannot be changed.")
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("Settlement log entries cannot be deleted.")
+
+    @classmethod
+    def record_event(cls, settlement, action, user=None, reason=""):
+        has_user = user is not None and getattr(user, "pk", None)
+        return cls.objects.create(
+            settlement=settlement,
+            action=action,
+            user=user if has_user else None,
+            user_name=user.get_username() if has_user else "",
+            reason=reason,
+            net_payable=settlement.net_payable,
+        )
+
+
 class IncomeTaxSlab(models.Model):
     """
     One income tax slab (yearly taxable income, rupees) of one tax regime.

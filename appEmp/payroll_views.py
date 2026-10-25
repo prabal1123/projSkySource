@@ -33,7 +33,16 @@ from app_projects.filters import apply_project_filter, project_filter_context
 from .bank_file import split_for_bank, write_bank_csv
 from .ecr import ecr_line, split_for_ecr
 from .esi_return import build_esi_workbook, split_for_esi
-from .models import EmployeeExitRequest, PayrollAuditLog, PayrollRecord, empProfile
+from .settlement_pdf import build_settlement_pdf
+from .models import (
+    EmployeeExitRequest,
+    FinalSettlement,
+    FinalSettlementItem,
+    FinalSettlementLog,
+    PayrollAuditLog,
+    PayrollRecord,
+    empProfile,
+)
 from .payslip_pdf import build_payroll_summary_pdf, build_payslip_pdf
 from .payroll_service import (
     calculate_payroll_for_employees,
@@ -709,6 +718,191 @@ def payroll_esi_return_view(request, year, month):
         f'attachment; filename="ESI_{slugify(request.current_org.name)}_{year}_{month:02d}.xlsx"'
     )
     return response
+
+
+SETTLEMENT_EXIT_STATUSES = ("READY_FOR_FINALIZATION", "COMPLETED")
+
+
+def _settlement_reference(exit_request):
+    """The final month's payroll, shown on the settlement as a reference only."""
+    last = exit_request.final_last_working_date or exit_request.proposed_last_working_date
+    if not last:
+        return None
+    record = PayrollRecord.objects.filter(
+        employee=exit_request.employee, year=last.year, month=last.month
+    ).first()
+    locked = record is not None and record.is_locked
+    return {
+        "label": f"{last:%B %Y}",
+        "locked": locked,
+        "net_pay": record.net_pay if locked else None,
+    }
+
+
+def _settlement_action(request, exit_request, settlement):
+    from decimal import InvalidOperation
+
+    action = request.POST.get("action")
+
+    if action == "create":
+        if settlement is not None:
+            messages.info(request, "A settlement already exists for this exit.")
+        elif exit_request.status not in SETTLEMENT_EXIT_STATUSES:
+            messages.error(request, "A settlement can be started once the exit is ready for finalization.")
+        else:
+            with transaction.atomic():
+                created = FinalSettlement.objects.create(
+                    exit_request=exit_request, employee=exit_request.employee
+                )
+                FinalSettlementLog.record_event(
+                    created, FinalSettlementLog.ACTION_CREATED, request.user
+                )
+            messages.success(request, "Settlement started. Add its items below.")
+        return
+
+    if settlement is None:
+        messages.error(request, "Start the settlement first.")
+        return
+
+    if action == "add_item":
+        if settlement.status != FinalSettlement.STATUS_DRAFT:
+            messages.error(request, "Items can only be changed while the settlement is a draft.")
+            return
+        kind = request.POST.get("kind")
+        label = (request.POST.get("label") or "").strip()
+        note = (request.POST.get("note") or "").strip()[:255]
+        try:
+            amount = Decimal((request.POST.get("amount") or "").strip())
+        except InvalidOperation:
+            amount = None
+        if kind not in (FinalSettlementItem.KIND_EARNING, FinalSettlementItem.KIND_DEDUCTION):
+            messages.error(request, "Choose whether the item is an earning or a deduction.")
+        elif not label or len(label) > 100:
+            messages.error(request, "Give the item a name of up to 100 characters.")
+        elif amount is None or not amount.is_finite() or amount <= 0 or amount >= Decimal("10000000000"):
+            messages.error(request, "Enter an amount above zero.")
+        else:
+            FinalSettlementItem.objects.create(
+                settlement=settlement, kind=kind, label=label,
+                amount=amount.quantize(Decimal("0.01")), note=note,
+            )
+            messages.success(request, "Item added.")
+
+    elif action == "delete_item":
+        if settlement.status != FinalSettlement.STATUS_DRAFT:
+            messages.error(request, "Items can only be changed while the settlement is a draft.")
+            return
+        try:
+            item_id = int(request.POST.get("item") or 0)
+        except ValueError:
+            item_id = 0
+        item = settlement.items.filter(pk=item_id).first()
+        if item is None:
+            messages.error(request, "That item was not found.")
+        else:
+            item.delete()
+            messages.success(request, "Item removed.")
+
+    elif action == "approve":
+        if settlement.status != FinalSettlement.STATUS_DRAFT:
+            messages.info(request, "This settlement is already approved.")
+        elif not settlement.items.exists():
+            messages.error(request, "Add at least one item before approving.")
+        else:
+            with transaction.atomic():
+                settlement.approve(request.user)
+                FinalSettlementLog.record_event(
+                    settlement, FinalSettlementLog.ACTION_APPROVED, request.user
+                )
+            messages.success(request, "Settlement approved.")
+
+    elif action == "paid":
+        if settlement.status != FinalSettlement.STATUS_APPROVED:
+            messages.error(request, "Only an approved settlement can be marked as paid.")
+        else:
+            with transaction.atomic():
+                settlement.mark_paid()
+                FinalSettlementLog.record_event(
+                    settlement, FinalSettlementLog.ACTION_PAID, request.user
+                )
+            messages.success(request, "Settlement marked as paid.")
+
+    elif action == "unlock":
+        reason = (request.POST.get("reason") or "").strip()
+        if settlement.status != FinalSettlement.STATUS_APPROVED:
+            messages.error(request, "Only an approved settlement that is not paid can be unlocked.")
+        elif not (MIN_UNLOCK_REASON <= len(reason) <= MAX_UNLOCK_REASON):
+            messages.error(
+                request,
+                f"Give a reason of {MIN_UNLOCK_REASON} to {MAX_UNLOCK_REASON} characters. "
+                "Nothing was unlocked.",
+            )
+        else:
+            with transaction.atomic():
+                settlement.unlock()
+                FinalSettlementLog.record_event(
+                    settlement, FinalSettlementLog.ACTION_UNLOCKED, request.user, reason
+                )
+            messages.warning(request, "Settlement unlocked. Its items can be changed again.")
+    else:
+        messages.error(request, "Unknown action.")
+
+
+@login_required
+def final_settlement_view(request, uuid):
+    denied = _guard(request)
+    if denied:
+        return denied
+    exit_request = get_object_or_404(
+        EmployeeExitRequest.objects.select_related("employee__user"),
+        uuid=uuid,
+        employee__organization=request.current_org,
+    )
+    settlement = FinalSettlement.objects.filter(exit_request=exit_request).first()
+
+    if request.method == "POST":
+        _settlement_action(request, exit_request, settlement)
+        return redirect("finalSettlement", uuid=exit_request.uuid)
+
+    items = list(settlement.items.all()) if settlement else []
+    net = settlement.net_payable if settlement else ZERO
+    return render(
+        request,
+        "appEmp/final_settlement.html",
+        {
+            "exit_request": exit_request,
+            "settlement": settlement,
+            "items": items,
+            "logs": list(settlement.logs.all()[:20]) if settlement else [],
+            "total_earnings": settlement.total_earnings if settlement else ZERO,
+            "total_deductions": settlement.total_deductions if settlement else ZERO,
+            "recoverable": net < 0,
+            "net_abs": abs(net),
+            "reference": _settlement_reference(exit_request),
+            "last_day": exit_request.final_last_working_date or exit_request.proposed_last_working_date,
+            "can_create": exit_request.status in SETTLEMENT_EXIT_STATUSES,
+        },
+    )
+
+
+@login_required
+def final_settlement_pdf_view(request, uuid):
+    denied = _guard(request)
+    if denied:
+        return denied
+    settlement = get_object_or_404(
+        FinalSettlement.objects.select_related(
+            "employee__user", "exit_request", "organization"
+        ),
+        exit_request__uuid=uuid,
+        organization=request.current_org,
+    )
+    if settlement.status == FinalSettlement.STATUS_DRAFT:
+        messages.error(request, "Approve the settlement before downloading its statement.")
+        return redirect("finalSettlement", uuid=uuid)
+    buffer = build_settlement_pdf(settlement, _settlement_reference(settlement.exit_request))
+    name = slugify(settlement.employee.user.get_username())
+    return _pdf_response(buffer, f"settlement_{name}.pdf")
 
 
 def _own_profile(request):

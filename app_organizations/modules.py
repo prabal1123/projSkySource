@@ -62,7 +62,7 @@ MODULES = {
             "wageRegisterBulk",
             "payroll", "payrollCycle", "payrollEmployee",
             "payrollPayslip", "payrollSummaryPdf", "payrollBankFile", "payrollEcr",
-            "payrollEsiReturn",
+            "payrollEsiReturn", "finalSettlement", "finalSettlementPdf",
             "myPayslips", "myPayslipPdf",
         ],
     },
