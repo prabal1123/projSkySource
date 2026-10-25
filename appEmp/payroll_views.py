@@ -30,6 +30,7 @@ from django.utils.text import slugify
 
 from app_projects.filters import apply_project_filter, project_filter_context
 
+from .bank_file import split_for_bank, write_bank_csv
 from .models import PayrollAuditLog, PayrollRecord, empProfile
 from .payslip_pdf import build_payroll_summary_pdf, build_payslip_pdf
 from .payroll_service import (
@@ -520,6 +521,65 @@ def payroll_summary_pdf_view(request, year, month):
         records, request.current_org.name, year, month, project_label
     )
     return _pdf_response(buffer, f"payroll_summary_{year}_{month:02d}.pdf")
+
+
+@login_required
+def payroll_bank_file_view(request, year, month):
+    """Generic NEFT CSV of the month's locked payroll, respecting the project filter."""
+    denied = _guard(request)
+    if denied:
+        return denied
+    _validate_month(year, month)
+
+    project_ctx = project_filter_context(request)
+    selected = project_ctx["project_filter_selected"]
+    target = reverse("payrollCycle", args=[year, month])
+    back = redirect(f"{target}?project={selected}" if selected else target)
+
+    records = list(
+        apply_project_filter(
+            PayrollRecord.objects.filter(
+                organization=request.current_org, year=year, month=month, is_locked=True
+            ).select_related("employee__user", "organization"),
+            selected,
+            path="employee__project",
+        ).order_by("employee__user__first_name", "employee__user__last_name", "pk")
+    )
+    if not records:
+        messages.error(request, "There is no locked payroll to export for this month.")
+        return back
+
+    included, left_out = split_for_bank(records)
+    if not included:
+        messages.error(
+            request,
+            "No bank file was made: none of the locked employees has complete bank "
+            "details and a net pay above zero.",
+        )
+        return back
+
+    with transaction.atomic():
+        for record, _details in included:
+            PayrollAuditLog.record_event(
+                record, PayrollAuditLog.ACTION_EXPORTED, request.user, "Bank file (NEFT CSV)"
+            )
+
+    if left_out:
+        shown = "; ".join(f"{name} ({why})" for name, why in left_out[:5])
+        more = f" and {len(left_out) - 5} more" if len(left_out) > 5 else ""
+        messages.warning(
+            request,
+            f"{len(left_out)} employee(s) were left out of the bank file: {shown}{more}.",
+        )
+
+    start, _end = get_month_range(year, month)
+    narration = f"Salary {start:%b %Y}"
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = (
+        f'attachment; filename="bank_file_{slugify(request.current_org.name)}_{year}_{month:02d}.csv"'
+    )
+    write_bank_csv(response, included, narration)
+    return response
 
 
 def _own_profile(request):

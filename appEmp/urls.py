@@ -37,6 +37,7 @@ urlpatterns = [
     path("payroll/<int:year>/<int:month>/<uuid:uuid>/", payroll_views.payroll_employee_view, name="payrollEmployee"),
     path("payroll/<int:year>/<int:month>/<uuid:uuid>/payslip/", payroll_views.payroll_payslip_view, name="payrollPayslip"),
     path("payroll/<int:year>/<int:month>/summary/", payroll_views.payroll_summary_pdf_view, name="payrollSummaryPdf"),
+    path("payroll/<int:year>/<int:month>/bank-file/", payroll_views.payroll_bank_file_view, name="payrollBankFile"),
     path("my-payslips/", payroll_views.my_payslips_view, name="myPayslips"),
     path("my-payslips/<int:year>/<int:month>/", payroll_views.my_payslip_pdf_view, name="myPayslipPdf"),
     path(

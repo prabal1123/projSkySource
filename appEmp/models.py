@@ -1374,9 +1374,11 @@ class PayrollAuditLog(models.Model):
     """
     ACTION_LOCKED = "LOCKED"
     ACTION_UNLOCKED = "UNLOCKED"
+    ACTION_EXPORTED = "EXPORTED"
     ACTION_CHOICES = (
         (ACTION_LOCKED, "Locked"),
         (ACTION_UNLOCKED, "Unlocked"),
+        (ACTION_EXPORTED, "Exported"),
     )
 
     organization = models.ForeignKey(
