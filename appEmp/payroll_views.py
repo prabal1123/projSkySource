@@ -32,7 +32,8 @@ from app_projects.filters import apply_project_filter, project_filter_context
 
 from .bank_file import split_for_bank, write_bank_csv
 from .ecr import ecr_line, split_for_ecr
-from .models import PayrollAuditLog, PayrollRecord, empProfile
+from .esi_return import build_esi_workbook, split_for_esi
+from .models import EmployeeExitRequest, PayrollAuditLog, PayrollRecord, empProfile
 from .payslip_pdf import build_payroll_summary_pdf, build_payslip_pdf
 from .payroll_service import (
     calculate_payroll_for_employees,
@@ -635,6 +636,77 @@ def payroll_ecr_view(request, year, month):
     response = HttpResponse(text, content_type="text/plain")
     response["Content-Disposition"] = (
         f'attachment; filename="ECR_{slugify(request.current_org.name)}_{year}_{month:02d}.txt"'
+    )
+    return response
+
+
+@login_required
+def payroll_esi_return_view(request, year, month):
+    """ESI monthly contribution Excel of the month's locked payroll, respecting the project filter."""
+    denied = _guard(request)
+    if denied:
+        return denied
+    _validate_month(year, month)
+
+    project_ctx = project_filter_context(request)
+    selected = project_ctx["project_filter_selected"]
+    target = reverse("payrollCycle", args=[year, month])
+    back = redirect(f"{target}?project={selected}" if selected else target)
+
+    records = list(
+        apply_project_filter(
+            PayrollRecord.objects.filter(
+                organization=request.current_org, year=year, month=month, is_locked=True
+            ).select_related("employee__user", "organization"),
+            selected,
+            path="employee__project",
+        ).order_by("employee__user__first_name", "employee__user__last_name", "pk")
+    )
+    if not records:
+        messages.error(request, "There is no locked payroll to export for this month.")
+        return back
+
+    exit_dates = {}
+    for emp_id, last_day in (
+        EmployeeExitRequest.objects.filter(
+            employee_id__in=[r.employee_id for r in records],
+            status="COMPLETED",
+            final_last_working_date__isnull=False,
+        )
+        .order_by("created_at")
+        .values_list("employee_id", "final_last_working_date")
+    ):
+        exit_dates[emp_id] = last_day
+
+    included, left_out = split_for_esi(records, exit_dates)
+    if not included:
+        messages.error(
+            request,
+            "No ESI return was made: no locked employee has ESI for this month together "
+            "with a valid ESIC number.",
+        )
+        return back
+
+    with transaction.atomic():
+        for record, _details in included:
+            PayrollAuditLog.record_event(
+                record, PayrollAuditLog.ACTION_EXPORTED, request.user, "ESI return"
+            )
+
+    if left_out:
+        shown = "; ".join(f"{name} ({why})" for name, why in left_out[:5])
+        more = f" and {len(left_out) - 5} more" if len(left_out) > 5 else ""
+        messages.warning(
+            request,
+            f"{len(left_out)} employee(s) were left out of the ESI return: {shown}{more}.",
+        )
+
+    response = HttpResponse(
+        build_esi_workbook(included),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = (
+        f'attachment; filename="ESI_{slugify(request.current_org.name)}_{year}_{month:02d}.xlsx"'
     )
     return response
 

@@ -103,6 +103,10 @@
                        href="{% url 'payrollEcr' year=year month=month %}{{ querystring }}">
                         Download PF ECR (TXT)
                     </a>
+                    <a class="pr-btn pr-btn-sm"
+                       href="{% url 'payrollEsiReturn' year=year month=month %}{{ querystring }}">
+                        Download ESI return (Excel)
+                    </a>
                     {% endif %}
                     <span class="pr-count">{{ rows|length }} Employee{{ rows|length|pluralize }}</span>
                 </div>
