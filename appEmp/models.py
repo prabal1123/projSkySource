@@ -1366,6 +1366,84 @@ class ProfessionalTaxSlab(models.Model):
         return f"{self.state} {self.gender}: {self.above} to {top}, {when} = {self.amount}"
 
 
+class PayrollAuditLog(models.Model):
+    """
+    Append-only history of payroll locks and unlocks. Entries can never be
+    changed or deleted (not even from Django admin). Each entry keeps the
+    figures of the record at that moment, so a later change can be traced.
+    """
+    ACTION_LOCKED = "LOCKED"
+    ACTION_UNLOCKED = "UNLOCKED"
+    ACTION_CHOICES = (
+        (ACTION_LOCKED, "Locked"),
+        (ACTION_UNLOCKED, "Unlocked"),
+    )
+
+    organization = models.ForeignKey(
+        "app_organizations.Organization",
+        on_delete=models.PROTECT,
+        editable=False,
+        related_name="payroll_audit_logs",
+    )
+    employee = models.ForeignKey(
+        empProfile, on_delete=models.PROTECT, related_name="payroll_audit_logs",
+    )
+    record = models.ForeignKey(
+        PayrollRecord, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="audit_logs",
+    )
+    year = models.PositiveIntegerField()
+    month = models.PositiveSmallIntegerField()
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
+    user = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="payroll_audit_entries",
+    )
+    user_name = models.CharField(max_length=150, blank=True)
+    reason = models.CharField(max_length=255, blank=True)
+    net_pay = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    total_deductions = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    tds = EncryptedDecimalField(max_digits=12, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=["employee", "year", "month"]),
+            models.Index(fields=["organization", "year", "month"]),
+        ]
+
+    def __str__(self):
+        return f"{self.action} {self.employee} {self.year}-{self.month:02d}"
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValidationError("Payroll audit entries cannot be changed.")
+        self.organization_id = self.employee.organization_id
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("Payroll audit entries cannot be deleted.")
+
+    @classmethod
+    def record_event(cls, record, action, user=None, reason=""):
+        """Write one entry for a payroll record, with its figures at this moment."""
+        has_user = user is not None and getattr(user, "pk", None)
+        return cls.objects.create(
+            employee=record.employee,
+            record=record,
+            year=record.year,
+            month=record.month,
+            action=action,
+            user=user if has_user else None,
+            user_name=user.get_username() if has_user else "",
+            reason=reason,
+            net_pay=record.net_pay,
+            total_deductions=record.total_deductions,
+            tds=record.tds,
+        )
+
+
 class IncomeTaxSlab(models.Model):
     """
     One income tax slab (yearly taxable income, rupees) of one tax regime.

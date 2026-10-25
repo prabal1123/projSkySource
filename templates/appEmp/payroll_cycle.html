@@ -121,6 +121,7 @@
                 <form method="post">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="unlock">
+                        <input type="text" name="reason" class="form-control" required minlength="10" maxlength="255" placeholder="Reason for unlocking (min 10 characters)" style="width: 260px; padding: 6px 10px; font-size: 0.85rem;">
                     <button type="submit" class="pr-btn pr-btn-danger"
                             onclick="return confirm('Unlock {{ counts.locked }} locked record(s)? Their figures will follow current attendance again.');">
                         Unlock

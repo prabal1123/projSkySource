@@ -595,6 +595,33 @@ class StatutoryRuleAdmin(SuperuserOnlyMixin, admin.ModelAdmin):
 from .models import IncomeTaxSlab
 
 
+from .models import PayrollAuditLog
+
+
+@admin.register(PayrollAuditLog)
+class PayrollAuditLogAdmin(SuperuserOnlyMixin, OrgColumnMixin, admin.ModelAdmin):
+    list_display = ('created_at', 'employee', 'year', 'month', 'action', 'user_name', 'reason')
+    list_filter = ('action', 'year', 'month')
+    search_fields = (
+        'employee__user__username',
+        'employee__user__first_name',
+        'employee__user__last_name',
+        'user_name',
+        'reason',
+    )
+    raw_id_fields = ('employee', 'record', 'user')
+    ordering = ('-created_at',)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(IncomeTaxSlab)
 class IncomeTaxSlabAdmin(SuperuserOnlyMixin, admin.ModelAdmin):
     list_display = (

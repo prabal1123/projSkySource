@@ -30,7 +30,7 @@ from django.utils.text import slugify
 
 from app_projects.filters import apply_project_filter, project_filter_context
 
-from .models import PayrollRecord, empProfile
+from .models import PayrollAuditLog, PayrollRecord, empProfile
 from .payslip_pdf import build_payroll_summary_pdf, build_payslip_pdf
 from .payroll_service import (
     calculate_payroll_for_employees,
@@ -41,6 +41,8 @@ from .payroll_service import (
 
 ZERO = Decimal("0")
 ACTIONS = {"calculate", "lock", "unlock"}
+MIN_UNLOCK_REASON = 10
+MAX_UNLOCK_REASON = 255
 
 
 def _can_manage_payroll(user):
@@ -232,6 +234,9 @@ def _apply_action(request, action, rows, year, month):
                     else:
                         record = save_payroll_record(row["result"])
                         record.lock(request.user)
+                        PayrollAuditLog.record_event(
+                            record, PayrollAuditLog.ACTION_LOCKED, request.user
+                        )
                         newly += 1
                         if row["result"].warnings:
                             with_warnings += 1
@@ -248,12 +253,23 @@ def _apply_action(request, action, rows, year, month):
         messages.success(request, " ".join(parts))
 
     elif action == "unlock":
+        to_unlock = [row for row in rows if row["locked"]]
+        reason = (request.POST.get("reason") or "").strip()
+        if to_unlock and not (MIN_UNLOCK_REASON <= len(reason) <= MAX_UNLOCK_REASON):
+            messages.error(
+                request,
+                f"Give a reason of {MIN_UNLOCK_REASON} to {MAX_UNLOCK_REASON} characters "
+                "to unlock payroll. Nothing was unlocked.",
+            )
+            return
         count = 0
         with transaction.atomic():
-            for row in rows:
-                if row["locked"]:
-                    row["record"].unlock()
-                    count += 1
+            for row in to_unlock:
+                row["record"].unlock()
+                PayrollAuditLog.record_event(
+                    row["record"], PayrollAuditLog.ACTION_UNLOCKED, request.user, reason
+                )
+                count += 1
         if count:
             messages.warning(
                 request,

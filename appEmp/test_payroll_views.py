@@ -50,6 +50,8 @@ class PayrollViewBase(PayrollBase):
         return p
 
     def post(self, action, url=None, **extra):
+        if action == "unlock":
+            extra.setdefault("reason", "Correcting attendance for the month")
         with today_is(AFTER_MONTH):
             return self.client.post(url or self.url, {"action": action, **extra}, follow=True)
 
