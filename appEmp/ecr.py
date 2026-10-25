@@ -62,7 +62,7 @@ def ecr_line(record, details):
         base,
         _whole(record.pf),
         _whole(record.employer_eps),
-        _whole(record.employer_epf),
+        max(0, _whole(record.pf) - _whole(record.employer_eps)),
         ncp,
         0,
     ]
