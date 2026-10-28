@@ -905,6 +905,7 @@ def profileDetail_view(request, uuid):
             "profile": employee,
             "form": form,
             "salary": target_salary,
+            "payroll_estimate": _profile_payroll_estimate(employee, target_salary),
             "can_edit_salary": user_has_permission(request.user, "manage_salary"),
             "can_edit_profile": True,
             "salary_form": (
@@ -972,6 +973,7 @@ def empProfile_view(request):
             "profile": profile,
             "created": created,
             "salary": self_salary,
+            "payroll_estimate": _profile_payroll_estimate(profile, self_salary),
             "can_edit_salary": False,
             "target_uuid": profile.uuid,
             "current_year": timezone.now().year,
@@ -6681,3 +6683,19 @@ def wage_register_bulk_view(request, year, month):
         "totals": totals,
         **project_ctx,
     })
+
+
+def _profile_payroll_estimate(employee, salary):
+    """This month's payroll result for the profile salary card (None if unavailable)."""
+    if salary is None:
+        return None
+    try:
+        from .payroll_service import calculate_employee_payroll
+        today = timezone.localdate()
+        return calculate_employee_payroll(employee, today.year, today.month)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception(
+            "Profile payroll estimate failed for employee %s", employee.pk
+        )
+        return None

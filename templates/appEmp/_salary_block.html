@@ -134,16 +134,16 @@
         <span class="stat-value">₹{{ salary.pf|floatformat:2 }}</span>
       </div>
       <div class="stat-box accent">
-        <span class="stat-label">Monthly CTC</span>
-        <span class="stat-value">₹{{ salary.ctc_monthly|floatformat:2 }}</span>
+        <span class="stat-label">Gross Monthly</span>
+        <span class="stat-value">₹{{ salary.gross_monthly|floatformat:2 }}</span>
       </div>
       <div class="stat-box">
-        <span class="stat-label">Est. Monthly TDS</span>
-        <span class="stat-value">₹{{ salary.calculate_monthly_tds|floatformat:2 }}</span>
+        <span class="stat-label">TDS (this month's payroll)</span>
+        <span class="stat-value">{% if payroll_estimate and not payroll_estimate.skipped %}₹{{ payroll_estimate.tds|floatformat:2 }}{% else %}Not available{% endif %}</span>
       </div>
       <div class="stat-box accent">
-        <span class="stat-label">Est. Net Pay</span>
-        <span class="stat-value">₹{{ salary.net_monthly_pay|floatformat:2 }}</span>
+        <span class="stat-label">Net Pay (this month's payroll)</span>
+        <span class="stat-value">{% if payroll_estimate and not payroll_estimate.skipped %}₹{{ payroll_estimate.net_pay|floatformat:2 }}{% else %}{{ payroll_estimate.skip_reason|default:"Not available" }}{% endif %}</span>
       </div>
     </div>
 

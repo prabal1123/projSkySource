@@ -57,6 +57,14 @@ MIN_UNLOCK_REASON = 10
 MAX_UNLOCK_REASON = 255
 
 
+def _reason_is_meaningful(reason):
+    """Length alone lets junk like aaaaaaaaaa through: need 2+ words and 5+ distinct characters."""
+    if not (MIN_UNLOCK_REASON <= len(reason) <= MAX_UNLOCK_REASON):
+        return False
+    letters = "".join(reason.lower().split())
+    return len(reason.split()) >= 2 and len(set(letters)) >= 5
+
+
 def _can_manage_payroll(user):
     return user.is_superuser or user.has_perm("appEmp.manage_salary")
 
@@ -267,7 +275,7 @@ def _apply_action(request, action, rows, year, month):
     elif action == "unlock":
         to_unlock = [row for row in rows if row["locked"]]
         reason = (request.POST.get("reason") or "").strip()
-        if to_unlock and not (MIN_UNLOCK_REASON <= len(reason) <= MAX_UNLOCK_REASON):
+        if to_unlock and not _reason_is_meaningful(reason):
             messages.error(
                 request,
                 f"Give a reason of {MIN_UNLOCK_REASON} to {MAX_UNLOCK_REASON} characters "
@@ -831,7 +839,7 @@ def _settlement_action(request, exit_request, settlement):
         reason = (request.POST.get("reason") or "").strip()
         if settlement.status != FinalSettlement.STATUS_APPROVED:
             messages.error(request, "Only an approved settlement that is not paid can be unlocked.")
-        elif not (MIN_UNLOCK_REASON <= len(reason) <= MAX_UNLOCK_REASON):
+        elif not _reason_is_meaningful(reason):
             messages.error(
                 request,
                 f"Give a reason of {MIN_UNLOCK_REASON} to {MAX_UNLOCK_REASON} characters. "
