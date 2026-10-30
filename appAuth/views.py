@@ -2,6 +2,7 @@
 
 
 import random
+import secrets
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -98,45 +99,39 @@ def contact_us(request):
             messages.error(request, "Please enter your name, a valid email and a message (max 500 characters).", extra_tags="contact")
     return redirect("/app/#contact")
 
+
 # def login_view(request):
-#     form = LoginForm(request.POST or None)
+#     """
+#     Step 1: employee enters their email. If an empProfile exists for that
+#     email, an OTP is generated and emailed. Unknown emails are rejected —
+#     only admin-provisioned accounts (via register_view) can log in.
+#     """
+#     form = RequestOTPForm(request.POST or None)
 
 #     if request.method == "POST" and form.is_valid():
-#         username = form.cleaned_data["username"]
-#         password = form.cleaned_data["password"]
+#         email = form.cleaned_data["email"]
 
-#         user = authenticate(
-#             request=request,
-#             username=username,
-#             password=password,
-#         )
+#         user = User.objects.filter(email__iexact=email, empprofile__isnull=False, is_active=True).first()
 
-#         if user is not None:
-#             login(request, user)
+#         if not user:
+#             messages.error(request, "This email is not registered. Contact HR/Admin to get access.")
+#             return render(request, "appAuth/login.html", {"form": form})
 
-#             ActivityLog.objects.create(
-#                 user=user,
-#                 action="User logged in",
-#                 ip_address=get_client_ip(request),
-#                 user_agent=request.META.get("HTTP_USER_AGENT") or "Unknown",
-#             )
+#         otp = f"{random.randint(100000, 999999)}"
+#         EmailOTP.objects.create(email=email, code=otp)
 
-#             return redirect("dashboard")
+#         email_sent = send_azure_otp(email, otp)
 
-#         messages.error(request, "Invalid username or password.")
+#         if not email_sent:
+#             messages.error(request, "Failed to send code. Please try again shortly.")
+#             return render(request, "appAuth/login.html", {"form": form})
 
-#     return render(
-#         request,
-#         "appAuth/login.html",
-#         {"form": form},
-#     )
+#         request.session["pending_login_email"] = email
+#         return redirect("verify_otp")
+
+#     return render(request, "appAuth/login.html", {"form": form})
 
 def login_view(request):
-    """
-    Step 1: employee enters their email. If an empProfile exists for that
-    email, an OTP is generated and emailed. Unknown emails are rejected —
-    only admin-provisioned accounts (via register_view) can log in.
-    """
     form = RequestOTPForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -148,8 +143,17 @@ def login_view(request):
             messages.error(request, "This email is not registered. Contact HR/Admin to get access.")
             return render(request, "appAuth/login.html", {"form": form})
 
-        otp = f"{random.randint(100000, 999999)}"
-        EmailOTP.objects.create(email=email, code=otp)
+        # Throttle: at most 3 codes per email in any 10 minutes
+        window_start = timezone.now() - timedelta(minutes=10)
+        if EmailOTP.objects.filter(email__iexact=email, created_at__gte=window_start).count() >= 3:
+            messages.error(request, "Too many code requests. Please wait a few minutes and try again.")
+            return render(request, "appAuth/login.html", {"form": form})
+
+        # Only the newest code may work
+        EmailOTP.objects.filter(email__iexact=email, used=False).update(used=True)
+
+        otp = f"{secrets.randbelow(10**6):06d}"
+        EmailOTP.objects.create(email=email, code=EmailOTP.hash_code(email, otp))
 
         email_sent = send_azure_otp(email, otp)
 

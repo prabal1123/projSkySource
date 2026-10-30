@@ -14,16 +14,45 @@ import io
 from PIL import Image, UnidentifiedImageError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from datetime import timedelta, date
+from django.conf import settings 
+import hashlib, hmac
+
+# class EmailOTP(models.Model):
+#     email = models.EmailField(db_index=True)
+#     code = models.CharField(max_length=6)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     used = models.BooleanField(default=False)
+
+#     def is_valid(self):
+#         not_expired = (timezone.now() - self.created_at).seconds < 300  # 5 min
+#         return not_expired and not self.used
 
 class EmailOTP(models.Model):
+    MAX_ATTEMPTS = 5
+    LIFETIME_SECONDS = 300  # 5 min
+
     email = models.EmailField(db_index=True)
-    code = models.CharField(max_length=6)
+    code = models.CharField(max_length=64)  # HMAC-SHA256 hex digest, never the raw code
     created_at = models.DateTimeField(auto_now_add=True)
     used = models.BooleanField(default=False)
+    attempts = models.PositiveSmallIntegerField(default=0)
+
+    @staticmethod
+    def hash_code(email, code):
+        message = f"{email.lower()}:{code}".encode()
+        return hmac.new(settings.SECRET_KEY.encode(), message, hashlib.sha256).hexdigest()
+
+    def matches(self, code):
+        return hmac.compare_digest(self.code, self.hash_code(self.email, code))
 
     def is_valid(self):
-        not_expired = (timezone.now() - self.created_at).seconds < 300  # 5 min
-        return not_expired and not self.used
+        age = (timezone.now() - self.created_at).total_seconds()
+        return (
+            age < self.LIFETIME_SECONDS
+            and not self.used
+            and self.attempts < self.MAX_ATTEMPTS
+        )
+    
 
 class WhatsAppOTP(models.Model):
     phone_number = models.CharField(max_length=20)
