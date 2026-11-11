@@ -9,7 +9,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail
 from django.conf import settings
-
+from datetime import timedelta
+from django.utils import timezone
 from .forms import LoginForm, registerEmp, RequestOTPForm, VerifyOTPForm
 from .models import ActivityLog
 from app_organizations.utils import require_org_role
