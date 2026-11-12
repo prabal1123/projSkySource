@@ -5,6 +5,36 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/payroll_ui.css' %}">
+<style>
+    .fs-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; letter-spacing: .02em; background: rgba(100,116,139,.15); color: inherit; vertical-align: middle; }
+    .fs-pill-draft { background: rgba(245,158,11,.18); color: #b45309; }
+    .fs-pill-approved { background: rgba(59,130,246,.16); color: #1d4ed8; }
+    .fs-pill-paid { background: rgba(34,197,94,.18); color: #15803d; }
+    .fs-pill-earning { background: rgba(34,197,94,.16); color: #15803d; }
+    .fs-pill-deduction { background: rgba(239,68,68,.16); color: #b91c1c; }
+    .fs-name { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .fs-name h1 { margin: 0; }
+    .fs-meta { opacity: .75; margin: 6px 0 0; font-size: .9rem; }
+    .fs-alert-ok { border-left: 4px solid #16a34a; }
+    .fs-alert-warn { border-left: 4px solid #f59e0b; }
+    .fs-note { display: block; opacity: .65; font-size: .8rem; margin-top: 2px; }
+    .fs-amount { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .fs-add { display: grid; grid-template-columns: 150px minmax(180px, 2fr) 150px minmax(140px, 1.5fr) auto; gap: 12px; align-items: end; padding: 16px 20px; }
+    .fs-add label { display: block; font-size: .75rem; font-weight: 600; margin-bottom: 4px; opacity: .8; }
+    .fs-add .form-control { width: 100%; }
+    .fs-pos { color: #15803d; }
+    .fs-neg { color: #b91c1c; }
+    .fs-recover .val { color: #b91c1c; }
+    .fs-groups { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+    .fs-group { display: flex; flex-direction: column; gap: 6px; }
+    .fs-group-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; opacity: .6; }
+    .fs-group form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0; }
+    .fs-help { font-size: .78rem; opacity: .7; max-width: 380px; }
+    .fs-info { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: .85rem; opacity: .85; margin-bottom: 16px; }
+    .fs-info strong { font-weight: 600; }
+    @media (max-width: 900px) { .fs-add { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 560px) { .fs-add { grid-template-columns: 1fr; } }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -14,10 +44,13 @@
         <div class="pr-head pr-anim">
             <div>
                 <div class="pr-eyebrow">Exit</div>
-                <h1>Final settlement</h1>
-                <p>
+                <div class="fs-name">
+                    <h1>Final settlement</h1>
+                    <span class="fs-pill">{{ exit_request.get_status_display }}</span>
+                </div>
+                <p class="fs-meta">
                     <strong>{{ exit_request.employee.user.get_full_name|default:exit_request.employee.user.username }}</strong>
-                    · {{ exit_request.get_exit_type_display }} · {{ exit_request.get_status_display }}
+                    · {{ exit_request.get_exit_type_display }}
                     {% if last_day %}· Last working day {{ last_day|date:"d M Y" }}{% endif %}
                 </p>
             </div>
@@ -25,7 +58,7 @@
         </div>
 
         {% if reference %}
-        <div class="pr-alert pr-anim">
+        <div class="pr-alert pr-anim {% if reference.locked %}fs-alert-ok{% else %}fs-alert-warn{% endif %}">
             Final month salary ({{ reference.label }}) is paid through payroll and is not part of this settlement.
             {% if reference.locked %}Payroll is locked: net pay ₹ {{ reference.net_pay|floatformat:2|intcomma }}.
             {% else %}Payroll for that month is not locked yet.{% endif %}
@@ -50,7 +83,7 @@
         <div class="pr-card pr-anim">
             <div class="pr-card-head">
                 <h2>Items</h2>
-                <span class="pr-count">{{ settlement.get_status_display }}</span>
+                <span class="fs-pill fs-pill-{{ settlement.status|lower }}">{{ settlement.get_status_display }}</span>
             </div>
 
             <div class="pr-table-wrap">
@@ -59,16 +92,16 @@
                         <tr>
                             <th>Particulars</th>
                             <th>Type</th>
-                            <th style="text-align: right;">Amount (₹)</th>
+                            <th class="fs-amount">Amount (₹)</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for item in items %}
                         <tr>
-                            <td>{{ item.label }}{% if item.note %} <small>({{ item.note }})</small>{% endif %}</td>
-                            <td>{{ item.get_kind_display }}</td>
-                            <td style="text-align: right;">{{ item.amount|floatformat:2|intcomma }}</td>
+                            <td>{{ item.label }}{% if item.note %}<small class="fs-note">{{ item.note }}</small>{% endif %}</td>
+                            <td><span class="fs-pill {% if item.kind == 'EARNING' %}fs-pill-earning{% else %}fs-pill-deduction{% endif %}">{{ item.get_kind_display }}</span></td>
+                            <td class="fs-amount">{{ item.amount|floatformat:2|intcomma }}</td>
                             <td style="text-align: right;">
                                 {% if settlement.status == "DRAFT" %}
                                 <form method="post" style="margin: 0;">
@@ -88,60 +121,97 @@
             </div>
 
             {% if settlement.status == "DRAFT" %}
-            <div class="pr-actions">
-                <form method="post" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="add_item">
-                    <select name="kind" class="form-control" style="width: 140px;">
+            <form method="post" class="fs-add">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_item">
+                <div>
+                    <label for="fs-kind">Type</label>
+                    <select id="fs-kind" name="kind" class="form-control">
                         <option value="EARNING">Earning</option>
                         <option value="DEDUCTION">Deduction</option>
                     </select>
-                    <input type="text" name="label" class="form-control" required maxlength="100" placeholder="Particulars (e.g. Bonus, Advance recovery)" style="width: 260px;">
-                    <input type="number" name="amount" class="form-control" required min="0.01" step="0.01" placeholder="Amount" style="width: 140px;">
-                    <input type="text" name="note" class="form-control" maxlength="255" placeholder="Note (optional)" style="width: 200px;">
+                </div>
+                <div>
+                    <label for="fs-label">Particulars</label>
+                    <input id="fs-label" type="text" name="label" class="form-control" required maxlength="100" placeholder="e.g. Bonus, Advance recovery">
+                </div>
+                <div>
+                    <label for="fs-amount">Amount (₹)</label>
+                    <input id="fs-amount" type="number" name="amount" class="form-control" required min="0.01" step="0.01" placeholder="0.00">
+                </div>
+                <div>
+                    <label for="fs-note">Note (optional)</label>
+                    <input id="fs-note" type="text" name="note" class="form-control" maxlength="255">
+                </div>
+                <div>
                     <button type="submit" class="pr-btn">Add item</button>
-                </form>
-            </div>
+                </div>
+            </form>
             {% endif %}
         </div>
 
         <div class="pr-card pr-anim"><div class="pr-card-body">
-            <div class="pr-metric"><span>Total earnings</span><span class="val">₹ {{ total_earnings|floatformat:2|intcomma }}</span></div>
+            <div class="pr-metric"><span>Total earnings</span><span class="val fs-pos">₹ {{ total_earnings|floatformat:2|intcomma }}</span></div>
             <div class="pr-metric"><span>Total deductions</span><span class="val is-danger">- ₹ {{ total_deductions|floatformat:2|intcomma }}</span></div>
-            <div class="pr-metric highlight">
+            <div class="pr-metric highlight {% if recoverable %}fs-recover{% endif %}">
                 <span>{% if recoverable %}Recoverable from employee{% else %}Net payable{% endif %}</span>
                 <span class="val">₹ {{ net_abs|floatformat:2|intcomma }}</span>
             </div>
         </div></div>
 
         <div class="pr-card pr-anim"><div class="pr-card-body">
-            <div class="pr-actions">
-                {% if settlement.status == "DRAFT" %}
-                <form method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="approve">
-                    <button type="submit" class="pr-btn pr-btn-primary"
-                            onclick="return confirm('Approve this settlement? Items cannot be changed after approval.');">
-                        Approve settlement
-                    </button>
-                </form>
-                {% else %}
-                <a class="pr-btn" target="_blank" href="{% url 'finalSettlementPdf' uuid=exit_request.uuid %}">Download statement (PDF)</a>
+            {% if settlement.approved_at or settlement.paid_at %}
+            <div class="fs-info">
+                {% if settlement.approved_at %}
+                <span>Approved by <strong>{{ settlement.approved_by.get_full_name|default:settlement.approved_by.username|default:"-" }}</strong> on {{ settlement.approved_at|date:"d M Y, h:i A" }}</span>
                 {% endif %}
+                {% if settlement.paid_at %}
+                <span>Paid on <strong>{{ settlement.paid_at|date:"d M Y, h:i A" }}</strong></span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="fs-groups">
+                {% if settlement.status == "DRAFT" %}
+                <div class="fs-group">
+                    <span class="fs-group-title">Approve</span>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="approve">
+                        <button type="submit" class="pr-btn pr-btn-primary"
+                                onclick="return confirm('Approve this settlement? Items cannot be changed after approval.');">
+                            Approve settlement
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="fs-group">
+                    <span class="fs-group-title">Statement</span>
+                    <a class="pr-btn" target="_blank" href="{% url 'finalSettlementPdf' uuid=exit_request.uuid %}">Download statement (PDF)</a>
+                </div>
+                {% endif %}
+
                 {% if settlement.status == "APPROVED" %}
-                <form method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="paid">
-                    <button type="submit" class="pr-btn pr-btn-primary"
-                            onclick="return confirm('Mark this settlement as paid?');">Mark as paid</button>
-                </form>
-                <form method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="unlock">
-                    <input type="text" name="reason" class="form-control" required minlength="10" maxlength="255" placeholder="Reason for unlocking (min 10 characters)" style="width: 260px; padding: 6px 10px; font-size: 0.85rem;">
-                    <button type="submit" class="pr-btn pr-btn-danger"
-                            onclick="return confirm('Unlock this settlement so its items can be changed?');">Unlock</button>
-                </form>
+                <div class="fs-group">
+                    <span class="fs-group-title">Payment</span>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="paid">
+                        <button type="submit" class="pr-btn pr-btn-primary"
+                                onclick="return confirm('Mark this settlement as paid? This cannot be undone and it can no longer be unlocked.');">Mark as paid</button>
+                    </form>
+                </div>
+                <div class="fs-group">
+                    <span class="fs-group-title">Unlock</span>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="unlock">
+                        <input type="text" name="reason" class="form-control" required minlength="10" maxlength="255" placeholder="Reason for unlocking" style="width: 260px; padding: 6px 10px; font-size: 0.85rem;">
+                        <button type="submit" class="pr-btn pr-btn-danger"
+                                onclick="return confirm('Unlock this settlement so its items can be changed?');">Unlock</button>
+                    </form>
+                    <span class="fs-help">10 to 255 characters, at least 2 words, with a meaningful reason. The unlock is recorded in the history.</span>
+                </div>
                 {% endif %}
             </div>
         </div></div>
@@ -150,16 +220,18 @@
             <div class="pr-card-head"><h2>History</h2></div>
             <div class="pr-table-wrap">
                 <table>
-                    <thead><tr><th>When</th><th>Action</th><th>By</th><th>Reason</th><th style="text-align: right;">Net payable (₹)</th></tr></thead>
+                    <thead><tr><th>When</th><th>Action</th><th>By</th><th>Reason</th><th class="fs-amount">Net payable (₹)</th></tr></thead>
                     <tbody>
                         {% for log in logs %}
                         <tr>
                             <td>{{ log.created_at|date:"d M Y, h:i A" }}</td>
-                            <td>{{ log.get_action_display }}</td>
+                            <td><span class="fs-pill">{{ log.get_action_display }}</span></td>
                             <td>{{ log.user_name|default:"-" }}</td>
                             <td>{{ log.reason|default:"-" }}</td>
-                            <td style="text-align: right;">{{ log.net_payable|floatformat:2|intcomma }}</td>
+                            <td class="fs-amount">{{ log.net_payable|floatformat:2|intcomma }}</td>
                         </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="pr-empty">No history yet.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

@@ -10,3 +10,5 @@ media/
 .env.*
 !.env.example
 private_media/
+zap-reports/
+.DS_Store
