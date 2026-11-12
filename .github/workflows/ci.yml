@@ -42,6 +42,7 @@ jobs:
       DJANGO_SECRET_KEY: ci-only-not-a-real-secret-key
       DJANGO_DEBUG: "False"
       DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,testserver"
+      BLIND_INDEX_KEY: "1pUgAqItQBB4z6YxQavx5ix41HjUCnl96rOb7Z2GiAmZg6ISIQLPXvaRwyzeRWJY"
       FIELD_ENCRYPTION_KEYS: "38K065M_gFhqOmpR-qjW56JRUtLjLU63t_HYyXhXTZ8="
 
     steps:
