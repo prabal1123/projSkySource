@@ -87,6 +87,7 @@ CORE_URL_NAMES = {
     "register", "verificationStats", "verificationQuickUpdate",
     "create_organization", "switch_organization",
     "home", "demo_request", "login", "logout", "verify_otp", "contact_us",
+    "health",
 }
 
 URL_NAME_TO_MODULE = {
