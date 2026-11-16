@@ -9,7 +9,10 @@ from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
 
+from projSkySource.health import health
+
 urlpatterns = [
+    path("health/", health, name="health"),
     path(
         "",
         RedirectView.as_view(url="/app/", permanent=False),
