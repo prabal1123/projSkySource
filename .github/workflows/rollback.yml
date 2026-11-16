@@ -1,0 +1,71 @@
+name: Rollback production
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Commit SHA or tag (must be on main) to roll back to"
+        required: true
+        type: string
+
+# Shares the deploy group, so a rollback and a deploy never overlap.
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate input
+        env:
+          ROLLBACK_REF: ${{ inputs.ref }}
+        run: |
+          if ! [[ "$ROLLBACK_REF" =~ ^[0-9A-Za-z._-]{4,64}$ ]]; then
+            echo "Invalid ref. Use a commit SHA or a tag name."
+            exit 1
+          fi
+
+      - name: Roll back on EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          ROLLBACK_REF: ${{ inputs.ref }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: ROLLBACK_REF
+          script: |
+            set -e
+            cd ${{ secrets.EC2_PROJECT_PATH }}
+            source venv/bin/activate
+            git fetch origin --tags
+            git cat-file -e "${ROLLBACK_REF}^{commit}" || { echo "Unknown commit or tag"; exit 1; }
+            git merge-base --is-ancestor "$ROLLBACK_REF" origin/main || { echo "Ref is not on main. Aborting."; exit 1; }
+            if ! git diff --quiet HEAD; then
+              echo "Server has local changes to tracked files. Aborting."
+              git status --short
+              exit 1
+            fi
+            echo "Rolling back from $(git rev-parse --short HEAD) to $(git rev-parse --short "$ROLLBACK_REF")"
+            git reset --hard "$ROLLBACK_REF"
+            pip install -r requirements.txt
+            python manage.py check
+            python manage.py collectstatic --noinput
+            sudo systemctl restart gunicorn
+            sleep 2
+            sudo systemctl is-active --quiet gunicorn || (sudo journalctl -u gunicorn -n 25 --no-pager && exit 1)
+            ok=0
+            for i in $(seq 1 10); do
+              code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://127.0.0.1:8000/health/ || true)
+              if [ "$code" = "200" ]; then ok=1; break; fi
+              echo "Health check attempt $i: HTTP $code"
+              sleep 3
+            done
+            if [ "$ok" != "1" ]; then
+              echo "Health check FAILED after rollback"
+              sudo journalctl -u gunicorn -n 40 --no-pager
+              exit 1
+            fi
+            echo "Rollback complete and healthy"
