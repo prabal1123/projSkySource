@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+# One production change at a time. A newer run waits for the current one.
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -20,7 +25,9 @@ jobs:
             set -e
             cd ${{ secrets.EC2_PROJECT_PATH }}
             source venv/bin/activate
+            echo "Previous commit (rollback target): $(git rev-parse HEAD)"
             git pull origin main
+            echo "Deploying commit: $(git rev-parse HEAD)"
             pip install -r requirements.txt
             python manage.py check
             python manage.py migrate --noinput
@@ -28,3 +35,16 @@ jobs:
             sudo systemctl restart gunicorn
             sleep 2
             sudo systemctl is-active --quiet gunicorn || (sudo journalctl -u gunicorn -n 25 --no-pager && exit 1)
+            ok=0
+            for i in $(seq 1 10); do
+              code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://127.0.0.1:8000/health/ || true)
+              if [ "$code" = "200" ]; then ok=1; break; fi
+              echo "Health check attempt $i: HTTP $code"
+              sleep 3
+            done
+            if [ "$ok" != "1" ]; then
+              echo "Health check FAILED. Consider running the Rollback workflow."
+              sudo journalctl -u gunicorn -n 40 --no-pager
+              exit 1
+            fi
+            echo "Health check passed"
