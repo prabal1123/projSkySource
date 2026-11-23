@@ -168,6 +168,52 @@ def login_view(request):
     return render(request, "appAuth/login.html", {"form": form})
 
 
+# def verify_otp_view(request):
+#     """
+#     Step 2: employee enters the OTP they received by email.
+#     """
+#     email = request.session.get("pending_login_email")
+#     if not email:
+#         messages.error(request, "Please enter your email first.")
+#         return redirect("login")
+
+#     form = VerifyOTPForm(request.POST or None)
+
+#     if request.method == "POST" and form.is_valid():
+#         code = form.cleaned_data["otp"]
+
+#         otp_obj = (
+#             EmailOTP.objects.filter(email__iexact=email, code=code)
+#             .order_by("-created_at")
+#             .first()
+#         )
+
+#         if not otp_obj or not otp_obj.is_valid():
+#             messages.error(request, "Invalid or expired code.")
+#             return render(request, "appAuth/verify_otp.html", {"form": form, "email": email})
+
+#         user = User.objects.filter(email__iexact=email, empprofile__isnull=False, is_active=True).first()
+#         if not user:
+#             messages.error(request, "No employee account found for this email.")
+#             return redirect("login")
+
+#         otp_obj.used = True
+#         otp_obj.save()
+
+#         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+
+#         ActivityLog.objects.create(
+#             user=user,
+#             action="User logged in via OTP",
+#             ip_address=get_client_ip(request),
+#             user_agent=request.META.get("HTTP_USER_AGENT") or "Unknown",
+#         )
+
+#         del request.session["pending_login_email"]
+#         return redirect("dashboard")
+
+#     return render(request, "appAuth/verify_otp.html", {"form": form, "email": email})
+
 def verify_otp_view(request):
     """
     Step 2: employee enters the OTP they received by email.
@@ -182,13 +228,21 @@ def verify_otp_view(request):
     if request.method == "POST" and form.is_valid():
         code = form.cleaned_data["otp"]
 
+        # Codes are stored hashed, so fetch the newest unused code for this
+        # email and compare hashes instead of filtering on the raw code.
         otp_obj = (
-            EmailOTP.objects.filter(email__iexact=email, code=code)
+            EmailOTP.objects.filter(email__iexact=email, used=False)
             .order_by("-created_at")
             .first()
         )
 
         if not otp_obj or not otp_obj.is_valid():
+            messages.error(request, "Invalid or expired code.")
+            return render(request, "appAuth/verify_otp.html", {"form": form, "email": email})
+
+        if not otp_obj.matches(code):
+            otp_obj.attempts += 1
+            otp_obj.save(update_fields=["attempts"])
             messages.error(request, "Invalid or expired code.")
             return render(request, "appAuth/verify_otp.html", {"form": form, "email": email})
 
@@ -198,7 +252,7 @@ def verify_otp_view(request):
             return redirect("login")
 
         otp_obj.used = True
-        otp_obj.save()
+        otp_obj.save(update_fields=["used"])
 
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
 
