@@ -5,6 +5,12 @@
 <h3>Bulk Import Employees</h3>
 
 {% if not preview_rows %}
+<div class="btn-group mb-3" role="group" aria-label="Import method">
+<button type="button" class="btn btn-outline-primary active" id="modeUploadBtn">Upload Excel</button>
+<button type="button" class="btn btn-outline-primary" id="modeGridBtn">Type in directly</button>
+</div>
+
+<div id="uploadPane">
 <form method="post" enctype="multipart/form-data" class="mb-4">
 {% csrf_token %}
 {{ form.file }}
@@ -17,6 +23,50 @@
 {% endif %}
 <button type="submit" class="btn btn-success mt-2">Preview Import</button>
 </form>
+</div>
+
+<div id="gridPane" style="display:none;">
+<form method="post" id="gridForm" class="mb-4" autocomplete="off">
+{% csrf_token %}
+<input type="hidden" name="input_mode" value="grid">
+<p class="text-muted small mb-2">
+Type directly into the cells, or copy rows from Excel and paste into the first cell. Columns marked <span class="text-danger fw-bold">*</span> are required. Dates: DD-MM-YYYY. Up to 50 rows.
+</p>
+<div class="table-responsive" style="max-height: 60vh; overflow: auto;">
+<table class="table table-sm table-bordered align-middle mb-2" id="gridTable">
+<thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+<tr>
+<th style="width:40px;">#</th>
+{% for c in configs %}<th style="min-width:{% if c.data_type == 'DATE' %}130{% else %}170{% endif %}px;">{{ c.display_name }}{% if c.is_required %} <span class="text-danger">*</span>{% endif %}</th>{% endfor %}
+<th style="width:40px;"></th>
+</tr>
+</thead>
+<tbody id="gridBody"></tbody>
+</table>
+</div>
+
+<template id="gridRowTemplate">
+<tr>
+<td class="text-muted small row-num"></td>
+{% for c in configs %}<td class="p-0"><input type="text" name="grid_{{ c.field_key }}" class="form-control form-control-sm border-0 rounded-0"{% if c.is_required %} style="background:#fff5f5;"{% endif %}{% if c.data_type == 'DATE' %} placeholder="DD-MM-YYYY"{% elif c.data_type == 'PHONE' %} inputmode="tel"{% elif c.data_type == 'EMAIL' %} inputmode="email"{% endif %}></td>{% endfor %}
+<td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger p-0 remove-row" title="Remove row">&times;</button></td>
+</tr>
+</template>
+
+{% if form.fields.default_project %}
+<div class="mb-3" style="max-width: 360px;">
+<label for="gridDefaultProject" class="form-label">{{ form.default_project.label }}</label>
+<select name="default_project" id="gridDefaultProject" class="form-select">
+<option value="">No project</option>
+{% for p in form.fields.default_project.queryset %}<option value="{{ p.uuid }}">{{ p.name }}</option>{% endfor %}
+</select>
+</div>
+{% endif %}
+
+<button type="button" class="btn btn-outline-secondary btn-sm" id="addRowBtn">+ Add row</button>
+<button type="submit" class="btn btn-success">Preview Import</button>
+</form>
+</div>
 
 <details class="mb-3">
 <summary>Expected columns</summary>
@@ -78,4 +128,78 @@
 <a href="{% url 'employeeBulkImport' %}" class="btn btn-link mt-2">Start Over</a>
 {% endif %}
 </div>
+
+{% if not preview_rows %}
+<script>
+(function () {
+  var MAX_ROWS = 50, START_ROWS = 5;
+  var uploadPane = document.getElementById("uploadPane"), gridPane = document.getElementById("gridPane");
+  var upBtn = document.getElementById("modeUploadBtn"), gridBtn = document.getElementById("modeGridBtn");
+  var body = document.getElementById("gridBody"), tpl = document.getElementById("gridRowTemplate");
+
+  function setMode(grid) {
+    uploadPane.style.display = grid ? "none" : "";
+    gridPane.style.display = grid ? "" : "none";
+    upBtn.classList.toggle("active", !grid);
+    gridBtn.classList.toggle("active", grid);
+    if (grid && !body.children.length) { for (var i = 0; i < START_ROWS; i++) addRow(); }
+  }
+  upBtn.addEventListener("click", function () { setMode(false); });
+  gridBtn.addEventListener("click", function () { setMode(true); });
+
+  function renumber() {
+    Array.prototype.forEach.call(body.children, function (tr, i) { tr.querySelector(".row-num").textContent = i + 1; });
+  }
+  function addRow() {
+    if (body.children.length >= MAX_ROWS) return null;
+    var tr = tpl.content.firstElementChild.cloneNode(true);
+    body.appendChild(tr);
+    renumber();
+    return tr;
+  }
+  document.getElementById("addRowBtn").addEventListener("click", function () {
+    var tr = addRow();
+    if (tr) tr.querySelector("input").focus();
+  });
+
+  body.addEventListener("click", function (e) {
+    if (!e.target.classList.contains("remove-row")) return;
+    e.target.closest("tr").remove();
+    if (!body.children.length) addRow();
+    renumber();
+  });
+
+  // Enter moves down the same column instead of submitting the form
+  body.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" || e.target.tagName !== "INPUT") return;
+    e.preventDefault();
+    var td = e.target.closest("td"), tr = td.parentElement;
+    var col = Array.prototype.indexOf.call(tr.children, td);
+    var next = tr.nextElementSibling || addRow();
+    if (next) next.children[col].querySelector("input").focus();
+  });
+
+  // Paste a block copied from Excel (tab-separated columns, newline-separated rows)
+  body.addEventListener("paste", function (e) {
+    if (e.target.tagName !== "INPUT") return;
+    var text = (e.clipboardData || window.clipboardData).getData("text");
+    if (text.indexOf("\t") === -1 && text.indexOf("\n") === -1) return;  // plain single value: default paste
+    e.preventDefault();
+    var lines = text.replace(/\r/g, "").replace(/\n+$/, "").split("\n");
+    var td = e.target.closest("td"), tr = td.parentElement;
+    var startCol = Array.prototype.indexOf.call(tr.children, td);
+    lines.forEach(function (line, r) {
+      if (!tr) tr = addRow();
+      if (!tr) return;
+      line.split("\t").forEach(function (val, c) {
+        var cell = tr.children[startCol + c];
+        var input = cell && cell.querySelector("input");
+        if (input) input.value = val.trim();
+      });
+      tr = tr.nextElementSibling;
+    });
+  });
+})();
+</script>
+{% endif %}
 {% endblock %}
