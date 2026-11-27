@@ -30,6 +30,24 @@ class Command(BaseCommand):
         parser.add_argument("--to", dest="to_date", help="YYYY-MM-DD (default today)")
         parser.add_argument("--chunk-days", type=int, default=7)
         parser.add_argument(
+            "--retries",
+            type=int,
+            default=4,
+            help="Retries per weekly call on network errors, 5xx or 429.",
+        )
+        parser.add_argument(
+            "--retry-delay",
+            type=float,
+            default=2.0,
+            help="Seconds before the first retry; doubles each time.",
+        )
+        parser.add_argument(
+            "--pause",
+            type=float,
+            default=1.0,
+            help="Seconds to wait between weekly calls.",
+        )
+        parser.add_argument(
             "--dry-run",
             action="store_true",
             help="Fetch and count only; write nothing to the database.",
@@ -60,6 +78,10 @@ class Command(BaseCommand):
             raise CommandError("--from must not be after --to")
         if opts["chunk_days"] < 2:
             raise CommandError("--chunk-days must be at least 2")
+        if opts["retries"] < 0 or opts["retry_delay"] < 0 or opts["pause"] < 0:
+            raise CommandError(
+                "--retries, --retry-delay and --pause must not be negative"
+            )
 
         self.stdout.write(
             f"Organization id={org.pk} | {from_date} to {to_date} | "
@@ -74,6 +96,9 @@ class Command(BaseCommand):
                     api_key,
                     chunk_days=opts["chunk_days"],
                     progress=progress,
+                    retries=opts["retries"],
+                    retry_delay=opts["retry_delay"],
+                    pause=opts["pause"],
                 )
                 self.stdout.write(
                     "DRY RUN, nothing written. "
@@ -88,6 +113,9 @@ class Command(BaseCommand):
                 api_key,
                 chunk_days=opts["chunk_days"],
                 progress=progress,
+                retries=opts["retries"],
+                retry_delay=opts["retry_delay"],
+                pause=opts["pause"],
             )
         except services.SmartOfficeError as exc:
             raise CommandError(str(exc))

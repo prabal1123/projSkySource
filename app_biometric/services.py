@@ -1,5 +1,8 @@
 """Smart Office client and punch ingestion. No Django views; used by the command."""
+import http.client
 import json
+import random
+import time
 from datetime import datetime, timedelta
 from urllib import error, parse, request
 
@@ -16,6 +19,14 @@ STALE_RUN_HOURS = 3
 
 class SmartOfficeError(Exception):
     """Any failure talking to Smart Office. Messages never contain the API key."""
+
+    retryable = False
+
+
+class SmartOfficeTransientError(SmartOfficeError):
+    """A failure worth retrying: network trouble, HTTP 5xx or 429."""
+
+    retryable = True
 
 
 def _scrub(text, api_key):
@@ -44,16 +55,26 @@ def fetch_logs(api_key, from_date, to_date, base_url=None, timeout=90):
         with request.urlopen(url, timeout=timeout) as resp:
             body = resp.read().decode("utf-8-sig")
     except error.HTTPError as exc:
-        raise SmartOfficeError(f"HTTP {exc.code} from Smart Office") from None
-    except (error.URLError, TimeoutError, OSError) as exc:
+        cls = (
+            SmartOfficeTransientError
+            if exc.code == 429 or exc.code >= 500
+            else SmartOfficeError
+        )
+        raise cls(f"HTTP {exc.code} from Smart Office") from None
+    except (
+        error.URLError,
+        TimeoutError,
+        OSError,
+        http.client.HTTPException,
+    ) as exc:
         reason = getattr(exc, "reason", exc)
-        raise SmartOfficeError(
+        raise SmartOfficeTransientError(
             "could not reach Smart Office: " + _scrub(reason, api_key)
         ) from None
     try:
         data = json.loads(body)
     except ValueError:
-        raise SmartOfficeError("response was not JSON") from None
+        raise SmartOfficeTransientError("response was not JSON") from None
     if not isinstance(data, list):
         shown = data if isinstance(data, str) else json.dumps(data)
         raise SmartOfficeError(
@@ -156,6 +177,28 @@ def ingest_records(organization, records):
     return {"fetched": len(records), "skipped": skipped, "new": after - before}
 
 
+def call_with_retry(
+    fetcher, api_key, start, end, retries=0, delay=2.0, progress=None
+):
+    """Call fetcher; retry transient errors with doubling waits plus jitter."""
+    attempt = 0
+    while True:
+        try:
+            return fetcher(api_key, start, end)
+        except SmartOfficeError as exc:
+            if not getattr(exc, "retryable", False) or attempt >= retries:
+                raise
+            wait = delay * (2**attempt)
+            wait += random.uniform(0, wait * 0.25)
+            attempt += 1
+            if progress:
+                progress(
+                    f"{start} to {end}: {exc}; retry {attempt} of {retries} "
+                    f"in {wait:.0f}s"
+                )
+            time.sleep(wait)
+
+
 def _fail(run, message):
     run.status = SyncRun.STATUS_FAILED
     run.error_message = message[:300]
@@ -172,6 +215,9 @@ def sync_range(
     chunk_days=7,
     fetcher=None,
     progress=None,
+    retries=0,
+    retry_delay=2.0,
+    pause=0,
 ):
     """Pull the range from Smart Office and store it. Re-runnable at any time."""
     fetcher = fetcher or fetch_logs
@@ -190,9 +236,15 @@ def sync_range(
     run = SyncRun.objects.create(
         organization=organization, mode=mode, from_date=from_date, to_date=to_date
     )
+    window = None
     try:
         for start, end in date_windows(from_date, to_date, chunk_days):
-            data = fetcher(api_key, start, end)
+            if window is not None and pause:
+                time.sleep(pause)
+            window = (start, end)
+            data = call_with_retry(
+                fetcher, api_key, start, end, retries, retry_delay, progress
+            )
             run.api_calls += 1
             stats = ingest_records(organization, data)
             run.records_fetched += stats["fetched"]
@@ -211,7 +263,12 @@ def sync_range(
                 f"new {stats['new']}, skipped {stats['skipped']}"
             )
     except SmartOfficeError as exc:
-        _fail(run, str(exc))
+        where = (
+            f" (stopped at {window[0]} to {window[1]}; re-run with --from {window[0]})"
+            if window
+            else ""
+        )
+        _fail(run, str(exc) + where)
         raise
     except Exception as exc:
         _fail(run, "unexpected error: " + type(exc).__name__)
@@ -223,15 +280,29 @@ def sync_range(
 
 
 def dry_run_range(
-    from_date, to_date, api_key, chunk_days=7, fetcher=None, progress=None
+    from_date,
+    to_date,
+    api_key,
+    chunk_days=7,
+    fetcher=None,
+    progress=None,
+    retries=0,
+    retry_delay=2.0,
+    pause=0,
 ):
     """Fetch and count only. Writes nothing to the database."""
     fetcher = fetcher or fetch_logs
     progress = progress or (lambda msg: None)
     totals = {"calls": 0, "fetched": 0, "valid": 0, "skipped": 0}
     codes, serials = set(), set()
+    first = True
     for start, end in date_windows(from_date, to_date, chunk_days):
-        data = fetcher(api_key, start, end)
+        if not first and pause:
+            time.sleep(pause)
+        first = False
+        data = call_with_retry(
+            fetcher, api_key, start, end, retries, retry_delay, progress
+        )
         totals["calls"] += 1
         valid = 0
         for rec in data:
