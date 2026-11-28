@@ -127,6 +127,7 @@ INSTALLED_APPS = [
     "appEmp",
     "app_organizations",
     "app_projects",
+    "app_biometric",
 ]
 
 
@@ -306,6 +307,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 WHATSAPP_TOKEN = os.environ.get('WHATSAPP_TOKEN')
 WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
 WHATSAPP_VERIFY_TOKEN = os.environ.get('WHATSAPP_VERIFY_TOKEN')
+
+# Smart Office biometric API (app_biometric). The key lives only in the env file.
+SMARTOFFICE_BASE_URL = os.environ.get("SMARTOFFICE_BASE_URL", "http://47.247.38.66:82").rstrip("/")
+SMARTOFFICE_API_KEY = os.environ.get("SMARTOFFICE_API_KEY", "").strip()
 
 # =========================================================
 # File Storage (S3)

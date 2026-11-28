@@ -44,15 +44,15 @@
     <nav class="hr-sidebar-nav">
         {% with u=request.resolver_match.url_name %}
 
-        <!-- DAILY FOCUS -->
-        <div class="hr-sidebar-section">
-            <div class="hr-sidebar-section-title">DAILY FOCUS</div>
-
+        <!-- TOP: Dashboard + Projects -->
+        <div class="hr-sidebar-section hr-sidebar-section-top">
             <a href="{% url 'dashboard' %}" class="hr-sidebar-link {% if u == 'dashboard' %}active{% endif %}">
                 <i class="bi bi-grid-1x2"></i>
                 <span>Dashboard</span>
             </a>
-
+        <details class="hr-nav-group" data-group="projects">
+            <summary class="hr-nav-group-title"><i class="bi bi-folder2-open"></i><span>Projects</span><i class="bi bi-chevron-down hr-nav-chevron"></i></summary>
+            <div class="hr-nav-group-body">
             {% if projects_nav_show %}
                 <a href="{% url 'projectList' %}" data-nav="projects" class="hr-sidebar-link {% if 'project' in u and u != 'projectAssign' %}active{% endif %}">
                     <i class="bi bi-folder2-open"></i>
@@ -71,7 +71,16 @@
                 </a>
                 {% endif %}
             {% endif %}
+            </div>
+        </details>
+        </div>
 
+        <!-- MY SPACE (things I do for myself) -->
+        <div class="hr-sidebar-section" data-auto-hide>
+            <div class="hr-sidebar-section-title">MY SPACE</div>
+        <details class="hr-nav-group" data-group="my-attendance-pay">
+            <summary class="hr-nav-group-title"><i class="bi bi-calendar-check"></i><span>Attendance &amp; Pay</span><i class="bi bi-chevron-down hr-nav-chevron"></i></summary>
+            <div class="hr-nav-group-body">
             {% if has_employee_profile %}
                 {% if 'attendance' in org_modules %}<a href="{% url 'attendanceCalendarSelf' %}" class="hr-sidebar-link {% if u == 'attendanceCalendarSelf' %}active{% endif %}">
                     <i class="bi bi-calendar-check"></i>
@@ -83,21 +92,65 @@
                     <span>My Payslips</span>
                 </a>{% endif %}
             {% endif %}
-            {% if can_manage_salary and 'payroll' in org_modules %}
-                <a href="{% url 'payroll' %}" class="hr-sidebar-link {% if u in 'payroll payrollCycle payrollEmployee payrollPayslip payrollSummaryPdf' %}active{% endif %}">
-                    <i class="bi bi-cash-stack"></i>
-                    <span>Payroll</span>
+            </div>
+        </details>
+        <details class="hr-nav-group" data-group="my-leave">
+            <summary class="hr-nav-group-title"><i class="bi bi-calendar2-heart"></i><span>Leave &amp; Holidays</span><i class="bi bi-chevron-down hr-nav-chevron"></i></summary>
+            <div class="hr-nav-group-body">
+{% if show_time_menu %}
+                {% if has_employee_profile and 'leave' in org_modules %}
+                    <a href="{% url 'applyLeave' %}" class="hr-sidebar-link compact {% if u == 'applyLeave' %}active{% endif %}">
+                        <i class="bi bi-calendar-plus"></i><span>Apply Leave</span>
+                    </a>
+                    <a href="{% url 'myLeaveRequests' %}" class="hr-sidebar-link compact {% if u == 'myLeaveRequests' %}active{% endif %}">
+                        <i class="bi bi-calendar2-check"></i><span>My Leave Requests</span>
+                    </a>
+                {% endif %}
+                {% if has_employee_profile and 'holidays' in org_modules %}
+                    <a href="{% url 'optionalHolidayApply' %}" class="hr-sidebar-link compact {% if u == 'optionalHolidayApply' %}active{% endif %}">
+                        <i class="bi bi-gift"></i><span>Optional Holidays</span>
+                    </a>
+                {% endif %}
+{% endif %}
+            </div>
+        </details>
+        <details class="hr-nav-group" data-group="my-docs-exit">
+            <summary class="hr-nav-group-title"><i class="bi bi-folder-check"></i><span>Documents &amp; Exit</span><i class="bi bi-chevron-down hr-nav-chevron"></i></summary>
+            <div class="hr-nav-group-body">
+{% if show_docs_menu %}
+                {% if has_employee_profile and 'documents' in org_modules %}
+                    <a href="{% url 'upload_document' %}" class="hr-sidebar-link compact {% if u == 'upload_document' %}active{% endif %}">
+                        <i class="bi bi-file-earmark-text"></i><span>My Documents</span>
+                    </a>
+                {% endif %}
+{% endif %}
+{% if show_exit_menu %}
+                    {% if has_employee_profile and 'exit_clearance' in org_modules %}
+                        <a href="{% url 'myResignations' %}" class="hr-sidebar-link compact {% if u == 'myResignations' %}active{% endif %}">
+                            <i class="bi bi-journal-text"></i><span>My Resignations</span>
+                        </a>
+                        <a href="{% url 'submitResignation' %}" class="hr-sidebar-link compact {% if u == 'submitResignation' %}active{% endif %}">
+                            <i class="bi bi-box-arrow-right"></i><span>Submit Resignation</span>
+                        </a>
+                    {% endif %}
+{% endif %}
+            </div>
+        </details>
+            {% if has_employee_profile %}
+                <a href="{% url 'myProfile' %}" class="hr-sidebar-link {% if u == 'myProfile' %}active{% endif %}">
+                    <i class="bi bi-person"></i>
+                    <span>My Profile</span>
                 </a>
             {% endif %}
         </div>
 
-        <!-- CORE OPERATIONS -->
-        <div class="hr-sidebar-section">
-            <div class="hr-sidebar-section-title">CORE OPERATIONS</div>
-
-            <!-- People -->
+        <!-- MANAGE (HR / admin) -->
+        <div class="hr-sidebar-section" data-auto-hide>
+            <div class="hr-sidebar-section-title">MANAGE</div>
+        <details class="hr-nav-group" data-group="people-payroll">
+            <summary class="hr-nav-group-title"><i class="bi bi-people"></i><span>People &amp; Payroll</span><i class="bi bi-chevron-down hr-nav-chevron"></i></summary>
+            <div class="hr-nav-group-body">
             {% if can_manage_employees %}
-                <div class="hr-sidebar-subheading">People</div>
                 <a href="{% url 'employeeList' %}" class="hr-sidebar-link compact {% if u == 'employeeList' %}active{% endif %}">
                     <i class="bi bi-people"></i><span>View Employees</span>
                 </a>
@@ -113,11 +166,18 @@
                     <i class="bi bi-patch-check"></i><span>Verification Status</span>
                 </a>
             {% endif %}
-
-            <!-- Time & Absence -->
-            {% if show_time_menu %}
-                <div class="hr-sidebar-subheading">Time &amp; Absence</div>
-
+            {% if can_manage_salary and 'payroll' in org_modules %}
+                <a href="{% url 'payroll' %}" class="hr-sidebar-link {% if u in 'payroll payrollCycle payrollEmployee payrollPayslip payrollSummaryPdf' %}active{% endif %}">
+                    <i class="bi bi-cash-stack"></i>
+                    <span>Payroll</span>
+                </a>
+            {% endif %}
+            </div>
+        </details>
+        <details class="hr-nav-group" data-group="leave-attendance">
+            <summary class="hr-nav-group-title"><i class="bi bi-hourglass-split"></i><span>Leave &amp; Attendance</span><i class="bi bi-chevron-down hr-nav-chevron"></i></summary>
+            <div class="hr-nav-group-body">
+{% if show_time_menu %}
                 {% if can_review_leave and 'leave' in org_modules %}
                     <a href="{% url 'pendingLeaveRequests' %}" class="hr-sidebar-link compact {% if u == 'pendingLeaveRequests' %}active{% endif %}">
                         <i class="bi bi-hourglass-split"></i><span>Pending Leave Requests</span>
@@ -126,14 +186,6 @@
                 {% if can_review_attendance_exception and 'attendance' in org_modules %}
                     <a href="{% url 'pendingAttendanceExceptions' %}" class="hr-sidebar-link compact {% if u == 'pendingAttendanceExceptions' %}active{% endif %}">
                         <i class="bi bi-clock-history"></i><span>Attendance Exceptions</span>
-                    </a>
-                {% endif %}
-                {% if has_employee_profile and 'leave' in org_modules %}
-                    <a href="{% url 'applyLeave' %}" class="hr-sidebar-link compact {% if u == 'applyLeave' %}active{% endif %}">
-                        <i class="bi bi-calendar-plus"></i><span>Apply Leave</span>
-                    </a>
-                    <a href="{% url 'myLeaveRequests' %}" class="hr-sidebar-link compact {% if u == 'myLeaveRequests' %}active{% endif %}">
-                        <i class="bi bi-calendar2-check"></i><span>My Leave Requests</span>
                     </a>
                 {% endif %}
                 {% if can_review_leave and 'leave' in org_modules %}
@@ -151,11 +203,13 @@
                         <i class="bi bi-calendar-event"></i><span>Pending Holiday Requests</span>
                     </a>
                 {% endif %}
-                {% if has_employee_profile and 'holidays' in org_modules %}
-                    <a href="{% url 'optionalHolidayApply' %}" class="hr-sidebar-link compact {% if u == 'optionalHolidayApply' %}active{% endif %}">
-                        <i class="bi bi-gift"></i><span>Optional Holidays</span>
-                    </a>
-                {% endif %}
+{% endif %}
+            </div>
+        </details>
+        <details class="hr-nav-group" data-group="holidays-schedules">
+            <summary class="hr-nav-group-title"><i class="bi bi-calendar3"></i><span>Holidays &amp; Schedules</span><i class="bi bi-chevron-down hr-nav-chevron"></i></summary>
+            <div class="hr-nav-group-body">
+{% if show_time_menu %}
                 {% if can_manage_attendance and 'holidays' in org_modules %}
                     <a href="{% url 'holidayList' %}" class="hr-sidebar-link compact {% if u == 'holidayList' %}active{% endif %}">
                         <i class="bi bi-list-ul"></i><span>Holiday List</span>
@@ -169,19 +223,16 @@
                         <i class="bi bi-calendar-week"></i><span>Work Schedules</span>
                     </a>
                 {% endif %}
-            {% endif %}
-
-            <!-- Documents & Passes -->
-            {% if show_docs_menu %}
-                <div class="hr-sidebar-subheading">Documents &amp; Passes</div>
+{% endif %}
+            </div>
+        </details>
+        <details class="hr-nav-group" data-group="docs-passes">
+            <summary class="hr-nav-group-title"><i class="bi bi-file-earmark-check"></i><span>Documents &amp; Passes</span><i class="bi bi-chevron-down hr-nav-chevron"></i></summary>
+            <div class="hr-nav-group-body">
+{% if show_docs_menu %}
                 {% if can_manage_employees and 'documents' in org_modules %}
                     <a href="{% url 'hr_document_list' %}" class="hr-sidebar-link compact {% if u == 'hr_document_list' %}active{% endif %}">
                         <i class="bi bi-file-earmark-check"></i><span>Document Review</span>
-                    </a>
-                {% endif %}
-                {% if has_employee_profile and 'documents' in org_modules %}
-                    <a href="{% url 'upload_document' %}" class="hr-sidebar-link compact {% if u == 'upload_document' %}active{% endif %}">
-                        <i class="bi bi-file-earmark-text"></i><span>My Documents</span>
                     </a>
                 {% endif %}
                 {% if can_manage_employees and 'bcas' in org_modules %}
@@ -189,17 +240,13 @@
                         <i class="bi bi-credit-card-2-front"></i><span>BCAS Passes</span>
                     </a>
                 {% endif %}
-            {% endif %}
-        </div>
-
-        <!-- LIFECYCLE & GOVERNANCE -->
-        {% if show_lifecycle_section %}
-            <div class="hr-sidebar-section">
-                <div class="hr-sidebar-section-title">LIFECYCLE &amp; GOVERNANCE</div>
-
-                {% if show_exit_menu %}
-                    <div class="hr-sidebar-subheading">Exit &amp; Offboarding</div>
-
+{% endif %}
+            </div>
+        </details>
+        <details class="hr-nav-group" data-group="exit-offboarding">
+            <summary class="hr-nav-group-title"><i class="bi bi-box-arrow-right"></i><span>Exit &amp; Offboarding</span><i class="bi bi-chevron-down hr-nav-chevron"></i></summary>
+            <div class="hr-nav-group-body">
+{% if show_exit_menu %}
                     {% if can_review_manager_noc and 'exit_clearance' in org_modules %}
                         <a href="{% url 'managerClearanceQueue' %}" class="hr-sidebar-link compact {% if u == 'managerClearanceQueue' %}active{% endif %}">
                             <i class="bi bi-person-check"></i><span>Manager NOCs</span>
@@ -230,39 +277,75 @@
                             <i class="bi bi-person-x"></i><span>Initiate Termination</span>
                         </a>
                     {% endif %}
-                    {% if has_employee_profile and 'exit_clearance' in org_modules %}
-                        <a href="{% url 'myResignations' %}" class="hr-sidebar-link compact {% if u == 'myResignations' %}active{% endif %}">
-                            <i class="bi bi-journal-text"></i><span>My Resignations</span>
-                        </a>
-                        <a href="{% url 'submitResignation' %}" class="hr-sidebar-link compact {% if u == 'submitResignation' %}active{% endif %}">
-                            <i class="bi bi-box-arrow-right"></i><span>Submit Resignation</span>
-                        </a>
-                    {% endif %}
-                {% endif %}
+{% endif %}
+            </div>
+        </details>
+        </div>
 
-                {% if user.is_superuser %}
-                    <div class="hr-sidebar-subheading">Organization</div>
+        <!-- ADMIN (superuser only) -->
+        {% if user.is_superuser %}
+        <div class="hr-sidebar-section">
+            <div class="hr-sidebar-section-title">ADMIN</div>
                     <a href="{% url 'create_organization' %}" class="hr-sidebar-link compact {% if u == 'create_organization' %}active{% endif %}">
                         <i class="bi bi-building-add"></i><span>Create Organization</span>
                     </a>
-                {% endif %}
-            </div>
-        {% endif %}
-
-        <!-- ACCOUNT -->
-        <div class="hr-sidebar-section">
-            <div class="hr-sidebar-section-title">ACCOUNT</div>
-
-            {% if has_employee_profile %}
-                <a href="{% url 'myProfile' %}" class="hr-sidebar-link {% if u == 'myProfile' %}active{% endif %}">
-                    <i class="bi bi-person"></i>
-                    <span>My Profile</span>
-                </a>
-            {% endif %}
         </div>
-
+        {% endif %}
         {% endwith %}
     </nav>
+
+    <style>
+        /* Collapsible navigation groups */
+        .hr-sidebar-section-top { padding-top: 10px; }
+        .hr-nav-group { margin: 2px 0 4px; }
+        .hr-nav-group > summary {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 11px;
+            border-radius: 8px;
+            color: #cbd5e1;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+        .hr-nav-group > summary::-webkit-details-marker { display: none; }
+        .hr-nav-group > summary::marker { content: ""; }
+        .hr-nav-group > summary > i:first-child {
+            width: 18px;
+            flex-shrink: 0;
+            color: var(--sidebar-muted);
+            font-size: 15px;
+            text-align: center;
+        }
+        .hr-nav-group > summary:hover { background: var(--sidebar-hover); color: #ffffff; }
+        .hr-nav-group > summary:hover > i:first-child { color: #ffffff; }
+        .hr-nav-group > summary:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+        .hr-nav-chevron {
+            margin-left: auto;
+            color: #667085;
+            font-size: 11px;
+            transition: transform 0.2s ease;
+        }
+        .hr-nav-group[open] > summary .hr-nav-chevron { transform: rotate(180deg); color: #ffffff; }
+        .hr-nav-group.has-active > summary { color: #ffffff; }
+        .hr-nav-group.has-active > summary > i:first-child { color: var(--primary); }
+        .hr-nav-group-body {
+            margin: 2px 0 6px 20px;
+            padding-left: 8px;
+            border-left: 1px solid var(--sidebar-line);
+        }
+        .hr-nav-group-body .hr-sidebar-link {
+            margin-bottom: 1px;
+            padding: 7px 10px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .hr-nav-group[hidden], .hr-sidebar-section[hidden] { display: none; }
+    </style>
+
 
     <!-- ========================================= -->
     <!-- FOOTER (USER + SIGN OUT) -->
@@ -285,5 +368,35 @@
             </button>
         </form>
     </div>
+
+    <script>
+    (function () {
+        var nav = document.querySelector(".hr-sidebar-nav");
+        if (!nav) { return; }
+
+        var KEY = "hrNavOpen", saved = {};
+        try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { saved = {}; }
+        function persist() { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} }
+
+        nav.querySelectorAll(".hr-nav-group").forEach(function (group) {
+            // A group whose links are all hidden for this user (permissions / modules) is not shown.
+            if (!group.querySelector(".hr-sidebar-link")) { group.hidden = true; return; }
+
+            var hasActive = !!group.querySelector(".hr-sidebar-link.active");
+            if (hasActive) { group.classList.add("has-active"); }
+            // Open the group holding the current page, plus any group the user left open.
+            if (hasActive || saved[group.dataset.group]) { group.open = true; }
+
+            group.querySelector("summary").addEventListener("click", function () {
+                setTimeout(function () { saved[group.dataset.group] = group.open; persist(); }, 0);
+            });
+        });
+
+        // Hide a section title when nothing under it is visible.
+        nav.querySelectorAll(".hr-sidebar-section[data-auto-hide]").forEach(function (section) {
+            if (!section.querySelector(".hr-nav-group:not([hidden]), .hr-sidebar-link")) { section.hidden = true; }
+        });
+    })();
+    </script>
 
 </aside>
