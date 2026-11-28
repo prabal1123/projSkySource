@@ -225,6 +225,24 @@ AADHAAR_IN_USE_MESSAGE = (
 )
 
 
+GRID_MAX_ROWS = 50
+
+
+def _rows_from_grid(post, configs):
+    """
+    Turn the on-page entry grid into the same row list the Excel parser
+    produces: a header row followed by one list per entered row, so the
+    existing validation / preview / confirm flow is reused unchanged.
+    Each grid column posts as a repeated field named grid_<field_key>.
+    """
+    columns = [post.getlist(f"grid_{c.field_key}") for c in configs]
+    total = max((len(col) for col in columns), default=0)
+    rows = [[c.column_label for c in configs]]
+    for i in range(min(total, GRID_MAX_ROWS)):
+        rows.append([col[i] if i < len(col) else "" for col in columns])
+    return rows, total > GRID_MAX_ROWS
+
+
 def _find_header_row(rows, configs):
     required_labels = {c.column_label.strip().lower() for c in configs if c.is_required}
     for i, row in enumerate(rows[:5]):
@@ -381,17 +399,27 @@ def employee_bulk_import_view(request):
 
     # ---------------- PREVIEW ----------------
     if request.method == "POST":
+        grid_mode = request.POST.get("input_mode") == "grid"
         form = EmployeeBulkImportForm(
-            request.POST, request.FILES, organization=org, offer_projects=offer_projects
+            request.POST, request.FILES, organization=org, offer_projects=offer_projects,
+            grid_mode=grid_mode,
         )
 
         if form.is_valid():
-            uploaded_file = form.cleaned_data["file"]
             default_project = form.cleaned_data.get("default_project")
             try:
-                workbook = load_workbook(uploaded_file, data_only=True)
-                worksheet = workbook.active
-                rows = [list(r) for r in worksheet.iter_rows(values_only=True)]
+                if grid_mode:
+                    rows, truncated = _rows_from_grid(request.POST, configs)
+                    if truncated:
+                        messages.warning(
+                            request,
+                            f"Only the first {GRID_MAX_ROWS} rows were read. Import the rest in a second batch.",
+                        )
+                else:
+                    uploaded_file = form.cleaned_data["file"]
+                    workbook = load_workbook(uploaded_file, data_only=True)
+                    worksheet = workbook.active
+                    rows = [list(r) for r in worksheet.iter_rows(values_only=True)]
 
                 header_idx, headers = _find_header_row(rows, configs)
 
@@ -522,6 +550,9 @@ def employee_bulk_import_view(request):
                             "_project_id": project_id,
                             "project_display": project_display,
                         })
+
+                    if not preview_rows:
+                        messages.error(request, "No rows were entered. Fill at least one employee row.")
 
                     request.session["employee_import_rows"] = [
                         {

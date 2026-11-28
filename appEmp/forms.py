@@ -1854,8 +1854,10 @@ class EmployeeBulkImportForm(forms.Form):
         widget=forms.Select(attrs={"class": "form-select"}),
     )
 
-    def __init__(self, *args, organization=None, offer_projects=False, **kwargs):
+    def __init__(self, *args, organization=None, offer_projects=False, grid_mode=False, **kwargs):
         super().__init__(*args, **kwargs)
+        if grid_mode:
+            self.fields["file"].required = False
         if organization is not None and offer_projects:
             from app_projects.models import Project
 
